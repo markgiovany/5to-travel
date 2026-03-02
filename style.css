@@ -147,6 +147,7 @@ body{
 .destino-item {
   width: 130px;
   transition: transform 0.3s;
+  margin-top: 1%;
 }
 
 .destino-item:hover {
@@ -166,4 +167,72 @@ body{
 
 .carousel-control-prev, .carousel-control-next {
   width: 5%;
+}
+
+.main-footer {
+  background: #000;
+  color: #fff;
+  padding: 40px 10%;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 30px;
+}
+
+.footer-column h3 {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+}
+
+.footer-column ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-column ul li { margin-bottom: 10px; }
+
+.footer-column ul li a {
+  color: #bbb;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.footer-column ul li a:hover { color: #fff; }
+
+.social-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.social-icons a {
+  color: #fff;
+  background: #333;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  text-decoration: none;
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20px;
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.payment-icon {
+  background: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  color: #000;
+  font-weight: bold;
 }
