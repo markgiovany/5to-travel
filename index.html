@@ -10,58 +10,57 @@
     <title>Document</title>
 </head>
 <body>
-    <div class="container-fluid ">
-        <div class="row">
-          <div class="col-sm-9">
-            <nav class="navbar navbar-expand-lg">
-              <img class="si" src="imagenes/brooking.png" alt=""> 
-              
-              
-              <div class="collapse navbar-collapse" id="navbarNav">
-                <ul
-                  class="navbar-nav justify-content-center flex-grow-1 pe-3 text-orange menu"
-                
-                    >
-                  </li>
-                </ul>
-              </div>
-            </nav>
-          </div>
-          <div class="col-sm-3">
-            <a href="#" class="btn separacion  p-2 bg-opacity-50 ">Menú</a>
-            <a href="#" class="person separacion  text-dark"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
-  <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
-  <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
-</svg></a>
-          </div>
+    <header class="main-header">
+    <div class="glass-nav">
+        <a href="index.html" class="logo">
+            <img src="imagenes/brooking.png" alt="Logo">
+        </a>
+        <div class="nav-links">
+            <a href="#">Destinos</a>
+            <a href="#">Ofertas</a>
+            <div class="user-pill">
+                <i class="bi bi-list"></i>
+                <div class="user-avatar">
+                   <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="display: block; fill: #717171; height: 30px; width: 30px;"><path d="m16 .7c-8.437 0-15.3 6.863-15.3 15.3s6.863 15.3 15.3 15.3 15.3-6.863 15.3-15.3-6.863-15.3-15.3-15.3zm0 28c-4.021 0-7.605-1.884-9.933-4.81a12.425 12.425 0 0 1 2.245-2.903l.445-.4c1.886-1.637 4.191-2.487 7.243-2.487s5.357.85 7.243 2.487l.445.4a12.425 12.425 0 0 1 2.245 2.903c-2.328 2.926-5.912 4.81-9.933 4.81zm9.328-7.387c-.012-.02-.023-.04-.035-.06a10.428 10.428 0 0 0-6.191-3.653c1.789-1.344 2.898-3.411 2.898-5.7 0-3.97-3.23-7.2-7.2-7.2s-7.2 3.23-7.2 7.2c0 2.289 1.109 4.356 2.898 5.7a10.428 10.428 0 0 0-6.191 3.653c-.012.02-.023.04-.035.06a13.31 13.31 0 0 1-2.573-7.913c0-7.345 5.955-13.3 13.3-13.3s13.3 5.955 13.3 13.3c0 2.924-1.01 5.614-2.711 7.913z"></path></svg>
+                </div>
+            </div>
         </div>
-      </div>
+    </div>
+</header>
 
-
-      <section class="hero">
-  <form class="search-box">
-
-    
-    <div class="item">
-      <label>¿A dónde quieres ir?</label>
-      <input type="text" placeholder="Ciudad o hotel">
+<section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1>Encuentra tu próximo <span class="text-gradient">destino ideal</span></h1>
+        <p>Reserva hoteles, casas y experiencias únicas en todo el mundo.</p>
+        
+        <div class="smart-search">
+    <div class="search-field">
+        <span class="label">Ubicación</span>
+        <input type="text" placeholder="¿A dónde quieres ir?">
     </div>
 
-    
-    <div class="item">
-      <label>Fechas</label>
-      <input type="text" placeholder="Entrada - Salida">
+    <div class="divider"></div> <div class="search-field">
+        <span class="label">Entrada</span>
+        <input type="date">
     </div>
 
-  
-    <div class="item">
-      <label>Huésped</label>
-      <input type="text" placeholder="Número de huéspedes">
+    <div class="divider"></div> <div class="search-field">
+        <span class="label">Salida</span>
+        <input type="date">
     </div>
 
-    <button type="submit" class="btn-buscar">Buscar</button>
-
-  </form>
+    <div class="divider"></div> <div class="search-field">
+        <span class="label">Personas</span>
+        <input type="text" placeholder="¿Cuántos?">
+    </div>
+<a href="busqueda-resultado.html">
+            <button class="search-btn">
+                <svg width="20" height="20" fill="white" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+            </button>
+            </a>
+        </div>
+    </div>
 </section>
 
 <section class="ofertas-section py-5">
@@ -136,12 +135,6 @@
         </div>
       </div>
 
-    </div>
-
-    
-    <div class="text-center mt-5">
-      <h2 class="reseñas-title">MEJORES RESEÑAS</h2>
-      <button class="btn-vermas mt-3">Ver Más →</button>
     </div>
 
   </div>
