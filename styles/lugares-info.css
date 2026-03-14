@@ -1,0 +1,225 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+
+body{
+margin: 0;
+font-family: 'Inter', sans-serif;
+background: #f4f7f6;}
+
+:root {
+    --primary: #007bff;
+    --accent: #6610f2;
+    --dark: #1e1e24;
+}
+
+
+.glass-nav {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 1200px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 30px;
+    border-radius: 50px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    z-index: 1000;
+}
+
+.logo img { height: 35px; }
+
+.nav-links { display: flex; align-items: center; gap: 25px; }
+.nav-links a { text-decoration: none; color: #333; font-weight: 500; font-size: 14px; }
+
+.user-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #ddd;
+    padding: 5px 5px 5px 15px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.user-pill:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+
+.hero-lugar {
+  margin-top: 10rem;
+  margin-bottom: 2rem;
+}
+
+.hero-lugar img {
+  width: 100%;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.hero-lugar img:hover {
+  transform: scale(1.02);
+  transition: transform 0.3s ease;
+}
+
+.gallery-main {
+  height: 450px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 15px;
+}
+
+.gallery-sub {
+  height: calc(225px - 0.5rem); /* Ajuste para que sumen lo mismo que la principal */
+  width: 100%;
+  object-fit: cover;
+  border-radius: 15px;
+}
+
+.titulo-lugar h1 {
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #eee;
+}
+
+.section-subtitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+}
+
+.servicio-card {
+  padding: 15px;
+  border: 1px solid #000000;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.servicio-card:hover {
+  background-color: #ffffff;
+  transform: translateY(-5px);
+}
+
+.servicio-card h5 {
+  font-size: 1rem;
+  margin: 0;
+  color: #555;
+}
+
+.servicios-section img {
+  width: 16x;
+  height: 16px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+.info-extra {
+  margin-top: 2rem;
+}
+
+
+.mapa-card {
+  background-color: #607f9f;
+  padding: 2rem;
+  border-radius: 15px;
+  text-align: center;
+}
+
+.horarios-lugar {
+  margin-top: 3rem;
+  padding: 2rem 2rem 2rem 0;
+  border-top: 2px solid #eee;
+}
+
+.horario-item {
+  background: #e9ecef;
+  margin-top: 1rem;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 0.95rem;
+}
+
+.botones_habitacion .btn {
+  background-color: #2f4fbd;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.botones_habitacion .btn:hover {
+    transform: translateX(5px);
+}
+
+.main-footer {
+  background: #000;
+  color: #fff;
+  padding: 40px 10%;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 30px;
+}
+
+.footer-column h3 {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+}
+
+.footer-column ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-column ul li { margin-bottom: 10px; }
+
+.footer-column ul li a {
+  color: #bbb;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.footer-column ul li a:hover { color: #fff; }
+
+.social-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.social-icons a {
+  color: #fff;
+  background: #333;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  text-decoration: none;
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20px;
+  font-size: 0.8rem;
+  color: #777;
+}
