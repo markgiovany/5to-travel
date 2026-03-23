@@ -1,0 +1,152 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+
+font-family:'Poppins', sans-serif;
+font-size:18px;
+}
+
+/* CONTENEDOR GENERAL */
+
+.container{
+display:flex;
+height:100vh;
+}
+
+/* LADO IZQUIERDO */
+
+.left{
+width:65%;
+position:relative;
+}
+
+.bg{
+width:100%;
+height:100%;
+object-fit:cover;
+}
+
+/* OSCURECER IMAGEN */
+
+.left::after{
+content:"";
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.35);
+}
+
+/* TEXTO GRANDE SOBRE IMAGEN */
+
+.text{
+position:absolute;
+top:40%;
+left:20%;
+color:white;
+font-size:56px;
+font-weight:600;
+line-height:1.2;
+z-index:2;
+max-width:600px;
+}
+
+/* TEXTO SECUNDARIO */
+
+.text p{
+font-size:26px;
+margin-top:15px;
+}
+
+/* LADO DERECHO */
+
+.right{
+width:35%;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+background:#f4f6f9;
+text-align:center;
+}
+
+/* MENSAJE DERECHO */
+
+.right p{
+font-size:20px;
+margin-top:20px;
+}
+
+/* BOTON GOOGLE */
+
+.google-login{
+margin-bottom:30px;
+}
+
+/* TARJETA FORMULARIO */
+
+form{
+display:flex;
+flex-direction:column;
+align-items:center;
+background:white;
+padding:40px;
+border-radius:14px;
+box-shadow:0 10px 30px rgba(0,0,0,0.15);
+}
+
+/* INPUTS */
+
+input, select{
+width:260px;
+padding:14px;
+margin:10px;
+border-radius:8px;
+border:1px solid #ccc;
+font-size:16px;
+}
+
+/* EFECTO INPUT */
+
+input:focus, select:focus{
+outline:none;
+border-color:#0ea5e9;
+box-shadow:0 0 6px rgba(14,165,233,0.5);
+}
+
+/* BOTONES */
+
+button{
+width:260px;
+padding:14px;
+margin-top:12px;
+border:none;
+border-radius:8px;
+background:#0ea5e9;
+color:white;
+font-weight:bold;
+font-size:16px;
+cursor:pointer;
+transition:0.3s;
+}
+
+button:hover{
+background:#0284c7;
+transform:scale(1.05);
+}
+
+.register{
+background:#3b82f6;
+}
+
+/* TITULOS */
+
+h2{
+font-size:30px;
+margin-bottom:20px;
+}
