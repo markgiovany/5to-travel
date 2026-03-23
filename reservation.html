@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmar Reserva - BookingEngineer</title>
+    <link rel="stylesheet" href="styles/reservation.css">
+</head>
+<body>
+
+    <header class="main-header">
+    <div class="glass-nav">
+        <a href="index.html" class="logo">
+            <img src="imagenes/brooking.png" alt="Logo">
+        </a>
+    </div>
+</header>
+
+
+    <div class="checkout-container">
+        <h1>Confirmar y Pagar tu Reserva</h1>
+
+        <div class="checkout-layout">
+            
+            <section class="checkout-form">
+                <form action="procesar_pago.php" method="POST">
+                    
+                    <div class="form-section">
+                        <h2>1. Tus Datos de Facturación</h2>
+                        <div class="field">
+                            <label>Nombre Completo *</label>
+                            <input type="text" name="nombre" placeholder="Ej. Perenganito Castillo" required>
+                        </div>
+                        <div class="field">
+                            <label>Correo Electrónico *</label>
+                            <input type="email" name="email" placeholder="usuario@correo.com" required>
+                        </div>
+                        <div class="field">
+                            <label>Teléfono *</label>
+                            <input type="tel" name="telefono" placeholder="Número de teléfono" required>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2>2. Método de Pago</h2>
+                        <div class="payment-options">
+                            <label class="payment-card">
+                                <input type="radio" name="metodo" value="card" checked>
+                                <span>Crédito/Débito</span>
+                            </label>
+                            <label class="payment-card">
+                                <input type="radio" name="metodo" value="paypal">
+                                <span>PayPal</span>
+                            </label>
+                            <label class="payment-card">
+                                <input type="radio" name="metodo" value="transfer">
+                                <span>Transferencia</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-pay">Confirmar y Pagar MXN$ 30,761,799 pesito</button>
+                </form>
+            </section>
+
+            <aside class="order-summary">
+                <div class="summary-card">
+                    <h3>Resumen de tu Estancia</h3>
+                    <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427" alt="Habitación La Maison" class="summary-img">
+                    
+                    <div class="summary-info">
+                        <p><strong>Propiedad:</strong> La Maison (Cancún, MX)</p>
+                        <p><strong>Fechas:</strong> 12-19 Julio, 2026</p>
+                        <p><strong>Habitación:</strong> Grand Room (2 Camas)</p>
+                    </div>
+
+                    <div class="price-breakdown">
+                        <div class="price-row">
+                            <span>Subtotal:</span>
+                            <span>MXN$ 26,800</span>
+                        </div>
+                        <div class="price-row">
+                            <span>Impuestos:</span>
+                            <span>MXN$ 5,111</span>
+                        </div>
+                        <div class="price-row discount">
+                            <span>Descuento:</span>
+                            <span>-MXN$ 1,150</span>
+                        </div>
+                        <div class="price-row total">
+                            <span>Total:</span>
+                            <span>MXN$ 30,761,799 pesito</span>
+                        </div>
+                    </div>
+                    <a href="#" class="policy-link">Política de Cancelación</a>
+                </div>
+            </aside>
+
+        </div>
+    </div>
+
+</body>
+</html>
