@@ -1,3 +1,29 @@
+<?php
+session_start();
+include("config/conexion.php"); 
+ 
+if (!isset($_SESSION['user_uuid'])) {
+    header("Location: index.php");
+    exit();
+}
+
+$query = "SELECT c.nombre, c.precio, i.url_imagen 
+          FROM catalogo c
+          LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo";
+
+$resultado_hoteles = mysqli_query($conexion, $query);
+
+$catalogo_hoteles = array();
+
+while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
+    $catalogo_hoteles[$fila['nombre']] = array(
+        "precio" => $fila['precio'],
+        "imagen" => $fila['url_imagen'] ?? 'https://images.unsplash.com/photo-1566073771259-6a8506099945'
+    );
+}
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,12 +55,13 @@
     </div>
     
     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-        <li><a class="dropdown-item fw-bold" href="#">Regístrate</a></li>
-        <li><a class="dropdown-item" href="#">Iniciar sesión</a></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item" href="#">Centro de ayuda</a></li>
+    <li><a class="dropdown-item" href="auth/logout.php">Cerrar sesión</a></li>
+    
+    <li><hr class="dropdown-divider"></li>
+    
+    <li><a class="dropdown-item" href="#">Centro de ayuda</a></li>
     </ul>
-</div>
+    </div>
         </div>
     </div>
 </header>
@@ -105,51 +132,22 @@
     </div>
 
     <div class="row g-4">
-
+    <?php 
+    foreach ($catalogo_hoteles as $nombre => $datos): 
+    ?>
       <div class="col-md-3">
         <div class="hotel-card">
-          <a href="lugares-info.html"><img src="https://images.unsplash.com/photo-1566073771259-6a8506099945" class="img-fluid"></a>
+          <a href="lugares-info.html">
+            <img src="<?php echo $datos['imagen']; ?>" class="img-fluid">
+          </a>
           <div class="hotel-info">
-            <h6>The Oasis</h6>
-            <p>$10,000</p>
+            <h6><?php echo $nombre; ?></h6>
+            <p>$<?php echo number_format($datos['precio'], 2); ?></p>
           </div>
         </div>
       </div>
-
-      <div class="col-md-3">
-        <div class="hotel-card">
-          <a href="lugares-info.html"><img src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461" class="img-fluid"></a>
-          <div class="hotel-info">
-            <h6>The Sanctuary</h6>
-            <p>$9,000</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-3">
-        <div class="hotel-card">
-          <a href="lugares-info.html"><img src="https://images.unsplash.com/photo-1582719508461-905c673771fd" class="img-fluid"></a>
-          <div class="hotel-info">
-            <h6>The Infinity</h6>
-            <p>$8,000</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-3">
-        <div class="hotel-card">
-          <a href="lugares-info.html"><img src="https://images.unsplash.com/photo-1590490360182-c33d57733427" class="img-fluid"></a>
-          <div class="hotel-info">
-            <h6>La Maison</h6>
-            <p>$8,000</p>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-</section>
+    <?php endforeach; ?>
+</div>
 
 <section class="destinos-section py-5">
   <div class="container text-center text-white">
