@@ -44,12 +44,11 @@ data-client_id="598354696647-ro7off4rgjplgm0cuvipd47b5jkffekh.apps.googleusercon
 data-callback="handleCredentialResponse">
 </div>
 
-<div class="g_id_signin" data-type="standard"></div>
 
 <p>¿No tienes una cuenta?</p>
 
 <a href="registro.php">
-<button class="register">Regístrate</button>
+<button class="register">¡Regístrate!</button>
 </a>
 
 </div>

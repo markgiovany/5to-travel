@@ -16,8 +16,8 @@ $sql1 = "INSERT INTO usr_users (uuid, first_name, last_name, created_at)
 $sql2 = "INSERT INTO usr_emails (email, user_uuid) 
          VALUES ('$email', '$uuid')";
 
-$sql3 = "INSERT INTO usr_users_login (user_uuid, password, status, created_at) 
-         VALUES ('$uuid', '$password', 'active', NOW())";
+$sql3 = "INSERT INTO usr_users_login (user_uuid, password, role, status, created_at) 
+         VALUES ('$uuid', '$password', 'user', 'active', NOW())";
 
 if(mysqli_query($conexion, $sql1) && mysqli_query($conexion, $sql2) && mysqli_query($conexion, $sql3)){
     echo "Registro exitoso con UUID: " . $uuid;
