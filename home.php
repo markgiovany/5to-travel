@@ -148,7 +148,8 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
       </div>
     <?php endforeach; ?>
 </div>
-
+</div>
+</section>
 <section class="destinos-section py-5">
   <div class="container text-center text-white">
     <h2 class="fw-bold">Destinos Populares</h2>
