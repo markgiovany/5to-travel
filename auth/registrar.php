@@ -1,5 +1,5 @@
 <?php
-include("../conexion.php");
+include("../config/conexion.php");
 
 
 $first_name = $_POST['nombre'];
