@@ -7,19 +7,21 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Usuarios totales
 $res_users = mysqli_query($conexion, "SELECT COUNT(*) as total FROM usr_users");
 $total_users = mysqli_fetch_assoc($res_users)['total'];
 
-// Propiedades (hoteles) totales
 $res_props = mysqli_query($conexion, "SELECT COUNT(*) as total FROM catalogo");
 $total_props = mysqli_fetch_assoc($res_props)['total'];
 
-// Actividad reciente (últimos usuarios registrados)
-$query_actividad = "SELECT u.first_name, u.last_name, e.email, u.created_at 
-                   FROM usr_users u
-                   INNER JOIN usr_emails e ON u.uuid = e.user_uuid 
-                   ORDER BY u.created_at DESC";
+$res_count_reservas = mysqli_query($conexion, "SELECT COUNT(*) as total FROM res_reserva");
+$total_reservas = mysqli_fetch_assoc($res_count_reservas)['total'];
+
+$query_actividad = "SELECT r.id_reserva, r.fecha_entrada, r.estado, u.first_name, u.last_name, c.nombre as hotel_nombre 
+                    FROM res_reserva r
+                    INNER JOIN usr_users u ON r.user_uuid = u.uuid
+                    INNER JOIN cat_catalogo_habitacion ch ON r.id_habitacion = ch.id_catalogo
+                    INNER JOIN catalogo c ON ch.id_catalogo = c.id_catalogo
+                    ORDER BY r.id_reserva DESC LIMIT 10";
 $res_actividad = mysqli_query($conexion, $query_actividad);
 ?>
 
@@ -45,7 +47,7 @@ $res_actividad = mysqli_query($conexion, $query_actividad);
             <li><a href="#" class="nav-link active"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
             <li><a href="users.php" class="nav-link"><i class="bi bi-people"></i> Usuarios</a></li>
             <li><a href="hoteles.php" class="nav-link"><i class="bi bi-building"></i> Hoteles</a></li>
-            <li><a href="reservas.php" class="nav-link"><i class="bi bi-calendar-check"></i> Reservas</a></li>
+            <li><a href="reservaciones.php" class="nav-link"><i class="bi bi-calendar-check"></i> Reservaciones</a></li>
         </ul>
 
         <div class="p-3 border-top">
@@ -83,8 +85,8 @@ $res_actividad = mysqli_query($conexion, $query_actividad);
             </div>
             <div class="col-md-4">
                 <div class="card stat-card p-4">
-                    <span class="text-muted small uppercase fw-bold">Nuevas Reservas</span>
-                    <h3 class="mb-0 mt-2">0</h3> </div>
+                    <span class="text-muted small uppercase fw-bold">Nuevas Reservaciones</span>
+                    <h3 class="mb-0 mt-2"><?php echo number_format($total_reservas); ?></h3> </div>
             </div>
         </div>
 
@@ -94,19 +96,23 @@ $res_actividad = mysqli_query($conexion, $query_actividad);
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
+                            <th>Hotel</th>
                             <th>Usuario</th>
-                            <th>Email</th>
-                            <th>Fecha</th>
+                            <th>Fecha Entrada</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while($user = mysqli_fetch_assoc($res_actividad)): ?>
+                        <?php while($reserva = mysqli_fetch_assoc($res_actividad)): ?>
                         <tr>
-                            <td><?php echo $user['first_name'] . " " . $user['last_name']; ?></td>
-                            <td><?php echo $user['email']; ?></td>
-                            <td><?php echo date('d M Y', strtotime($user['created_at'])); ?></td>
-                            <td><span class="badge bg-success">Activo</span></td>
+                            <td class="fw-bold text-primary"><?php echo $reserva['hotel_nombre']; ?></td>
+                            <td><?php echo $reserva['first_name'] . " " . $reserva['last_name']; ?></td>
+                            <td><?php echo date('d M Y', strtotime($reserva['fecha_entrada'])); ?></td>
+                            <td>
+                                <span class="badge <?php echo ($reserva['estado'] == 'Pendiente') ? 'bg-warning' : 'bg-success'; ?>">
+                                    <?php echo $reserva['estado']; ?>
+                                </span>
+                            </td>
                         </tr>
                         <?php endwhile; ?>
                     </tbody>

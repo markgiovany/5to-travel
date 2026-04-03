@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <li><a href="admin_dashboard.php" class="nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
             <li><a href="users.php" class="nav-link"><i class="bi bi-people"></i> Usuarios</a></li>
             <li><a href="hoteles.php" class="nav-link active"><i class="bi bi-building"></i> Hoteles</a></li>
-            <li><a href="reservas.php" class="nav-link"><i class="bi bi-calendar-check"></i> Reservas</a></li>
+            <li><a href="reservaciones.php" class="nav-link"><i class="bi bi-calendar-check"></i> Reservaciones</a></li>
         </ul>
         <div class="p-3 border-top">
             <a href="../auth/logout.php" class="nav-link text-danger">
