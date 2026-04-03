@@ -1,0 +1,44 @@
+body { background-color: #f4f7f6; }
+        
+        .sidebar {
+            min-width: 250px;
+            max-width: 250px;
+            background: #ffffff;
+            min-height: 100vh;
+            border-right: 1px solid #dee2e6;
+            position: fixed;
+        }
+
+        .content {
+            margin-left: 250px;
+            padding: 30px;
+            width: calc(100% - 250px);
+        }
+
+        .nav-link {
+            color: #555;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            margin: 5px 15px;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: #f0f0ff;
+            color: #6f42c1; /* Morado suave como tus refs */
+            font-weight: 600;
+        }
+
+        .nav-link i { margin-right: 15px; font-size: 1.1rem; }
+
+        .stat-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .btn-outline-warning:hover {
+    color: #fff !important;
+}

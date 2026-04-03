@@ -5,6 +5,7 @@ include("../config/conexion.php");
 $first_name = $_POST['nombre'];
 $last_name  = $_POST['apellido'];
 $email      = $_POST['email'];
+$telefono = $_POST['telefono'];
 $password   = hash('md2', $_POST['password']); 
 
 $query_uuid = mysqli_query($conexion, "SELECT UUID() as uuid");
@@ -19,7 +20,9 @@ $sql2 = "INSERT INTO usr_emails (email, user_uuid)
 $sql3 = "INSERT INTO usr_users_login (user_uuid, password, role, status, created_at) 
          VALUES ('$uuid', '$password', 'user', 'active', NOW())";
 
-if(mysqli_query($conexion, $sql1) && mysqli_query($conexion, $sql2) && mysqli_query($conexion, $sql3)){
+$sql4 = "INSERT INTO usr_telefonos (telefono, user_uuid) VALUES ('$telefono', '$uuid')";
+
+if(mysqli_query($conexion, $sql1) && mysqli_query($conexion, $sql2) && mysqli_query($conexion, $sql3) && mysqli_query($conexion, $sql4)){
     echo "Registro exitoso con UUID: " . $uuid;
 } else {
     echo "Error: " . mysqli_error($conexion);
