@@ -2,10 +2,9 @@
 <html>
 
 <head>
-
 <title>Registro</title>
 
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="styles/logins.css">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
@@ -16,10 +15,9 @@
 <div class="container">
 
 <!-- LADO IZQUIERDO -->
-
 <div class="left">
 
-<img src="img/fondo.jpg" class="bg">
+<img src="imagenes/loginfondo.jpg" class="bg">
 
 <div class="text">
 <h2>Descubre destinos increíbles</h2>
@@ -29,7 +27,6 @@
 </div>
 
 <!-- LADO DERECHO -->
-
 <div class="right">
 
 <h2>Crear Cuenta</h2>
@@ -41,12 +38,10 @@
 <input type="text" name="apellido" placeholder="Apellidos" required>
 
 <select name="lada" required>
-
 <option value="">Selecciona lada</option>
 <option value="+52">+52 México</option>
 <option value="+1">+1 USA</option>
 <option value="+34">+34 España</option>
-
 </select>
 
 <input type="text" name="telefono" placeholder="Número telefónico">
