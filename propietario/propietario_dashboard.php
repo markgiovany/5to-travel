@@ -54,6 +54,9 @@ $res_hoteles = mysqli_query($conexion, $sql_hoteles);
             <li><a href="mis_hoteles.php" class="nav-link"><i class="bi bi-airplane me-2"></i> Mis Hoteles</a></li>
             <li><a href="mis_reservaciones.php" class="nav-link"><i class="bi bi-calendar-check me-2"></i> Reservaciones</a></li>
             <li><a href="mis_habitaciones.php" class="nav-link"><i class="bi bi-door-open me-2"></i> Habitaciones</a></li>
+            <a href="mis_pagos.php" class="nav-link">
+    <i class="bi bi-cash-coin me-2"></i> Pagos
+</a>
         </ul>
         <hr>
         <div class="p-2">
