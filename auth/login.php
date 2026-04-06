@@ -23,7 +23,7 @@ if(mysqli_num_rows($resultado) > 0){
     if($datos['role'] == 'admin'){
         header("Location: ../admin/admin_dashboard.php");
     } elseif($datos['role'] == 'propietario'){
-        header("Location: ../owner_dashboard.php");
+        header("Location: ../propietario/propietario_dashboard.php");
     } else {
         header("Location: ../home.php");
     }

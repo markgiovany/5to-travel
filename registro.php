@@ -20,8 +20,7 @@
 <img src="imagenes/loginfondo.jpg" class="bg">
 
 <div class="text">
-<h2>Descubre destinos increíbles</h2>
-<p>Reserva hoteles, vuelos y experiencias inolvidables</p>
+<h2>"Tu próxima aventura comienza aquí"</h2>
 </div>
 
 </div>
