@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 04-04-2026 a las 00:32:45
+-- Tiempo de generación: 04-04-2026 a las 21:43:24
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -270,11 +270,8 @@ CREATE TABLE `usr_emails` (
 --
 
 INSERT INTO `usr_emails` (`id_email`, `email`, `user_uuid`) VALUES
-(1, 'ingjuliosd@gmail.com', '69af0f9520252'),
-(2, 'jaja@gmail.com', '69af0fcb58fe8'),
-(3, 'ingjuliosd@gmail.com', '77050451-2f62-11f1-bcdb-e89c25808c74'),
-(4, 'ingjuliosd2@gmail.com', '08eda147-2f66-11f1-bcdb-e89c25808c74'),
-(5, 'ingjuliosd2@gmail.com', '40e6385f-2f66-11f1-bcdb-e89c25808c74');
+(9, 'ingjuliosd@gmail.com', '676f80e6-305d-11f1-94cc-e89c25808c74'),
+(10, 'ingjuliosd2@gmail.com', '9fa8197b-305d-11f1-94cc-e89c25808c74');
 
 -- --------------------------------------------------------
 
@@ -286,6 +283,15 @@ CREATE TABLE `usr_roles` (
   `id_rol` bigint(20) NOT NULL,
   `rol` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `usr_roles`
+--
+
+INSERT INTO `usr_roles` (`id_rol`, `rol`) VALUES
+(1, 'usuario'),
+(2, 'propietario'),
+(3, 'admin');
 
 -- --------------------------------------------------------
 
@@ -304,11 +310,8 @@ CREATE TABLE `usr_telefonos` (
 --
 
 INSERT INTO `usr_telefonos` (`id_telefono`, `telefono`, `user_uuid`) VALUES
-(1, '998339854', '69af0f9520252'),
-(2, '9983380954', '69af0fcb58fe8'),
-(3, '9983380954', '77050451-2f62-11f1-bcdb-e89c25808c74'),
-(4, '9983380954', '08eda147-2f66-11f1-bcdb-e89c25808c74'),
-(5, '9983380954', '40e6385f-2f66-11f1-bcdb-e89c25808c74');
+(8, '9983380954', '676f80e6-305d-11f1-94cc-e89c25808c74'),
+(9, '9983380954', '9fa8197b-305d-11f1-94cc-e89c25808c74');
 
 -- --------------------------------------------------------
 
@@ -329,11 +332,8 @@ CREATE TABLE `usr_users` (
 --
 
 INSERT INTO `usr_users` (`uuid`, `first_name`, `last_name`, `created_at`, `updated_at`) VALUES
-('08eda147-2f66-11f1-bcdb-e89c25808c74', 'Junior ', 'Sanches', '2026-04-03 09:04:30', NULL),
-('40e6385f-2f66-11f1-bcdb-e89c25808c74', 'Junior ', 'Sanches', '2026-04-03 09:06:04', NULL),
-('69af0f9520252', 'Julio', 'Serrano', NULL, NULL),
-('69af0fcb58fe8', 'Jija', 'Lopez', NULL, NULL),
-('77050451-2f62-11f1-bcdb-e89c25808c74', 'Julio ', 'Serrano ', '2026-04-03 08:38:57', NULL);
+('676f80e6-305d-11f1-94cc-e89c25808c74', 'julio ', 'serrano', '2026-04-04 14:35:15', NULL),
+('9fa8197b-305d-11f1-94cc-e89c25808c74', 'Javier', 'Montana', '2026-04-04 14:36:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -355,11 +355,8 @@ CREATE TABLE `usr_users_login` (
 --
 
 INSERT INTO `usr_users_login` (`user_uuid`, `password`, `status`, `role`, `created_at`, `updated_at`) VALUES
-('08eda147-2f66-11f1-bcdb-e89c25808c74', 'db5d888a0480461f4fb978746d1baf34', 'active', 'user', '2026-04-03 09:04:30', NULL),
-('40e6385f-2f66-11f1-bcdb-e89c25808c74', '12bd4efdd922b5c8c7b773f26ef4e35f', 'active', 'user', '2026-04-03 09:06:04', NULL),
-('69af0f9520252', '$2y$10$qim0TEeYjz5l6zQSdx.fdeYn8c7P5hv4DfLKiqngCynTj353w8X62', 'activo', 'cliente', NULL, NULL),
-('69af0fcb58fe8', '$2y$10$mbmuZoAC1UTiHw7qFuNLqu77JTNT9q1JYJJeYfNi6Ndqtb0y/lnQy', 'activo', 'cliente', NULL, NULL),
-('77050451-2f62-11f1-bcdb-e89c25808c74', 'db5d888a0480461f4fb978746d1baf34', 'active', 'user', '2026-04-03 08:38:57', NULL);
+('676f80e6-305d-11f1-94cc-e89c25808c74', 'db5d888a0480461f4fb978746d1baf34', 'active', 'propietario', '2026-04-04 14:35:15', NULL),
+('9fa8197b-305d-11f1-94cc-e89c25808c74', 'db5d888a0480461f4fb978746d1baf34', 'active', 'user', '2026-04-04 14:36:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -725,19 +722,19 @@ ALTER TABLE `res_reserva`
 -- AUTO_INCREMENT de la tabla `usr_emails`
 --
 ALTER TABLE `usr_emails`
-  MODIFY `id_email` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_email` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `usr_roles`
 --
 ALTER TABLE `usr_roles`
-  MODIFY `id_rol` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_rol` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `usr_telefonos`
 --
 ALTER TABLE `usr_telefonos`
-  MODIFY `id_telefono` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_telefono` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `usr_usuarios_has_roles`

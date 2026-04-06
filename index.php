@@ -1,10 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Login</title>
 
-<link rel="stylesheet" href="styles/logins.css">
+<link rel="stylesheet" href="styles/logins.css?v=2">
+
+<!-- Fuente -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- Google -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 </head>
@@ -13,45 +21,46 @@
 
 <div class="container">
 
-<div class="left">
+    <!-- LADO IZQUIERDO -->
+    <div class="left">
 
-<img src="imagenes/loginfondo.jpg" class="bg">
+        <img src="imagenes/loginfondo.jpg" class="bg">
 
-<div class="text">
+        <div class="text">
+            <h2>Tu próxima aventura comienza aquí</h2>
+        </div>
 
-<h2>"Tu próxima aventura comienza aquí"</h2>
+    </div>
 
-</div>
+    <!-- LADO DERECHO -->
+    <div class="right">
 
-</div>
+        <h2>Iniciar Sesión</h2>
 
-<div class="right">
+        <form action="auth/login.php" method="POST">
 
-<h2>Iniciar Sesión</h2>
+            <input type="email" name="email" placeholder="Correo electrónico" required>
 
-<form action="auth/login.php" method="POST">
+            <input type="password" name="password" placeholder="Contraseña" required>
 
-<input type="email" name="email" placeholder="Gmail" required>
+            <button type="submit">Acceder</button>
 
-<input type="password" name="password" placeholder="Contraseña" required>
+        </form>
 
-<button type="submit">Acceder</button>
+        <!-- GOOGLE LOGIN -->
+        <div id="g_id_onload"
+        data-client_id="598354696647-ro7off4rgjplgm0cuvipd47b5jkffekh.apps.googleusercontent.com"
+        data-callback="handleCredentialResponse">
+        </div>
 
-</form>
+        <div class="g_id_signin" data-type="standard"></div>
 
-<div id="g_id_onload"
-data-client_id="598354696647-ro7off4rgjplgm0cuvipd47b5jkffekh.apps.googleusercontent.com"
-data-callback="handleCredentialResponse">
-</div>
+        <p>¿No tienes una cuenta?</p>
 
+        <!-- 🔥 CORREGIDO -->
+        <a href="registro.php" class="register-link">¡Regístrate!</a>
 
-<p>¿No tienes una cuenta?</p>
-
-<a href="registro.php">
-<button class="register">¡Regístrate!</button>
-</a>
-
-</div>
+    </div>
 
 </div>
 

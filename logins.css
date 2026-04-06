@@ -1,0 +1,189 @@
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+}
+
+/* CONTENEDOR GENERAL */
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+/* LADO IZQUIERDO */
+.left {
+    width: 65%;
+    position: relative;
+}
+
+.bg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* OSCURECER IMAGEN */
+.left::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+}
+
+/* TEXTO SOBRE IMAGEN */
+.text {
+    position: absolute;
+    top: 40%;
+    left: 15%;
+    color: white;
+    font-size: 50px;
+    font-weight: 600;
+    line-height: 1.2;
+    z-index: 2;
+    max-width: 500px;
+}
+
+/* LADO DERECHO */
+.right {
+    width: 35%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #f4f6f9;
+    text-align: center;
+    padding: 20px;
+}
+
+/* TITULO */
+.right h2 {
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+/* FORMULARIO */
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    background: white;
+    padding: 40px;
+
+    border-radius: 20px;
+
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+}
+
+/* INPUTS MODERNOS */
+input, select {
+    width: 280px;
+    padding: 14px 16px;
+    margin: 10px 0;
+
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+
+    font-size: 15px;
+    background: #f9fafb;
+
+    transition: all 0.25s ease;
+}
+
+/* PLACEHOLDER */
+input::placeholder {
+    color: #9ca3af;
+}
+
+/* EFECTO FOCUS */
+input:focus, select:focus {
+    outline: none;
+    border-color: #38bdf8;
+    background: white;
+
+    box-shadow: 0 0 0 3px rgba(56,189,248,0.2);
+}
+
+/* BOTÓN */
+button {
+    width: 280px;
+    padding: 14px;
+    margin-top: 15px;
+
+    border: none;
+    border-radius: 12px;
+
+    background: #38bdf8;
+    color: white;
+
+    font-weight: 600;
+    font-size: 16px;
+
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #0ea5e9;
+}
+
+/* BOTÓN REGISTRO */
+.register-link {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 12px 20px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.register-link:hover {
+    background: #2563eb;
+}
+
+/* TEXTO */
+.right p {
+    margin-top: 15px;
+    font-size: 16px;
+}
+
+/* GOOGLE */
+.g_id_signin {
+    margin-top: 15px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+
+    .container {
+        flex-direction: column;
+    }
+
+    .left {
+        width: 100%;
+        height: 40vh;
+    }
+
+    .right {
+        width: 100%;
+        height: 60vh;
+    }
+
+    .text {
+        font-size: 30px;
+        left: 10%;
+        top: 30%;
+    }
+}

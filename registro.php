@@ -4,7 +4,7 @@
 <head>
 <title>Registro</title>
 
-<link rel="stylesheet" href="styles/logins.css">
+<link rel="stylesheet" href="styles/logins.css?v=2">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
