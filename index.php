@@ -5,7 +5,6 @@
 <title>Login</title>
 
 <link rel="stylesheet" href="styles/logins.css">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 </head>
 
@@ -54,8 +53,6 @@ data-callback="handleCredentialResponse">
 </div>
 
 </div>
-
-<script src="js/google.js"></script>
 
 </body>
 </html>

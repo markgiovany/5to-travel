@@ -55,11 +55,12 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
     </div>
     
     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-    <li><a class="dropdown-item" href="auth/logout.php">Cerrar sesión</a></li>
+      <li><a class="dropdown-item" href="perfil.php">Mi perfil</a></li>    
     
     <li><hr class="dropdown-divider"></li>
-    
+        
     <li><a class="dropdown-item" href="#">Centro de ayuda</a></li>
+    <li><a class="dropdown-item" href="auth/logout.php">Cerrar sesión</a></li>
     </ul>
     </div>
         </div>
