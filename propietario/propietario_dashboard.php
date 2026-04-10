@@ -19,7 +19,13 @@ $query_res = "SELECT COUNT(*) as total FROM res_reserva";
 $ejecutar_res = mysqli_query($conexion, $query_res);
 $total_reservas = ($ejecutar_res) ? mysqli_fetch_assoc($ejecutar_res)['total'] : 0;
 
-$sql_hoteles = "SELECT * FROM catalogo WHERE propietario_uuid = '$propietario_uuid' ORDER BY id_catalogo DESC";
+$sql_hoteles = "
+SELECT c.*, i.url_imagen 
+FROM catalogo c
+LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
+WHERE c.propietario_uuid = '$propietario_uuid'
+ORDER BY c.id_catalogo DESC
+";
 $res_hoteles = mysqli_query($conexion, $sql_hoteles);
 ?>
 
@@ -117,7 +123,7 @@ $res_hoteles = mysqli_query($conexion, $sql_hoteles);
                                 <?php while($row = mysqli_fetch_assoc($res_hoteles)): ?>
                                 <tr>
                                     <td>#<?php echo $row['id_catalogo']; ?></td>
-                                    <td><img src="https://via.placeholder.com/50" class="rounded" width="50" height="50" style="object-fit: cover;"></td>
+                                    <td><img src="<?php echo $row['url_imagen']; ?>" class="rounded" width="50" height="50" style="object-fit: cover;"></td>
                                     <td class="fw-bold"><?php echo htmlspecialchars($row['nombre']); ?></td>
                                     <td class="text-muted small"><?php echo htmlspecialchars(substr($row['descripcion'], 0, 80)); ?>...</td>
                                     <td class="text-center">
