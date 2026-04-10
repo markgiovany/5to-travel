@@ -27,7 +27,7 @@ body { background-color: #f4f7f6; }
 
         .nav-link:hover, .nav-link.active {
             background-color: #f0f0ff;
-            color: #6f42c1; /* Morado suave como tus refs */
+            color: #6f42c1;
             font-weight: 600;
         }
 
