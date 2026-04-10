@@ -7,15 +7,16 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-if (!isset($_GET['id'])) {
+if (!isset($_GET['uuid'])) {
     header("Location: hoteles.php");
     exit();
 }
 
-$id_hotel = mysqli_real_escape_string($conexion, $_GET['id']);
+$hotel_uuid = mysqli_real_escape_string($conexion, $_GET['uuid']);
 
-$res_hotel = mysqli_query($conexion, "SELECT nombre FROM catalogo WHERE id_catalogo = '$id_hotel'");
+$res_hotel = mysqli_query($conexion, "SELECT id_catalogo, nombre FROM catalogo WHERE uuid = '$hotel_uuid'");
 $hotel_info = mysqli_fetch_assoc($res_hotel);
+$id_hotel = $hotel_info['id_catalogo'];
 
 if (!$hotel_info) {
     header("Location: hoteles.php");
@@ -87,7 +88,7 @@ if (!$resultado) {
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="d-flex align-items-center gap-3">
                 <h2 class="fw-bold m-0">Habitaciones: <span class="text-primary"><?php echo $hotel_info['nombre']; ?></span></h2>
-                <a href="add_habitacion.php?id_hotel=<?php echo $id_hotel; ?>" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+                <a href="add_habitacion.php?uuid=<?php echo $hotel_uuid; ?>" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
                     <i class="bi bi-plus-lg"></i> Agregar Habitación
                 </a>
             </div>
@@ -99,7 +100,7 @@ if (!$resultado) {
         <div class="card mb-4 border-0 shadow-sm rounded-3">
             <div class="card-body p-3">
                 <form method="GET" class="row g-2 align-items-end">
-                    <input type="hidden" name="id" value="<?php echo $id_hotel; ?>">
+                    <input type="hidden" name="uuid" value="<?php echo $hotel_uuid; ?>">
                     
                     <div class="col-md-5">
                         <label class="small fw-bold text-muted ms-2">CAPACIDAD</label>
@@ -138,6 +139,7 @@ if (!$resultado) {
                             <tr>
                                 <th>Descripción de Habitación</th>
                                 <th class="text-center">Capacidad</th>
+                                <th class="text-center">Stock</th>
                                 <th class="text-center">Precio</th>
                                 <th class="text-center pe-4">Acciones</th>
                             </tr>
@@ -155,15 +157,19 @@ if (!$resultado) {
                                             <i class="bi bi-people"></i> <?php echo $hab['capacidad']; ?> paxs.
                                         </span>
                                     </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border rounded-pill">
+                                            <i class="bi bi-box-seam"></i> <?php echo $hab['disponibilidad']; ?> disponibles
+                                        </span>
                                     <td class="text-center text-success fw-bold">
                                         $<?php echo number_format($hab['precio'], 2); ?>
                                     </td>
                                     <td class="text-center">
-                                        <a href="delete_habitacion.php?name=<?php echo urlencode($hab['nombre']); ?>&id_hotel=<?php echo $id_hotel; ?>" 
+                                        <a href="delete_habitacion.php?name=<?php echo urlencode($hab['nombre']); ?>&uuid=<?php echo $hotel_uuid; ?>" 
                                            class="btn btn-sm text-danger" onclick="return confirm('¿Borrar?')">
                                             <i class="bi bi-trash"></i>
                                         </a>
-                                        <a href="edit_habitacion.php?name=<?php echo urlencode($hab['nombre']); ?>" class="btn btn-sm text-primary ms-1">
+                                        <a href="edit_habitacion.php?name=<?php echo urlencode($hab['nombre']); ?>&uuid=<?php echo $hotel_uuid; ?>" class="btn btn-sm text-primary ms-1">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
                                     </td>

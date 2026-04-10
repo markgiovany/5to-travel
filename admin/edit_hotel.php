@@ -10,15 +10,13 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// 1. Obtener datos del hotel por ID
-if (isset($_GET['id'])) {
-    $id_hotel = mysqli_real_escape_string($conexion, $_GET['id']);
+if (isset($_GET['uuid'])) {
+    $uuid_hotel = mysqli_real_escape_string($conexion, $_GET['uuid']);
     
-    // Traemos la info del hotel y solo la primera imagen para la vista previa
     $query = "SELECT c.*, i.url_imagen 
               FROM catalogo c
               LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
-              WHERE c.id_catalogo = '$id_hotel' LIMIT 1";
+              WHERE c.uuid = '$uuid_hotel' LIMIT 1";
     
     $res = mysqli_query($conexion, $query);
     $hotel = mysqli_fetch_assoc($res);
@@ -29,7 +27,6 @@ if (isset($_GET['id'])) {
     }
 }
 
-// 2. Consulta para el select de propietarios
 $query_propietarios = "SELECT u.uuid, u.first_name, u.last_name 
                        FROM usr_users u
                        INNER JOIN usr_users_login l ON u.uuid = l.user_uuid

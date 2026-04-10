@@ -7,15 +7,16 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-if (!isset($_GET['id_hotel'])) {
+if (!isset($_GET['uuid'])) {
     header("Location: hoteles.php");
     exit();
 }
 
-$id_hotel = mysqli_real_escape_string($conexion, $_GET['id_hotel']);
+$hotel_uuid = mysqli_real_escape_string($conexion, $_GET['uuid']);
 
-$res_h = mysqli_query($conexion, "SELECT nombre FROM catalogo WHERE id_catalogo = '$id_hotel'");
+$res_h = mysqli_query($conexion, "SELECT id_catalogo, nombre FROM catalogo WHERE uuid = '$hotel_uuid'");
 $hotel = mysqli_fetch_assoc($res_h);
+$id_hotel = $hotel['id_catalogo'];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nombre = mysqli_real_escape_string($conexion, $_POST['nombre']);
@@ -25,12 +26,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $disponibilidad = mysqli_real_escape_string($conexion, $_POST['disponibilidad']);
 
     $query = "INSERT INTO cat_catalogo_habitacion 
-              (id_catalogo, nombre, descripcion, precio, capacidad, disponibilidad, status, id_tipo, id_grupo) 
+              (id_catalogo, nombre, descripcion, precio, capacidad, disponibilidad, status) 
               VALUES 
-              ('$id_hotel', '$nombre', '$descripcion', '$precio', '$capacidad', '$disponibilidad', 'active', 1, 1)";
+              ('$id_hotel', '$nombre', '$descripcion', '$precio', '$capacidad', '$disponibilidad', 'active')";
 
     if (mysqli_query($conexion, $query)) {
-        header("Location: habitaciones.php?id=$id_hotel&msg=added");
+        header("Location: habitaciones.php?uuid=$hotel_uuid&msg=added");
         exit();
     } else {
         $error = "Error al guardar: " . mysqli_error($conexion);
@@ -88,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary fw-bold rounded-pill">Guardar Habitación</button>
-                <a href="habitaciones.php?id=<?php echo $id_hotel; ?>" class="btn btn-link text-muted text-decoration-none small">Cancelar</a>
+                <a href="habitaciones.php?uuid=<?php echo $hotel_uuid; ?>" class="btn btn-link text-muted text-decoration-none small">Cancelar</a>
             </div>
         </form>
     </div>
