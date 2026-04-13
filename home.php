@@ -34,7 +34,7 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
 <body>
     <header class="main-header">
     <div class="glass-nav">
-        <a href="index.html" class="logo">
+        <a href="home.php" class="logo">
             <img src="imagenes/brooking.png" alt="Logo">
         </a>
         <div class="nav-links">
