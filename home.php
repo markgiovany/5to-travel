@@ -9,7 +9,9 @@ if (!isset($_SESSION['user_uuid'])) {
 
 $query = "SELECT c.nombre, c.precio, i.url_imagen 
           FROM catalogo c
-          LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo";
+         LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
+          ORDER BY RAND()
+          LIMIT 8";
 
 $resultado_hoteles = mysqli_query($conexion, $query);
 
@@ -43,7 +45,10 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
         </a>
         <div class="nav-links">
             <a href="#">Destinos</a>
-            <a href="#">Ofertas</a>
+            <a href="catalogo.php">Catálogo</a>
+            <a href="favoritos.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                <i class="bi bi-heart-fill"></i> Mis Favoritos
+            </a>
 <div class="dropdown">
     <div class="user-pill" data-bs-toggle="dropdown" aria-expanded="false" role="button">
         <i class="bi bi-list"></i>
