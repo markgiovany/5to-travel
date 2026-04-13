@@ -117,7 +117,7 @@ $res_hoteles = mysqli_query($config, $sql_hoteles);
                                 <?php while($row = mysqli_fetch_assoc($res_hoteles)): ?>
                                 <tr>
                                     <td>#<?php echo $row['id_catalogo']; ?></td>
-                                    <td><img src="https://via.placeholder.com/50" class="rounded" width="50" height="50" style="object-fit: cover;"></td>
+                                    <td><img src="<?php echo $row['url_imagen']; ?>" class="rounded" width="50" height="50" style="object-fit: cover;"></td>
                                     <td class="fw-bold"><?php echo htmlspecialchars($row['nombre']); ?></td>
                                     <td class="text-muted small"><?php echo htmlspecialchars(substr($row['descripcion'], 0, 80)); ?>...</td>
                                     <td class="text-center">

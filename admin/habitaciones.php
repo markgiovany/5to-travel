@@ -16,6 +16,7 @@ $uuid_hotel = mysqli_real_escape_string($config, $_GET['u']);
 
 $res_hotel = mysqli_query($config, "SELECT id_catalogo, nombre FROM catalogo WHERE uuid = '$uuid_hotel'");
 $hotel_info = mysqli_fetch_assoc($res_hotel);
+$id_hotel = $hotel_info['id_catalogo'];
 
 if (!$hotel_info) {
     header("Location: hoteles.php");
@@ -139,6 +140,7 @@ if (!$resultado) {
                             <tr>
                                 <th>Descripción de Habitación</th>
                                 <th class="text-center">Capacidad</th>
+                                <th class="text-center">Stock</th>
                                 <th class="text-center">Precio</th>
                                 <th class="text-center pe-4">Acciones</th>
                             </tr>
@@ -156,6 +158,10 @@ if (!$resultado) {
                                             <i class="bi bi-people"></i> <?php echo $hab['capacidad']; ?> paxs.
                                         </span>
                                     </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border rounded-pill">
+                                            <i class="bi bi-box-seam"></i> <?php echo $hab['disponibilidad']; ?> disponibles
+                                        </span>
                                     <td class="text-center text-success fw-bold">
                                         $<?php echo number_format($hab['precio'], 2); ?>
                                     </td>

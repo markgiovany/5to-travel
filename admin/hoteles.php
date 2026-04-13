@@ -21,7 +21,7 @@ if (count($where_clauses) > 0) {
 $query = "SELECT c.id_catalogo, c.uuid, c.nombre, c.descripcion, u.first_name, u.last_name,
           (SELECT COUNT(*) FROM cat_catalogo_habitacion ch WHERE ch.id_catalogo = c.id_catalogo) as total_hab
           FROM catalogo c
-          LEFT JOIN usr_users u ON c.propietario_uuid = u.uuid 
+          INNER JOIN usr_users u ON c.propietario_uuid = u.uuid 
           $where_sql
           ORDER BY c.id_catalogo DESC";
 
