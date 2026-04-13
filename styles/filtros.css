@@ -1,0 +1,79 @@
+.be-filter-container {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    padding: 12px 0 !important;
+    top: 80px; 
+    z-index: 1000 !important;
+    width: 100% !important;
+}
+
+
+.be-filter-trigger {
+    background: #ffffff !important;
+    border: 1px solid #d3d3d3 !important;
+    border-radius: 25px !important;
+    padding: 8px 20px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #222222 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+}
+
+.be-filter-trigger:hover {
+    border-color: #000000 !important;
+    background-color: #f8f8f8 !important;
+}
+
+.be-filter-trigger::after {
+    content: "\F282"; 
+    font-family: "bootstrap-icons" !important;
+    border: none !important;
+    font-size: 12px !important;
+}
+
+.be-filter-menu {
+    border-radius: 16px !important;
+    padding: 24px !important;
+    min-width: 300px !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+    margin-top: 10px !important;
+}
+
+.be-filter-title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    margin-bottom: 15px !important;
+    color: #222 !important;
+}
+
+.be-btn-apply {
+    background: #222222 !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 10px !important;
+    border-radius: 8px !important;
+    width: 100% !important;
+    font-weight: 600 !important;
+    margin-top: 10px !important;
+}
+
+.be-link-clear {
+    color: #717171 !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    border: 1px solid transparent !important;
+    padding: 7px 15px !important;
+    border-radius: 20px !important;
+}
+
+.be-link-clear:hover {
+    border-color: #ddd !important;
+    background-color: #f8f8f8 !important;
+}
