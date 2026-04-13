@@ -12,9 +12,9 @@ if (isset($_GET['u'])) {
     
     $query = "SELECT u.first_name, u.last_name, l.role, e.email, t.telefono 
               FROM usr_users u
-              INNER JOIN usr_emails e ON u.uuid = e.user_uuid 
-              INNER JOIN usr_users_login l ON u.uuid = l.user_uuid
-              INNER JOIN usr_telefonos t ON u.uuid = t.user_uuid
+              LEFT JOIN usr_emails e ON u.uuid = e.user_uuid 
+              LEFT JOIN usr_users_login l ON u.uuid = l.user_uuid
+              LEFT JOIN usr_telefonos t ON u.uuid = t.user_uuid
               WHERE u.uuid = '$uuid'";
     
     $res = mysqli_query($config, $query);

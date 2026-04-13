@@ -153,7 +153,7 @@ if (!$resultado) {
                                     <td class="text-muted small"><?php echo substr($row['uuid'], 0, 8); ?>...</td>
                                     <td><span class="small"><?php echo ($row['created_at']) ? date('d M, Y', strtotime($row['created_at'])) : 'N/A'; ?></span></td>
                                     <td class="text-center">
-                                        <a href="delete_user.php?id=<?php echo $row['uuid']; ?>" class="btn btn-sm text-danger" onclick="return confirm('¿Borrar este usuario?')">
+                                        <a href="delete_user.php?u=<?php echo $row['uuid']; ?>" class="btn btn-sm text-danger" onclick="return confirm('¿Borrar este usuario?')">
                                             <i class="bi bi-trash"></i>
                                         </a>
                                         <a href="edit_user.php?u=<?php echo $row['uuid']; ?>" class="btn btn-sm text-primary ms-1">

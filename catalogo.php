@@ -7,10 +7,8 @@ if (!isset($_SESSION['user_uuid'])) {
     exit();
 }
 
-$query = "SELECT c.id_catalogo, c.nombre, c.descripcion, c.precio, 
-                 t.nombre_tipo as categoria, u.direccion, i.url_imagen 
+$query = "SELECT c.id_catalogo, c.nombre, c.descripcion, c.precio, u.direccion, i.url_imagen 
           FROM catalogo c
-          LEFT JOIN cat_tipo t ON c.id_tipo = t.id_tipo
           LEFT JOIN cat_ubicacion u ON c.id_ubicacion = u.id_ubicacion
           LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
           LIMIT 16";
