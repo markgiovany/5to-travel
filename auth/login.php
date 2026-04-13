@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 $email = $_POST['email'];
 $password = hash('md2', $_POST['password']); 
@@ -11,7 +11,7 @@ $query = "SELECT e.user_uuid, l.password, l.role, u.first_name
           INNER JOIN usr_users u ON e.user_uuid = u.uuid
           WHERE e.email = '$email' AND l.password = '$password'";
 
-$resultado = mysqli_query($conexion, $query);
+$resultado = mysqli_query($config, $query);
 
 if(mysqli_num_rows($resultado) > 0){
     $datos = mysqli_fetch_assoc($resultado);

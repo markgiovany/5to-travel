@@ -1,7 +1,6 @@
 <?php
 session_start();
-include("../config/conexion.php");
-// PASO 1: Incluir configuración de Cloudinary
+include("../config/config.php");
 require_once "../config/cloudinary_config.php";
 use Cloudinary\Api\Upload\UploadApi;
 
@@ -10,17 +9,15 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// 1. Obtener datos del hotel por ID
-if (isset($_GET['id'])) {
-    $id_hotel = mysqli_real_escape_string($conexion, $_GET['id']);
-    
-    // Traemos la info del hotel y solo la primera imagen para la vista previa
+if (isset($_GET['u'])) {
+    $uuid_hotel = mysqli_real_escape_string($config, $_GET['u']);
+
     $query = "SELECT c.*, i.url_imagen 
               FROM catalogo c
               LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
-              WHERE c.id_catalogo = '$id_hotel' LIMIT 1";
+              WHERE c.uuid = '$uuid_hotel' LIMIT 1";
     
-    $res = mysqli_query($conexion, $query);
+    $res = mysqli_query($config, $query);
     $hotel = mysqli_fetch_assoc($res);
 
     if (!$hotel) {
@@ -29,34 +26,29 @@ if (isset($_GET['id'])) {
     }
 }
 
-// 2. Consulta para el select de propietarios
 $query_propietarios = "SELECT u.uuid, u.first_name, u.last_name 
                        FROM usr_users u
                        INNER JOIN usr_users_login l ON u.uuid = l.user_uuid
                        WHERE l.role = 'propietario' OR l.role = 'admin'";
-$res_propietarios = mysqli_query($conexion, $query_propietarios);
+$res_propietarios = mysqli_query($config, $query_propietarios);
 
-// 3. Procesar la actualización
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $id_hotel = mysqli_real_escape_string($conexion, $_POST['id_catalogo']);
-    $nombre = mysqli_real_escape_string($conexion, $_POST['nombre']);
-    $descripcion = mysqli_real_escape_string($conexion, $_POST['descripcion']);
-    $propietario_uuid = mysqli_real_escape_string($conexion, $_POST['propietario_uuid']);
+    $id_hotel = mysqli_real_escape_string($config, $_POST['id_catalogo']);
+    $nombre = mysqli_real_escape_string($config, $_POST['nombre']);
+    $descripcion = mysqli_real_escape_string($config, $_POST['descripcion']);
+    $propietario_uuid = mysqli_real_escape_string($config, $_POST['propietario_uuid']);
 
-    mysqli_begin_transaction($conexion);
+    mysqli_begin_transaction($config);
 
     try {
-        // Actualizar datos básicos
-        mysqli_query($conexion, "UPDATE catalogo SET 
+        mysqli_query($config, "UPDATE catalogo SET 
             nombre = '$nombre', 
             descripcion = '$descripcion', 
             propietario_uuid = '$propietario_uuid' 
             WHERE id_catalogo = '$id_hotel'");
 
-        // PASO 2: Lógica para AÑADIR múltiples fotos (si seleccionan nuevas)
         if (isset($_FILES['foto']) && !empty($_FILES['foto']['name'][0])) {
             $upload = new UploadApi();
-            
             foreach ($_FILES['foto']['tmp_name'] as $key => $tmp_name) {
                 if ($_FILES['foto']['error'][$key] == 0) {
                     $resultado_cloud = $upload->upload($tmp_name, [
@@ -64,18 +56,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     ]);
                     $nueva_url = $resultado_cloud['secure_url'];
 
-                    // Insertamos las nuevas fotos en la tabla cat_imagen
-                    mysqli_query($conexion, "INSERT INTO cat_imagen (id_catalogo, url_imagen, status) 
+                    mysqli_query($config, "INSERT INTO cat_imagen (id_catalogo, url_imagen, status) 
                                              VALUES ('$id_hotel', '$nueva_url', 'active')");
                 }
             }
         }
 
-        mysqli_commit($conexion);
+        mysqli_commit($config);
         header("Location: hoteles.php?msg=updated");
         exit();
     } catch (Exception $e) {
-        mysqli_rollback($conexion);
+        mysqli_rollback($config);
         die("Error al actualizar: " . $e->getMessage());
     }
 }
@@ -135,11 +126,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold">VISTA PREVIA DE IMAGEN</label>
-                        <div class="mb-2">
-                            <img src="<?php echo $hotel['url_imagen']; ?>" class="img-thumbnail rounded" style="max-height: 150px;">
+                        <label class="form-label text-muted small fw-bold">IMÁGENES ACTUALES</label>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <?php
+                            $id_hotel_actual = $hotel['id_catalogo'];
+                            $query_imgs = mysqli_query($config, "SELECT * FROM cat_imagen WHERE id_catalogo = '$id_hotel_actual'");
+                            
+                            if (mysqli_num_rows($query_imgs) > 0):
+                                while ($img = mysqli_fetch_assoc($query_imgs)): ?>
+                                    <div class="position-relative">
+                                        <img src="<?php echo $img['url_imagen']; ?>" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                                        <a href="delete_foto_hotel.php?id_img=<?php echo $img['id_imagen']; ?>&u=<?php echo $uuid_hotel; ?>" 
+                                           class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 shadow-sm"
+                                           style="width: 20px; height: 20px; font-size: 12px;"
+                                           onclick="return confirm('¿Borrar esta foto?')">
+                                            <i class="bi bi-x"></i>
+                                        </a>
+                                    </div>
+                                <?php endwhile;
+                            else: ?>
+                                <p class="text-muted small italic">Sin imágenes registradas.</p>
+                            <?php endif; ?>
                         </div>
-                        <label class="form-label text-muted small fw-bold">AÑADIR MÁS FOTOS (OPCIONAL)</label>
+                        <label class="form-label text-muted small fw-bold">AÑADIR MÁS FOTOS</label>
                         <input type="file" name="foto[]" class="form-control" accept="image/*" multiple>
                     </div>
 

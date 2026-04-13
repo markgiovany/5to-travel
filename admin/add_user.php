@@ -1,43 +1,39 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../index.php"); exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $first_name = mysqli_real_escape_string($conexion, $_POST['first_name']);
-    $last_name  = mysqli_real_escape_string($conexion, $_POST['last_name']);
-    $email      = mysqli_real_escape_string($conexion, $_POST['email']);
-    $phone      = mysqli_real_escape_string($conexion, $_POST['phone']); // Nuevo campo
-    $role       = mysqli_real_escape_string($conexion, $_POST['role']);
+    $first_name = mysqli_real_escape_string($config, $_POST['first_name']);
+    $last_name  = mysqli_real_escape_string($config, $_POST['last_name']);
+    $email      = mysqli_real_escape_string($config, $_POST['email']);
+    $phone      = mysqli_real_escape_string($config, $_POST['phone']);
+    $role       = mysqli_real_escape_string($config, $_POST['role']);
     $password   = password_hash($_POST['password'], PASSWORD_DEFAULT);
     
     $uuid = bin2hex(random_bytes(16)); 
 
-    mysqli_begin_transaction($conexion);
+    mysqli_begin_transaction($config);
 
     try {
-        // 1. Datos personales
-        mysqli_query($conexion, "INSERT INTO usr_users (uuid, first_name, last_name) VALUES ('$uuid', '$first_name', '$last_name')");
+        mysqli_query($config, "INSERT INTO usr_users (uuid, first_name, last_name) VALUES ('$uuid', '$first_name', '$last_name')");
 
-        // 2. Correo
-        mysqli_query($conexion, "INSERT INTO usr_emails (user_uuid, email) VALUES ('$uuid', '$email')");
+        mysqli_query($config, "INSERT INTO usr_emails (user_uuid, email) VALUES ('$uuid', '$email')");
 
-        // 3. Teléfono (Nueva inserción)
         if (!empty($phone)) {
-            mysqli_query($conexion, "INSERT INTO usr_telefonos (user_uuid, telefono) VALUES ('$uuid', '$phone')");
+            mysqli_query($config, "INSERT INTO usr_telefonos (user_uuid, telefono) VALUES ('$uuid', '$phone')");
         }
 
-        // 4. Login y Rol
-        mysqli_query($conexion, "INSERT INTO usr_users_login (user_uuid, password, role) VALUES ('$uuid', '$password', '$role')");
+        mysqli_query($config, "INSERT INTO usr_users_login (user_uuid, password, role) VALUES ('$uuid', '$password', '$role')");
 
-        mysqli_commit($conexion);
+        mysqli_commit($config);
         header("Location: users.php?msg=added"); exit();
 
     } catch (Exception $e) {
-        mysqli_rollback($conexion);
+        mysqli_rollback($config);
         die("Error al crear usuario: " . $e->getMessage());
     }
 }
@@ -59,11 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label small fw-bold">NOMBRE</label>
-                    <input type="text" name="first_name" class="form-control" placeholder="Ej: Mao" required>
+                    <input type="text" name="first_name" class="form-control" placeholder="Ej: Juan" required>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label small fw-bold">APELLIDO</label>
-                    <input type="text" name="last_name" class="form-control" placeholder="Ej: R." required>
+                    <input type="text" name="last_name" class="form-control" placeholder="Ej: Pérez" required>
                 </div>
             </div>
             <div class="mb-3">

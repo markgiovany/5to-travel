@@ -1,9 +1,9 @@
 <?php
-include("../config/conexion.php");
+include("../config/config.php");
 
 $id = $_GET['id'];
 
-mysqli_query($conexion, "DELETE FROM metodos_pago WHERE id='$id'");
+mysqli_query($config, "DELETE FROM metodos_pago WHERE id='$id'");
 
 header("Location: ../perfil.php");
 ?>

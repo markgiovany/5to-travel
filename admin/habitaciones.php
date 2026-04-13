@@ -1,20 +1,20 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../index.php");
     exit();
 }
 
-if (!isset($_GET['id'])) {
+if (!isset($_GET['u'])) {
     header("Location: hoteles.php");
     exit();
 }
 
-$id_hotel = mysqli_real_escape_string($conexion, $_GET['id']);
+$uuid_hotel = mysqli_real_escape_string($config, $_GET['u']);
 
-$res_hotel = mysqli_query($conexion, "SELECT nombre FROM catalogo WHERE id_catalogo = '$id_hotel'");
+$res_hotel = mysqli_query($config, "SELECT id_catalogo, nombre FROM catalogo WHERE uuid = '$uuid_hotel'");
 $hotel_info = mysqli_fetch_assoc($res_hotel);
 
 if (!$hotel_info) {
@@ -22,10 +22,11 @@ if (!$hotel_info) {
     exit();
 }
 
+$id_hotel = $hotel_info['id_catalogo'];
 $where_clauses = ["ch.id_catalogo = '$id_hotel'"];
 
 if (isset($_GET['capacidad']) && !empty($_GET['capacidad'])) {
-    $capacidad = mysqli_real_escape_string($conexion, $_GET['capacidad']);
+    $capacidad = mysqli_real_escape_string($config, $_GET['capacidad']);
     $where_clauses[] = "ch.capacidad = '$capacidad'";
 }
 
@@ -48,10 +49,10 @@ if (isset($_GET['precio_range']) && !empty($_GET['precio_range'])) {
 $where_sql = " WHERE " . implode(" AND ", $where_clauses);
 
 $query = "SELECT ch.* FROM cat_catalogo_habitacion ch $where_sql ORDER BY ch.precio ASC";
-$resultado = mysqli_query($conexion, $query);
+$resultado = mysqli_query($config, $query);
 
 if (!$resultado) {
-    die("Error en la consulta SQL: " . mysqli_error($conexion));
+    die("Error en la consulta SQL: " . mysqli_error($config));
 }
 ?>
 
@@ -87,7 +88,7 @@ if (!$resultado) {
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="d-flex align-items-center gap-3">
                 <h2 class="fw-bold m-0">Habitaciones: <span class="text-primary"><?php echo $hotel_info['nombre']; ?></span></h2>
-                <a href="add_habitacion.php?id_hotel=<?php echo $id_hotel; ?>" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+                <a href="add_habitacion.php?u=<?php echo $uuid_hotel; ?>" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
                     <i class="bi bi-plus-lg"></i> Agregar Habitación
                 </a>
             </div>
@@ -99,7 +100,7 @@ if (!$resultado) {
         <div class="card mb-4 border-0 shadow-sm rounded-3">
             <div class="card-body p-3">
                 <form method="GET" class="row g-2 align-items-end">
-                    <input type="hidden" name="id" value="<?php echo $id_hotel; ?>">
+                    <input type="hidden" name="u" value="<?php echo $uuid_hotel; ?>">
                     
                     <div class="col-md-5">
                         <label class="small fw-bold text-muted ms-2">CAPACIDAD</label>
@@ -159,11 +160,11 @@ if (!$resultado) {
                                         $<?php echo number_format($hab['precio'], 2); ?>
                                     </td>
                                     <td class="text-center">
-                                        <a href="delete_habitacion.php?name=<?php echo urlencode($hab['nombre']); ?>&id_hotel=<?php echo $id_hotel; ?>" 
+                                        <a href="delete_habitacion.php?name=<?php echo urlencode($hab['nombre']); ?>&u=<?php echo $uuid_hotel; ?>" 
                                            class="btn btn-sm text-danger" onclick="return confirm('¿Borrar?')">
                                             <i class="bi bi-trash"></i>
                                         </a>
-                                        <a href="edit_habitacion.php?name=<?php echo urlencode($hab['nombre']); ?>" class="btn btn-sm text-primary ms-1">
+                                        <a href="edit_habitacion.php?uh=<?php echo urlencode($hab['uuid']); ?>&u=<?php echo $uuid_hotel; ?>" class="btn btn-sm text-primary ms-1">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
                                     </td>

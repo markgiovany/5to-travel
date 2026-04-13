@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
     header("Location: ../auth/login.php");
@@ -12,15 +12,15 @@ $nombre_usuario = isset($_SESSION['first_name']) ? $_SESSION['first_name'] : "Es
 
 
 $sql_conteo = "SELECT COUNT(*) as total FROM catalogo WHERE propietario_uuid = '$propietario_uuid'";
-$res_conteo = mysqli_query($conexion, $sql_conteo);
+$res_conteo = mysqli_query($config, $sql_conteo);
 $total_hoteles = mysqli_fetch_assoc($res_conteo)['total'];
 
 $query_res = "SELECT COUNT(*) as total FROM res_reserva"; 
-$ejecutar_res = mysqli_query($conexion, $query_res);
+$ejecutar_res = mysqli_query($config, $query_res);
 $total_reservas = ($ejecutar_res) ? mysqli_fetch_assoc($ejecutar_res)['total'] : 0;
 
 $sql_hoteles = "SELECT * FROM catalogo WHERE propietario_uuid = '$propietario_uuid' ORDER BY id_catalogo DESC";
-$res_hoteles = mysqli_query($conexion, $sql_hoteles);
+$res_hoteles = mysqli_query($config, $sql_hoteles);
 ?>
 
 <!DOCTYPE html>

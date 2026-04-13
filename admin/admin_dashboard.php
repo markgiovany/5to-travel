@@ -1,19 +1,19 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../index.php");
     exit();
 }
 
-$res_users = mysqli_query($conexion, "SELECT COUNT(*) as total FROM usr_users");
+$res_users = mysqli_query($config, "SELECT COUNT(*) as total FROM usr_users");
 $total_users = mysqli_fetch_assoc($res_users)['total'];
 
-$res_props = mysqli_query($conexion, "SELECT COUNT(*) as total FROM catalogo");
+$res_props = mysqli_query($config, "SELECT COUNT(*) as total FROM catalogo");
 $total_props = mysqli_fetch_assoc($res_props)['total'];
 
-$res_count_reservas = mysqli_query($conexion, "SELECT COUNT(*) as total FROM res_reserva");
+$res_count_reservas = mysqli_query($config, "SELECT COUNT(*) as total FROM res_reserva");
 $total_reservas = mysqli_fetch_assoc($res_count_reservas)['total'];
 
 $query_actividad = "SELECT r.id_reserva, r.fecha_entrada, r.estado, u.first_name, u.last_name, c.nombre as hotel_nombre 
@@ -22,7 +22,7 @@ $query_actividad = "SELECT r.id_reserva, r.fecha_entrada, r.estado, u.first_name
                     INNER JOIN cat_catalogo_habitacion ch ON r.id_habitacion = ch.id_catalogo
                     INNER JOIN catalogo c ON ch.id_catalogo = c.id_catalogo
                     ORDER BY r.id_reserva DESC LIMIT 10";
-$res_actividad = mysqli_query($conexion, $query_actividad);
+$res_actividad = mysqli_query($config, $query_actividad);
 ?>
 
 <!DOCTYPE html>

@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../index.php");
@@ -9,7 +9,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 
 $where_clauses = [];
 if (isset($_GET['search']) && !empty($_GET['search'])) {
-    $search = mysqli_real_escape_string($conexion, $_GET['search']);
+    $search = mysqli_real_escape_string($config, $_GET['search']);
     $where_clauses[] = "(c.nombre LIKE '%$search%' OR u.first_name LIKE '%$search%' OR u.last_name LIKE '%$search%')";
 }
 
@@ -18,18 +18,17 @@ if (count($where_clauses) > 0) {
     $where_sql = " WHERE " . implode(" AND ", $where_clauses);
 }
 
-// Mantenemos tu conteo profesional
-$query = "SELECT c.id_catalogo, c.nombre, c.descripcion, u.first_name, u.last_name,
+$query = "SELECT c.id_catalogo, c.uuid, c.nombre, c.descripcion, u.first_name, u.last_name,
           (SELECT COUNT(*) FROM cat_catalogo_habitacion ch WHERE ch.id_catalogo = c.id_catalogo) as total_hab
           FROM catalogo c
           LEFT JOIN usr_users u ON c.propietario_uuid = u.uuid 
           $where_sql
           ORDER BY c.id_catalogo DESC";
 
-$resultado = mysqli_query($conexion, $query);
+$resultado = mysqli_query($config, $query);
 
 if (!$resultado) {
-    die("Error en la consulta SQL: " . mysqli_error($conexion));
+    die("Error en la consulta SQL: " . mysqli_error($config));
 }
 ?>
 
@@ -43,7 +42,6 @@ if (!$resultado) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../styles/admin_dashboard.css">
     <style>
-        /* Un pequeño detalle para que sepa que es clickeable */
         .hotel-link {
             text-decoration: none;
             transition: 0.2s;
@@ -119,9 +117,9 @@ if (!$resultado) {
                             <?php while($hotel = mysqli_fetch_assoc($resultado)): ?>
                             <tr>
                                 <td>
-                                    <a href="habitaciones.php?id=<?php echo $hotel['id_catalogo']; ?>" class="hotel-link">
+                                    <a href="habitaciones.php?u=<?php echo $hotel['uuid']; ?>" class="hotel-link">
                                         <div class="fw-bold text-primary"><?php echo $hotel['nombre']; ?></div>
-                                        <div class="text-muted small"><?php echo substr($hotel['descripcion'], 0, 50); ?>...</div>
+                                        <div class="text-muted small"><?php echo substr($hotel['descripcion'], 0    , 50); ?>...</div>
                                     </a>
                                 </td>
                                 <td>
@@ -130,17 +128,17 @@ if (!$resultado) {
                                     </div>
                                 </td>
                                 <td class="text-center">
-                                    <a href="habitaciones.php?id=<?php echo $hotel['id_catalogo']; ?>" class="text-decoration-none">
+                                    <a href="habitaciones.php?u=<?php echo $hotel['uuid']; ?>" class="text-decoration-none">
                                         <span class="badge bg-light text-dark border rounded-pill px-3 fw-normal">
                                             <i class="bi bi-door-closed me-1"></i> <?php echo $hotel['total_hab']; ?> habs.
                                         </span>
                                     </a>
                                 </td>
                                 <td class="text-center">
-                                    <a href="delete_hotel.php?id=<?php echo $hotel['id_catalogo']; ?>" class="btn btn-sm text-danger" onclick="return confirm('¿Borrar este hotel?')">
+                                    <a href="delete_hotel.php?u=<?php echo $hotel['uuid']; ?>" class="btn btn-sm text-danger" onclick="return confirm('¿Borrar este hotel?')">
                                         <i class="bi bi-trash"></i>
                                     </a>
-                                    <a href="edit_hotel.php?id=<?php echo $hotel['id_catalogo']; ?>" class="btn btn-sm text-primary ms-1">
+                                    <a href="edit_hotel.php?u=<?php echo $hotel['uuid']; ?>" class="btn btn-sm text-primary ms-1">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
                                 </td>

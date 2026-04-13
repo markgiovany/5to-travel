@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
     header("Location: ../auth/login.php");
@@ -10,18 +10,18 @@ if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
 $propietario_uuid = $_SESSION['user_uuid'];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $nombre = mysqli_real_escape_string($conexion, $_POST['nombre']);
-    $descripcion = mysqli_real_escape_string($conexion, $_POST['descripcion']);
-    $precio = mysqli_real_escape_string($conexion, $_POST['precio']);
+    $nombre = mysqli_real_escape_string($config, $_POST['nombre']);
+    $descripcion = mysqli_real_escape_string($config, $_POST['descripcion']);
+    $precio = mysqli_real_escape_string($config, $_POST['precio']);
 
     $sql = "INSERT INTO catalogo (propietario_uuid, nombre, descripcion, precio) 
             VALUES ('$propietario_uuid', '$nombre', '$descripcion', '$precio')";
 
-    if (mysqli_query($conexion, $sql)) {
+    if (mysqli_query($config, $sql)) {
         header("Location: propietario_dashboard.php?mensaje=agregado");
         exit();
     } else {
-        $error = "Error al guardar: " . mysqli_error($conexion);
+        $error = "Error al guardar: " . mysqli_error($config);
     }
 }
 ?>

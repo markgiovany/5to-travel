@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("config/conexion.php"); 
+include("config/config.php"); 
  
 if (!isset($_SESSION['user_uuid'])) {
     header("Location: index.php");
@@ -11,7 +11,7 @@ $query = "SELECT c.nombre, c.precio, i.url_imagen
           FROM catalogo c
           LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo";
 
-$resultado_hoteles = mysqli_query($conexion, $query);
+$resultado_hoteles = mysqli_query($config, $query);
 
 $catalogo_hoteles = array();
 

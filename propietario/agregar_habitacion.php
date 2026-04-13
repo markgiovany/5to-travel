@@ -1,10 +1,10 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 $uuid = $_SESSION['user_uuid'];
 
-$hoteles = mysqli_query($conexion,"SELECT * FROM catalogo WHERE propietario_uuid='$uuid'");
+$hoteles = mysqli_query($config,"SELECT * FROM catalogo WHERE propietario_uuid='$uuid'");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -13,7 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $precio = $_POST['precio'];
     $estado = $_POST['estado'];
 
-    mysqli_query($conexion,"INSERT INTO res_habitacion 
+    mysqli_query($config,"INSERT INTO res_habitacion 
     (id_catalogo, numero, precio, estado)
     VALUES ('$id_catalogo','$numero','$precio','$estado')");
 
