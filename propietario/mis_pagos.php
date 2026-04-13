@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
     header("Location: ../auth/login.php");
@@ -16,7 +16,7 @@ JOIN res_habitacion h ON r.id_habitacion = h.id_habitacion
 JOIN catalogo c ON h.id_catalogo = c.id_catalogo
 WHERE c.propietario_uuid = '$uuid'";
 
-$res = mysqli_query($conexion, $sql);
+$res = mysqli_query($config, $sql);
 ?>
 
 <!DOCTYPE html>

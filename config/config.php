@@ -5,9 +5,9 @@ $user = "root";
 $pass = "";
 $db = "travel_marketing";
 
-$conexion = mysqli_connect($host,$user,$pass,$db);
+$config = mysqli_connect($host,$user,$pass,$db);
 
-if(!$conexion){
+if(!$config){
     die("Error de conexión");
 }
 

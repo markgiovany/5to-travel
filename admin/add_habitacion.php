@@ -1,40 +1,59 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
+require_once "../config/cloudinary_config.php";
+use Cloudinary\Api\Upload\UploadApi;
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../index.php");
     exit();
 }
 
-if (!isset($_GET['uuid'])) {
+if (!isset($_GET['u'])) {
     header("Location: hoteles.php");
     exit();
 }
 
-$hotel_uuid = mysqli_real_escape_string($conexion, $_GET['uuid']);
-
-$res_h = mysqli_query($conexion, "SELECT id_catalogo, nombre FROM catalogo WHERE uuid = '$hotel_uuid'");
+$uuid_hotel = mysqli_real_escape_string($config, $_GET['u']);
+$res_h = mysqli_query($config, "SELECT id_catalogo, nombre FROM catalogo WHERE uuid = '$uuid_hotel'");
 $hotel = mysqli_fetch_assoc($res_h);
-$id_hotel = $hotel['id_catalogo'];
+$res_tipos = mysqli_query($config, "SELECT id_tipo, nombre FROM cat_tipo ORDER BY nombre ASC");
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nombre = mysqli_real_escape_string($conexion, $_POST['nombre']);
-    $descripcion = mysqli_real_escape_string($conexion, $_POST['descripcion']);
-    $precio = mysqli_real_escape_string($conexion, $_POST['precio']);
-    $capacidad = mysqli_real_escape_string($conexion, $_POST['capacidad']);
-    $disponibilidad = mysqli_real_escape_string($conexion, $_POST['disponibilidad']);
+    $id_hotel_db = $hotel['id_catalogo'];
+    $nombre = mysqli_real_escape_string($config, $_POST['nombre']);
+    $descripcion = mysqli_real_escape_string($config, $_POST['descripcion']);
+    $precio = mysqli_real_escape_string($config, $_POST['precio']);
+    $capacidad = mysqli_real_escape_string($config, $_POST['capacidad']);
+    $disponibilidad = mysqli_real_escape_string($config, $_POST['disponibilidad']);
+    $id_tipo = mysqli_real_escape_string($config, $_POST['id_tipo']);
 
-    $query = "INSERT INTO cat_catalogo_habitacion 
-              (id_catalogo, nombre, descripcion, precio, capacidad, disponibilidad, status) 
-              VALUES 
-              ('$id_hotel', '$nombre', '$descripcion', '$precio', '$capacidad', '$disponibilidad', 'active')";
+    try {
+        //Lógica pal Cloudinary
+        $url_foto = ""; 
+        if (isset($_FILES['foto']) && $_FILES['foto']['error'] == 0) {
+            $upload = new UploadApi();
+            $resultado_cloud = $upload->upload($_FILES['foto']['tmp_name'], [
+                'folder' => 'brooking_habitaciones'
+            ]);
+            $url_foto = $resultado_cloud['secure_url'];
+        } else {
+            throw new Exception("Debes subir una foto de la habitación.");
+        }
 
-    if (mysqli_query($conexion, $query)) {
-        header("Location: habitaciones.php?uuid=$hotel_uuid&msg=added");
-        exit();
-    } else {
-        $error = "Error al guardar: " . mysqli_error($conexion);
+        $query = "INSERT INTO cat_catalogo_habitacion 
+                  (id_catalogo, uuid, nombre, descripcion, precio, capacidad, disponibilidad, status, id_tipo, foto_url) 
+                  VALUES 
+                  ('$id_hotel_db', uuid(), '$nombre', '$descripcion', '$precio', '$capacidad', '$disponibilidad', 'active', '$id_tipo', '$url_foto')";
+
+        if (mysqli_query($config, $query)) {
+            header("Location: habitaciones.php?u=$uuid_hotel&msg=added");
+            exit();
+        } else {
+            throw new Exception(mysqli_error($config));
+        }
+    } catch (Exception $e) {
+        $error = "Error: " . $e->getMessage();
     }
 }
 ?>
@@ -51,45 +70,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <div class="container">
     <div class="col-md-6 mx-auto card shadow-sm border-0 p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold m-0">Nueva Habitación</h4>
-            <span class="badge bg-primary-subtle text-primary"><?php echo $hotel['nombre']; ?></span>
-        </div>
+        <h4 class="fw-bold mb-4">Nueva Habitación para <span class="text-primary"><?php echo $hotel['nombre']; ?></span></h4>
 
         <?php if(isset($error)): ?>
             <div class="alert alert-danger small"><?php echo $error; ?></div>
         <?php endif; ?>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <div class="mb-3">
-                <label class="form-label fw-bold small text-muted">NOMBRE / TIPO</label>
-                <input type="text" name="nombre" class="form-control rounded-pill" placeholder="Ej. Suite Presidencial" required>
+                <label class="form-label fw-bold small">NOMBRE</label>
+                <input type="text" name="nombre" class="form-control rounded-pill" placeholder="Ej. Suite Vista al Mar" required>
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-bold small text-muted">DESCRIPCIÓN</label>
-                <textarea name="descripcion" class="form-control" rows="2" placeholder="¿Qué incluye? (Vista al mar, AC, etc.)"></textarea>
+                <label class="form-label fw-bold small">CATEGORÍA</label>
+                <select name="id_tipo" class="form-select rounded-pill" required>
+                    <option value="" disabled selected>Selecciona tipo...</option>
+                    <?php while($tipo = mysqli_fetch_assoc($res_tipos)): ?>
+                        <option value="<?php echo $tipo['id_tipo']; ?>"><?php echo $tipo['nombre']; ?></option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small">DESCRIPCIÓN</label>
+                <textarea name="descripcion" class="form-control" rows="2"></textarea>
             </div>
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold small text-muted">PRECIO X NOCHE</label>
+                    <label class="form-label fw-bold small">PRECIO</label>
                     <input type="number" name="precio" class="form-control rounded-pill" step="0.01" required>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold small text-muted">CAPACIDAD (PERS)</label>
-                    <input type="number" name="capacidad" class="form-control rounded-pill" min="1" required>
+                    <label class="form-label fw-bold small">CAPACIDAD</label>
+                    <input type="number" name="capacidad" class="form-control rounded-pill" required>
                 </div>
             </div>
 
+            <div class="mb-3">
+                <label class="form-label fw-bold small">FOTOS</label>
+                <input type="file" name="foto[]" class="form-control" accept="image/*" multiple required>
+            </div>
+
             <div class="mb-4">
-                <label class="form-label fw-bold small text-muted">CANTIDAD DE ESTAS HABITACIONES</label>
-                <input type="number" name="disponibilidad" class="form-control rounded-pill" placeholder="¿Cuántas de este tipo hay?" required>
+                <label class="form-label fw-bold small">HABITACIONES DISPONIBLES</label>
+                <input type="number" name="disponibilidad" class="form-control rounded-pill" required>
             </div>
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary fw-bold rounded-pill">Guardar Habitación</button>
-                <a href="habitaciones.php?uuid=<?php echo $hotel_uuid; ?>" class="btn btn-link text-muted text-decoration-none small">Cancelar</a>
+                <a href="habitaciones.php?u=<?php echo $uuid_hotel; ?>" class="btn btn-link text-decoration-none small text-center">Cancelar</a>
             </div>
         </form>
     </div>

@@ -1,0 +1,13 @@
+<?php
+session_start();
+include("../config/config.php");
+
+if (isset($_GET['id_img']) && isset($_GET['u'])) {
+    $id_img = mysqli_real_escape_string($config, $_GET['id_img']);
+    $uuid_hotel = mysqli_real_escape_string($config, $_GET['u']);
+
+    mysqli_query($config, "DELETE FROM cat_imagen WHERE id_imagen = '$id_img'");
+
+    header("Location: edit_hotel.php?u=$uuid_hotel&msg=img_deleted");
+    exit();
+}

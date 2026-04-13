@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 if (!isset($_SESSION['user_uuid'])) {
     header("Location: ../auth/login.php");
@@ -13,10 +13,10 @@ if (isset($_GET['id'])) {
 
     $sql = "DELETE FROM catalogo WHERE id_catalogo = '$id_hotel' AND propietario_uuid = '$propietario_uuid'";
 
-    if (mysqli_query($conexion, $sql)) {
+    if (mysqli_query($config, $sql)) {
         header("Location: propietario_dashboard.php?mensaje=eliminado");
     } else {
-        echo "Error al eliminar: " . mysqli_error($conexion);
+        echo "Error al eliminar: " . mysqli_error($config);
     }
 } else {
     header("Location: propietario_dashboard.php");

@@ -1,5 +1,5 @@
 <?php
-include("../config/conexion.php");
+include("../config/config.php");
 
 $first_name = $_POST['nombre'];
 $last_name  = $_POST['apellido'];
@@ -8,7 +8,7 @@ $telefono   = $_POST['telefono'];
 $password   = hash('md2', $_POST['password']); 
 
 // Generar UUID
-$query_uuid = mysqli_query($conexion, "SELECT UUID() as uuid");
+$query_uuid = mysqli_query($config, "SELECT UUID() as uuid");
 $uuid = mysqli_fetch_assoc($query_uuid)['uuid'];
 
 // Inserts
@@ -26,15 +26,15 @@ $sql4 = "INSERT INTO usr_telefonos (telefono, user_uuid)
 
 // Ejecutar todo
 if(
-    mysqli_query($conexion, $sql1) && 
-    mysqli_query($conexion, $sql2) && 
-    mysqli_query($conexion, $sql3) && 
-    mysqli_query($conexion, $sql4)
+    mysqli_query($config, $sql1) && 
+    mysqli_query($config, $sql2) && 
+    mysqli_query($config, $sql3) && 
+    mysqli_query($config, $sql4)
 ){
     // 🔁 REDIRECCIÓN AL LOGIN
     header("Location: ../index.php");
     exit();
 } else {
-    echo "Error: " . mysqli_error($conexion);
+    echo "Error: " . mysqli_error($config);
 }
 ?>

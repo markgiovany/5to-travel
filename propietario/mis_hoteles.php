@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 if (!isset($_SESSION['user_uuid'])) {
     header("Location: ../auth/login.php");
@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_uuid'])) {
 
 $propietario_uuid = $_SESSION['user_uuid'];
 $sql = "SELECT id_catalogo, nombre, descripcion FROM catalogo WHERE propietario_uuid = '$propietario_uuid'";
-$res = mysqli_query($conexion, $sql);
+$res = mysqli_query($config, $sql);
 ?>
 <!DOCTYPE html>
 <html lang="es">

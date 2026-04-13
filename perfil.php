@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("config/conexion.php");
+include("config/config.php");
 
 if (!isset($_SESSION['user_uuid'])) {
     header("Location: index.php");
@@ -17,10 +17,10 @@ LEFT JOIN usr_emails e ON u.uuid = e.user_uuid
 LEFT JOIN usr_telefonos t ON u.uuid = t.user_uuid
 WHERE u.uuid = '$user_id'
 ";
-$user = mysqli_fetch_assoc(mysqli_query($conexion, $query_user));
+$user = mysqli_fetch_assoc(mysqli_query($config, $query_user));
 
 /* RECIENTES */
-$result_recientes = mysqli_query($conexion, "
+$result_recientes = mysqli_query($config, "
 SELECT c.nombre, c.precio, i.url_imagen 
 FROM vistos_recientes v
 JOIN catalogo c ON v.id_catalogo = c.id_catalogo
@@ -30,7 +30,7 @@ ORDER BY v.fecha DESC LIMIT 4
 ");
 
 /* HISTORIAL */
-$result_historial = mysqli_query($conexion, "
+$result_historial = mysqli_query($config, "
 SELECT c.nombre, c.precio, i.url_imagen, r.fecha_entrada, r.fecha_salida
 FROM res_reserva r
 JOIN res_habitacion h ON r.id_habitacion = h.id_habitacion
@@ -40,7 +40,7 @@ WHERE r.user_uuid = '$user_id'
 ");
 
 /* PAGOS */
-$result_pago = mysqli_query($conexion, "
+$result_pago = mysqli_query($config, "
 SELECT * FROM metodos_pago WHERE user_id = '$user_id'
 ");
 ?>

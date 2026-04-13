@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("../config/conexion.php");
+include("../config/config.php");
 
 if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
     header("Location: ../auth/login.php");
@@ -12,7 +12,7 @@ if (isset($_GET['id'])) {
     $uuid_propietario = $_SESSION['user_uuid'];
 
     $sql = "SELECT * FROM catalogo WHERE id_catalogo = '$id_hotel' AND propietario_uuid = '$uuid_propietario'";
-    $resultado = mysqli_query($conexion, $sql);
+    $resultado = mysqli_query($config, $sql);
     $hotel = mysqli_fetch_assoc($resultado);
 
     if (!$hotel) {
@@ -22,8 +22,8 @@ if (isset($_GET['id'])) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id = $_POST['id_hotel'];
-    $nombre = mysqli_real_escape_string($conexion, $_POST['nombre']);
-    $desc = mysqli_real_escape_string($conexion, $_POST['descripcion']);
+    $nombre = mysqli_real_escape_string($config, $_POST['nombre']);
+    $desc = mysqli_real_escape_string($config, $_POST['descripcion']);
     $precio = $_POST['precio'];
 
     $sql_update = "UPDATE catalogo SET 
@@ -32,11 +32,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                    precio = '$precio' 
                    WHERE id_catalogo = '$id'";
 
-    if (mysqli_query($conexion, $sql_update)) {
+    if (mysqli_query($config, $sql_update)) {
         header("Location: propietario_dashboard.php?mensaje=editado");
         exit();
     } else {
-        echo "Error al actualizar: " . mysqli_error($conexion);
+        echo "Error al actualizar: " . mysqli_error($config);
     }
 }
 ?>
