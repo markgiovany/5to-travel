@@ -11,6 +11,7 @@ $sql = "SELECT c.*, ciu.nombre_ciudad, pais.nombre_pais, est.nombre_estado
         INNER JOIN cat_ciudad ciu ON u.id_ciudad = ciu.id_ciudad
         INNER JOIN cat_estado est ON ciu.id_estado = est.id_estado
         INNER JOIN cat_pais pais ON est.id_pais = pais.id_pais
+        INNER JOIN cat_imagen img On c.id_catalogo = img.id_catalogo
         WHERE 1=1";
 
 if (!empty($ubicacion)) {
@@ -49,12 +50,14 @@ if(!$resultado){
     <div class="mb-5">
         <h2 class="fw-bold text-dark">Resultados en <?php echo !empty($ubicacion) ? htmlspecialchars($ubicacion) : 'todos los destinos'; ?></h2>
         <p class="text-muted">Explora las mejores opciones disponibles para tu viaje</p>
+            <a href="home.php" class="btn btn-outline-secondary btn-sm rounded-pill px-3" style="justify-content: space-between">
+                <i class="bi bi-arrow-return-left"></i> Regresar
+            </a>
     </div>
 
    <div class="row g-4">
     <?php 
     if (mysqli_num_rows($resultado) > 0) {
-        // 1. Abrimos el while y dejamos la llave abierta {
         while ($row = mysqli_fetch_assoc($resultado)) { 
     ?>
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
@@ -87,12 +90,69 @@ if(!$resultado){
             </a>
         </div>
     <?php 
-        } // 2. AQUÍ cerramos la llave del while (después de la columna)
+        }
     } 
     else {
-        echo "<div class='col-12'><p class='text-center'>No se encontraron resultados para tu búsqueda.</p></div>";
-    }
+    $query_sugerencias = "SELECT c.nombre, c.precio, ciu.nombre_ciudad, c.id_catalogo 
+                      FROM catalogo c
+                      INNER JOIN cat_ubicacion u ON c.id_ubicacion = u.id_ubicacion
+                      INNER JOIN cat_ciudad ciu ON u.id_ciudad = ciu.id_ciudad
+                      ORDER BY RAND() 
+                      LIMIT 12";
+    $res_sugerencias = mysqli_query($config, $query_sugerencias);    
+    ?> 
+        <div class='col-12 mt-2 text-center'>
+            <a href= 'home.php' style='color: black'><i class='bi bi-search' style='font-size: 2rem;'></i></a>
+            <h2 class='mt-2'>No encontramos lo que buscas</h2>
+            <p class='text-muted'>Intenta con palabras clave diferentes.</p>
+        </div>
+            
+    <div class='container mt-5'>
+        <h3 class='section-title text-center'>Sugerencias para tu próximo viaje</h3>
+
+    </div>
+           
+    <?php 
+   
+    while ($sugerencias = mysqli_fetch_assoc($res_sugerencias)) { 
     ?>
+                <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+            <a href="#" class="hotel-card-link">
+                <article class="hotel-card shadow-sm">
+                    <div class="image-box">
+                        <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=600" alt="Hotel">
+                        <label class="fav-checkbox" onclick="event.stopPropagation();">
+                            <input type="checkbox" hidden>
+                            <i class="bi bi-heart-fill"></i>
+                        </label>
+                    </div>
+                    <div class="info-box">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="category">Resort de Lujo</span>
+                            <span class="rating"><i class="bi bi-star-fill text-warning"></i> 4.9</span>
+                        </div>
+                        <h3 class="hotel-title"><?php echo htmlspecialchars($sugerencias['nombre']); ?></h3>
+                        <p class="location"><i class="bi bi-geo-alt"></i><?php echo htmlspecialchars($sugerencias['nombre_ciudad']); ?></p>
+                        <div class="footer-card">
+                            <div class="price-data">
+                                <span class="old-p"><?php echo number_format($sugerencias['precio'] * 1.2, 0); ?></span>
+                                <span class="new-p"><?php echo number_format($sugerencias['precio'], 0); ?> <small>MXN</small></span>
+                            </div>
+                            <span class="btn-fake">Detalles</span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+        </div>
+    <?php 
+    } 
+    ?>
+</div>
+";      
+   
+<?php 
+    } 
+?>
 </div>
 </div>
 
