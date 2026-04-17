@@ -6,7 +6,9 @@ if (!isset($_SESSION['user_uuid'])) {
     exit();
 }
 
-$query_faq = "SELECT pregunta, respuesta FROM hc_preguntas_frecuentes WHERE status = 'Activo'";
+$query_faq = "SELECT p.pregunta, p.respuesta
+    FROM hc_preguntas_frecuentes p
+    WHERE p.id_status = (SELECT id_status FROM status WHERE nombre = 'Activo' LIMIT 1)";
 $resultado_faq = mysqli_query($config, $query_faq);
 
 ?>
@@ -21,6 +23,51 @@ $resultado_faq = mysqli_query($config, $query_faq);
      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="styles/styles.css">
+        <style>
+        .search-wrapper {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto 2rem auto;
+        }
+        .search-wrapper .bi-search {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+            font-size: 1.1rem;
+        }
+        #buscador {
+            padding-left: 2.8rem;
+            border-radius: 50px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            height: 48px;
+            font-size: 1rem;
+        }
+        #buscador:focus {
+            box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
+            border-color: #86b7fe;
+            outline: none;
+        }
+
+        .nav-pills .nav-link {
+            border-radius: 50px;
+            padding: 0.4rem 1.2rem;
+            color: #555;
+            font-size: 0.9rem;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+        }
+
+        #sin-resultados {
+            display: none;
+            text-align: center;
+            color: #888;
+            padding: 2rem 0;
+        }
+    </style>
 </head>
 <body>
 
@@ -58,6 +105,11 @@ $resultado_faq = mysqli_query($config, $query_faq);
 <section class="preguntas_frecuentes mt-5 pt-5 mb-5">
     <div class="container">
         <h1 class="text-center mb-4">Centro de Ayuda</h1>
+        <p class="text-center text-muted mb-4">¿En qué podemos ayudarte?</p>
+                <div class="search-wrapper">
+            <i class="bi bi-search"></i>
+            <input type="text" id="buscador" class="form-control" placeholder="Busca tu pregunta aquí...">
+        </div>
         <div class="accordion" id="accordionExample">
 <?php 
             if ($resultado_faq && mysqli_num_rows($resultado_faq) > 0) {
@@ -127,8 +179,7 @@ $resultado_faq = mysqli_query($config, $query_faq);
       </div>
     </div>
   </div>
- 
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </html>
