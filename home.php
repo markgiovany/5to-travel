@@ -2,7 +2,7 @@
 session_start();
 include("config/config.php"); 
 
-$query = "SELECT c.nombre, c.precio, i.url_imagen 
+$query = "SELECT c.nombre, i.url_imagen 
           FROM catalogo c
          LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
           ORDER BY RAND()
@@ -14,7 +14,6 @@ $catalogo_hoteles = array();
 
 while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
     $catalogo_hoteles[$fila['nombre']] = array(
-        "precio" => $fila['precio'],
         "imagen" => $fila['url_imagen'] ?? 'https://images.unsplash.com/photo-1566073771259-6a8506099945'
     );
 }
@@ -58,7 +57,7 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
     
     <li><hr class="dropdown-divider"></li>
         
-    <li><a class="dropdown-item" href="#">Centro de ayuda</a></li>
+    <li><a class="dropdown-item" href="centro_de_ayuda.php">Centro de ayuda</a></li>
     <li><a class="dropdown-item" href="auth/logout.php">Cerrar sesión</a></li>
     </ul>
     </div>
@@ -151,7 +150,7 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
           </a>
           <div class="hotel-info">
             <h6><?php echo $nombre; ?></h6>
-            <p>$<?php echo number_format($datos['precio'], 2); ?></p>
+            <p><?php /* echo number_format($datos['precio'], 2); */ ?></p>
           </div>
         </div>
       </div>

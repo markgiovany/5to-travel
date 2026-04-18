@@ -18,8 +18,8 @@ $sql1 = "INSERT INTO usr_users (uuid, first_name, last_name, created_at)
 $sql2 = "INSERT INTO usr_emails (email, user_uuid) 
          VALUES ('$email', '$uuid')";
 
-$sql3 = "INSERT INTO usr_users_login (user_uuid, password, role, status, created_at) 
-         VALUES ('$uuid', '$password', 'user', 'active', NOW())";
+$sql3 = "INSERT INTO usr_users_login (user_uuid, password, role, id_status, created_at) 
+         VALUES ('$uuid', '$password', 'user', (SELECT id_status FROM status WHERE nombre = 'Activo' LIMIT 1), NOW())";
 
 $sql4 = "INSERT INTO usr_telefonos (telefono, user_uuid) 
          VALUES ('$telefono', '$uuid')";
