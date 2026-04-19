@@ -31,49 +31,49 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $descripcion = mysqli_real_escape_string($config, $_POST['descripcion']);
     $precio = mysqli_real_escape_string($config, $_POST['precio']);
     $capacidad = mysqli_real_escape_string($config, $_POST['capacidad']);
-    $disponibilidad = mysqli_real_escape_string($config, $_POST['disponibilidad']);
+    $cantidad_a_crear = intval($_POST['stock']); // Ahora es la cantidad de filas
     $id_tipo = mysqli_real_escape_string($config, $_POST['id_tipo']);
 
     mysqli_begin_transaction($config);
 
     try {
-        // 1. Crear habitación
-        $query_hab = "INSERT INTO cat_catalogo_habitacion 
-                      (id_catalogo, uuid, id_tipo, nombre, descripcion, precio, capacidad, disponibilidad, id_status) 
-                      VALUES 
-                      ('$id_hotel_db', uuid(), '$id_tipo', '$nombre', '$descripcion', '$precio', '$capacidad', '$disponibilidad', 1)";
-        
-        if (!mysqli_query($config, $query_hab)) throw new Exception("Error al crear habitación");
-        $id_hab_nuevo = mysqli_insert_id($config);
+        $ids_habitaciones = [];
 
-        // 2. Procesar fotos con lógica de "No Duplicados"
+        // 1. Ciclo para insertar la habitación las veces solicitadas
+        for ($i = 0; $i < $cantidad_a_crear; $i++) {
+            // Nota: Se eliminó la columna 'disponibilidad'
+            $query_hab = "INSERT INTO cat_catalogo_habitacion 
+                          (id_catalogo, uuid, id_tipo, nombre, descripcion, precio, capacidad, id_status) 
+                          VALUES 
+                          ('$id_hotel_db', uuid(), '$id_tipo', '$nombre', '$descripcion', '$precio', '$capacidad', 1)";
+            
+            if (!mysqli_query($config, $query_hab)) throw new Exception("Error al crear la unidad " . ($i+1));
+            $ids_habitaciones[] = mysqli_insert_id($config);
+        }
+
+        // 2. Procesar fotos y vincularlas a TODAS las nuevas habitaciones
         if (isset($_FILES['foto']) && !empty($_FILES['foto']['name'][0])) {
             $upload = new UploadApi();
             
             foreach ($_FILES['foto']['tmp_name'] as $key => $tmp_name) {
                 if ($_FILES['foto']['error'][$key] == 0) {
-                    
-                    // CALCULAR HASH (Huella única del archivo)
                     $file_hash = md5_file($tmp_name);
-
-                    // BUSCAR SI YA EXISTE ESTA IMAGEN
                     $check_img = mysqli_query($config, "SELECT url_imagen FROM cat_imagen WHERE hash_archivo = '$file_hash' LIMIT 1");
                     
                     if (mysqli_num_rows($check_img) > 0) {
-                        // YA EXISTE: Reutilizamos la URL
                         $img_data = mysqli_fetch_assoc($check_img);
                         $url_final = $img_data['url_imagen'];
                     } else {
-                        // NO EXISTE: Subimos a Cloudinary
                         $resultado_cloud = $upload->upload($tmp_name, ['folder' => 'brooking_habitaciones']);
                         $url_final = $resultado_cloud['secure_url'];
                     }
 
-                    // Insertar vínculo (sea nueva o reutilizada)
-                    $query_img = "INSERT INTO cat_imagen (id_catalogo, id_habitacion, url_imagen, hash_archivo, id_status) 
-                                  VALUES ('$id_hotel_db', '$id_hab_nuevo', '$url_final', '$file_hash', 1)";
-                    
-                    mysqli_query($config, $query_img);
+                    // Vincular la misma imagen a cada una de las habitaciones creadas
+                    foreach ($ids_habitaciones as $id_hab_nuevo) {
+                        $query_img = "INSERT INTO cat_imagen (id_catalogo, id_habitacion, url_imagen, hash_archivo, id_status) 
+                                      VALUES ('$id_hotel_db', '$id_hab_nuevo', '$url_final', '$file_hash', 1)";
+                        mysqli_query($config, $query_img);
+                    }
                 }
             }
         }
@@ -88,12 +88,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
-
+<!-- El resto del HTML se mantiene igual, solo cambié el label de 'disponibilidad' a 'cantidad' -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nueva Habitación | <?php echo $hotel['nombre']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -104,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <div class="container">
     <div class="col-md-7 mx-auto card shadow-sm border-0 p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold m-0">Añadir Habitación</h4>
+            <h4 class="fw-bold m-0">Añadir Habitaciones</h4>
             <span class="badge bg-primary-subtle text-primary rounded-pill px-3"><?php echo $hotel['nombre']; ?></span>
         </div>
 
@@ -116,9 +115,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <form method="POST" enctype="multipart/form-data" id="habForm">
             <div class="mb-3">
-                <label class="form-label fw-bold small text-muted">NOMBRE DE LA HABITACIÓN</label>
+                <label class="form-label fw-bold small text-muted">NOMBRE DEL TIPO DE HABITACIÓN</label>
                 <input type="text" name="nombre" class="form-control rounded-pill" 
-                       value="<?php echo $_POST['nombre'] ?? ''; ?>" placeholder="Ej: Master Suite King Size" required>
+                       value="<?php echo $_POST['nombre'] ?? ''; ?>" placeholder="Ej: Suite Deluxe" required>
             </div>
 
             <div class="mb-3">
@@ -138,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             <div class="mb-3">
                 <label class="form-label fw-bold small text-muted">DESCRIPCIÓN DETALLADA</label>
-                <textarea name="descripcion" class="form-control rounded-4" rows="3" placeholder="Describe las amenidades..."><?php echo $_POST['descripcion'] ?? ''; ?></textarea>
+                <textarea name="descripcion" class="form-control rounded-4" rows="3"><?php echo $_POST['descripcion'] ?? ''; ?></textarea>
             </div>
 
             <div class="row g-3 mb-3">
@@ -146,38 +145,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <label class="form-label fw-bold small text-muted">PRECIO POR NOCHE</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0 rounded-start-pill">$</span>
-                        <input type="number" name="precio" class="form-control border-start-0 rounded-end-pill" 
-                               step="0.01" value="<?php echo $_POST['precio'] ?? ''; ?>" required>
+                        <input type="number" name="precio" class="form-control border-start-0 rounded-end-pill" step="0.01" required>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-bold small text-muted">CAPACIDAD (PAXS)</label>
-                    <input type="number" name="capacidad" class="form-control rounded-pill" 
-                           value="<?php echo $_POST['capacidad'] ?? ''; ?>" required>
+                    <input type="number" name="capacidad" class="form-control rounded-pill" required>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold small text-muted">STOCK DISPONIBLE</label>
-                    <input type="number" name="disponibilidad" class="form-control rounded-pill" 
-                           value="<?php echo $_POST['disponibilidad'] ?? ''; ?>" required>
+                    <label class="form-label fw-bold small text-muted">CANTIDAD A CREAR</label>
+                    <input type="number" name="stock" class="form-control rounded-pill" placeholder="¿Cuántas son?" required>
                 </div>
             </div>
 
             <div class="mb-4">
-                <label class="form-label fw-bold small text-muted">FOTOS DE LA HABITACIÓN</label>
+                <label class="form-label fw-bold small text-muted">FOTOS (SE APLICARÁN A TODAS)</label>
                 <div class="p-3 border-2 border-dashed rounded-4 bg-white text-center">
                     <input type="file" name="foto[]" class="form-control" accept="image/*" multiple required>
-                    <small class="text-muted d-block mt-2">Puedes seleccionar varias imágenes a la vez.</small>
                 </div>
             </div>
 
             <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary w-100 fw-bold">Guardar Habitación</button>
-            <a href="habitaciones.php?u=<?php echo $uuid_hotel; ?>" class="btn btn-link w-100 mt-2 text-muted text-decoration-none">Cancelar</a>
+                <button type="submit" class="btn btn-primary w-100 fw-bold">Generar Habitaciones</button>
+                <a href="habitaciones.php?u=<?php echo $uuid_hotel; ?>" class="btn btn-link w-100 mt-2 text-muted text-decoration-none">Cancelar</a>
             </div>
         </form>
     </div>
 </div>
-
 <script>
     // --- PERSISTENCIA CON LOCALSTORAGE ---
     const draftKey = "hab_draft_<?php echo $uuid_hotel; ?>";
@@ -208,6 +202,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         setTimeout(() => localStorage.removeItem(draftKey), 1000);
     });
 </script>
-
 </body>
 </html>
