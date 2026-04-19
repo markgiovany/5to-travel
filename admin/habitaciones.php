@@ -44,9 +44,8 @@ if (!empty($status_val)) {
 
 $where_sql = " WHERE " . implode(" AND ", $where_clauses);
 
-// --- QUERIES ---
 $query = "SELECT ch.*, t.nombre as tipo_nombre, s.nombre as estado_nombre,
-          (SELECT COUNT(*) FROM reservas r WHERE r.id_habitacion = ch.id_habitacion) as ocupadas 
+          (SELECT COUNT(*) FROM res_reserva r WHERE r.id_habitacion = ch.id_habitacion AND r.id_status != 6) as ocupadas 
           FROM cat_catalogo_habitacion ch
           LEFT JOIN cat_tipo t ON ch.id_tipo = t.id_tipo
           LEFT JOIN status s ON ch.id_status = s.id_status
@@ -55,7 +54,6 @@ $query = "SELECT ch.*, t.nombre as tipo_nombre, s.nombre as estado_nombre,
 
 $resultado = mysqli_query($config, $query);
 $res_tipos_lista = mysqli_query($config, "SELECT * FROM cat_tipo");
-// Obtenemos solo Activo(1), Inactivo(2), Mantenimiento(7)
 $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status IN (1, 2, 7) ORDER BY FIELD(id_status, 1, 2, 7)"); 
 
 if (!$resultado) {
@@ -214,7 +212,7 @@ if (!$resultado) {
                                 <tr>
                                     <td>
                                         <div class="fw-bold"><?php echo $hab['nombre']; ?></div>
-                                        <div class="badge bg-primary rounded-pill small fw-normal">
+                                        <div class="rounded-pill small fw-normal">
                                             <?php echo $hab['tipo_nombre'] ?? 'Sin tipo'; ?>
                                         </div>
                                     </td>
