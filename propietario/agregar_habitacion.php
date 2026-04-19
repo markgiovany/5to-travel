@@ -2,71 +2,142 @@
 session_start();
 include("../config/config.php");
 
-$uuid = $_SESSION['user_uuid'];
+if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
+    header("Location: ../auth/login.php");
+    exit();
+}
 
-$hoteles = mysqli_query($config,"SELECT * FROM catalogo WHERE propietario_uuid='$uuid'");
+$propietario_uuid = $_SESSION['user_uuid'];
+
+$hoteles = mysqli_query($config, "
+    SELECT id_catalogo, nombre 
+    FROM catalogo 
+    WHERE propietario_uuid = '$propietario_uuid'
+");
+
+$tipos = mysqli_query($config, "SELECT * FROM cat_tipo");
+$estados = mysqli_query($config, "SELECT * FROM status");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $id_catalogo = $_POST['id_catalogo'];
+    $uuid = uniqid();
     $numero = $_POST['numero'];
+    $id_catalogo = $_POST['id_catalogo'];
+    $id_tipo = $_POST['id_tipo'];
     $precio = $_POST['precio'];
-    $estado = $_POST['estado'];
+    $id_status = $_POST['id_status'];
 
-    mysqli_query($config,"INSERT INTO res_habitacion 
-    (id_catalogo, numero, precio, estado)
-    VALUES ('$id_catalogo','$numero','$precio','$estado')");
+    /* 1. INSERT HABITACIÓN (PRIMERO) */
+    $insert = mysqli_query($config, "
+        INSERT INTO res_habitacion 
+        (uuid_habitacion, numero, id_catalogo, precio, id_status)
+        VALUES 
+        ('$uuid', '$numero', '$id_catalogo', '$precio', '$id_status')
+    ");
 
-    header("Location: mis_habitaciones.php");
-    exit();
+    if ($insert) {
+
+        $id_habitacion = mysqli_insert_id($config);
+
+        /* 2. RELACIÓN TIPO */
+        mysqli_query($config, "
+            INSERT INTO cat_catalogo_habitacion (id_catalogo, id_tipo)
+            VALUES ('$id_catalogo', '$id_tipo')
+        ");
+
+        /* 3. IMAGEN (YA CON ID CORRECTO) */
+        if (!empty($_FILES['imagen']['name'])) {
+
+            $carpeta = "../imagenes/habitaciones/";
+            if (!is_dir($carpeta)) {
+                mkdir($carpeta, 0777, true);
+            }
+
+            $nombreImg = time() . "_" . basename($_FILES["imagen"]["name"]);
+            $ruta = $carpeta . $nombreImg;
+
+            if (move_uploaded_file($_FILES["imagen"]["tmp_name"], $ruta)) {
+
+                mysqli_query($config, "
+                    INSERT INTO cat_imagen 
+                    (id_catalogo, id_habitacion, url_imagen, id_status)
+                    VALUES 
+                    ('$id_catalogo', '$id_habitacion', 'imagenes/habitaciones/$nombreImg', 1)
+                ");
+            }
+        }
+
+        header("Location: agregar_habitacion.php?ok=1");
+        exit();
+    } else {
+        echo "Error: " . mysqli_error($config);
+    }
 }
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-<title>Agregar Habitación</title>
+<meta charset="UTF-8">
+<title>Agregar Habitación PRO</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
-<body class="bg-light p-5">
+<body class="bg-light">
 
-<div class="container">
-<h4>Agregar Habitación</h4>
+<div class="container py-5">
 
-<form method="POST">
+<h3 class="mb-3">🏨 Agregar Habitación</h3>
 
-<div class="mb-3">
-<label>Hotel</label>
-<select name="id_catalogo" class="form-control">
-<?php while($h=mysqli_fetch_assoc($hoteles)): ?>
-<option value="<?= $h['id_catalogo'] ?>"><?= $h['nombre'] ?></option>
+<a href="propietario_dashboard.php" class="btn btn-outline-primary mb-3">
+← Volver al Dashboard
+</a>
+
+<form method="POST" enctype="multipart/form-data">
+
+<!-- HOTEL -->
+<select name="id_catalogo" class="form-select mb-3" required>
+<option value="">Selecciona hotel</option>
+<?php while($h = mysqli_fetch_assoc($hoteles)): ?>
+<option value="<?php echo $h['id_catalogo']; ?>">
+<?php echo $h['nombre']; ?>
+</option>
 <?php endwhile; ?>
 </select>
-</div>
 
-<div class="mb-3">
-<label>Número</label>
-<input name="numero" class="form-control" required>
-</div>
-
-<div class="mb-3">
-<label>Precio</label>
-<input name="precio" class="form-control" required>
-</div>
-
-<div class="mb-3">
-<label>Estado</label>
-<select name="estado" class="form-control">
-<option>Disponible</option>
-<option>No disponible</option>
+<!-- TIPO -->
+<select name="id_tipo" class="form-select mb-3" required>
+<option value="">Tipo de habitación</option>
+<?php while($t = mysqli_fetch_assoc($tipos)): ?>
+<option value="<?php echo $t['id_tipo']; ?>">
+<?php echo $t['nombre']; ?>
+</option>
+<?php endwhile; ?>
 </select>
-</div>
 
-<button class="btn btn-primary">Guardar</button>
-<a href="mis_habitaciones.php" class="btn btn-secondary">Cancelar</a>
+<!-- NÚMERO -->
+<input type="number" name="numero" class="form-control mb-3" placeholder="Número de habitación" required>
+
+<!-- PRECIO -->
+<input type="number" step="0.01" name="precio" class="form-control mb-3" placeholder="Precio" required>
+
+<!-- STATUS -->
+<select name="id_status" class="form-select mb-3" required>
+<option value="">Estado</option>
+<?php while($s = mysqli_fetch_assoc($estados)): ?>
+<option value="<?php echo $s['id_status']; ?>">
+<?php echo $s['nombre']; ?>
+</option>
+<?php endwhile; ?>
+</select>
+
+<!-- IMAGEN -->
+<input type="file" name="imagen" class="form-control mb-3">
+
+<button class="btn btn-success w-100">Guardar habitación</button>
 
 </form>
+
 </div>
 
 </body>
