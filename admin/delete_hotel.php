@@ -8,36 +8,53 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 }
 
 if (isset($_GET['u'])) {
-    $uuid_hotel = mysqli_real_escape_string($config, $_GET['u']);
-    $res = mysqli_query($config, "SELECT id_catalogo FROM catalogo WHERE uuid = '$uuid_hotel'");
-    $hotel = mysqli_fetch_assoc($res);
+    $uuid = mysqli_real_escape_string($config, $_GET['u']);
 
-    if (!$hotel) {
-        header("Location: hoteles.php?msg=not_found");
-        exit();
-    }
-
-    $id_hotel = $hotel['id_catalogo'];
-
+    // Iniciamos una transacción
     mysqli_begin_transaction($config);
 
     try {
-        mysqli_query($config, "DELETE FROM cat_imagen WHERE id_catalogo = '$id_hotel'");
+        $res_h = mysqli_query($config, "SELECT id_catalogo, id_ubicacion FROM catalogo WHERE uuid = '$uuid' LIMIT 1");
+        $hotel = mysqli_fetch_assoc($res_h);
 
-        mysqli_query($config, "DELETE FROM cat_catalogo_habitacion WHERE id_catalogo = '$id_hotel'");
+        if ($hotel) {
+            $id_hotel = $hotel['id_catalogo'];
+            $id_ubicacion = $hotel['id_ubicacion'];
 
-        mysqli_query($config, "DELETE FROM catalogo WHERE id_catalogo = '$id_hotel'");
+            $res_status = mysqli_query($config, "SELECT id_status FROM status WHERE nombre = 'Inactivo' LIMIT 1");
+            $status_row = mysqli_fetch_assoc($res_status);
+            $id_inactivo = $status_row['id_status'] ?? 2;
 
-        mysqli_commit($config);
-        header("Location: hoteles.php?msg=deleted");
-        exit();
 
+            // A. Desactivar el Hotel
+            mysqli_query($config, "UPDATE catalogo SET id_status = $id_inactivo WHERE id_catalogo = $id_hotel");
+
+            // B. Desactivar la Ubicación asociada
+            if ($id_ubicacion) {
+                mysqli_query($config, "UPDATE cat_ubicacion SET id_status = $id_inactivo WHERE id_ubicacion = $id_ubicacion");
+            }
+
+            // C. Desactivar todas las Habitaciones del hotel
+            mysqli_query($config, "UPDATE cat_catalogo_habitacion SET id_status = $id_inactivo WHERE id_catalogo = $id_hotel");
+
+            // D. Desactivar todas las Fotos (Tanto generales del hotel como de sus habitaciones)
+            // Esto funciona porque en tu lógica pro, todas las fotos llevan el id_catalogo
+            mysqli_query($config, "UPDATE cat_imagen SET id_status = $id_inactivo WHERE id_catalogo = $id_hotel");
+
+            // 4. Confirmar cambios
+            mysqli_commit($config);
+            header("Location: hoteles.php?msg=deleted");
+            exit();
+        } else {
+            header("Location: hoteles.php");
+            exit();
+        }
     } catch (Exception $e) {
+        // Si falla CUALQUIERA de los pasos anteriores, se cancela todo
         mysqli_rollback($config);
-        die("Error al eliminar: " . $e->getMessage());
+        die("Error en la desactivación en cascada: " . $e->getMessage());
     }
 } else {
     header("Location: hoteles.php");
     exit();
 }
-?>

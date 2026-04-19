@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body class="bg-light p-5">
 <div class="container">
     <div class="col-md-5 mx-auto card shadow-sm border-0 p-4 rounded-3">
-        <h4 class="fw-bold mb-4 text-center">Registrar Nuevo Usuario</h4>
+        <h4 class="fw-bold mb-4">Registrar Nuevo Usuario</h4>
         <form method="POST">
             <div class="row">
                 <div class="col-md-6 mb-3">
