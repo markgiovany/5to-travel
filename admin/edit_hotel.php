@@ -25,11 +25,13 @@ if (isset($_GET['u'])) {
 
 $res_propietarios = mysqli_query($config, "SELECT u.uuid, u.first_name, u.last_name FROM usr_users u INNER JOIN usr_users_login l ON u.uuid = l.user_uuid WHERE l.role IN ('propietario', 'admin')");
 
+$res_status_opciones = mysqli_query($config, "SELECT id_status, nombre FROM status WHERE id_status IN (1, 2, 7)");
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id_hotel = mysqli_real_escape_string($config, $_POST['id_catalogo']);
     $nombre = mysqli_real_escape_string($config, $_POST['nombre']);
     $descripcion = mysqli_real_escape_string($config, $_POST['descripcion']);
     $propietario_uuid = mysqli_real_escape_string($config, $_POST['propietario_uuid']);
+    $id_status = intval($_POST['id_status']);
     
     $id_pais = intval($_POST['id_pais']);
     $id_estado = intval($_POST['id_estado']);
@@ -50,7 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         mysqli_query($config, "UPDATE cat_ubicacion SET country_id=$id_pais, state_id=$id_estado, city_id=$id_ciudad, direccion='$dir_texto' WHERE id_ubicacion=$id_ub_actual");
-        mysqli_query($config, "UPDATE catalogo SET nombre='$nombre', descripcion='$descripcion', propietario_uuid='$propietario_uuid' WHERE id_catalogo='$id_hotel'");
+        
+        mysqli_query($config, "UPDATE catalogo SET nombre='$nombre', descripcion='$descripcion', propietario_uuid='$propietario_uuid', id_status='$id_status' WHERE id_catalogo='$id_hotel'");
 
         if (isset($_FILES['foto'])) {
             $upload = new UploadApi();
@@ -85,7 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .foto-item.marked-delete { opacity: 0.3; filter: grayscale(1); border: 2px solid #dc3545; }
         .delete-overlay { cursor: pointer; transition: 0.2s; background: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .delete-overlay:hover { background: #dc3545; color: white !important; }
-        #btn-mas-fotos { display: none; } /* Oculto por defecto */
+        #btn-mas-fotos { display: none; }
+        .status-maint { background-color: #fff3cd; border: 1px solid #ffeeba; }
     </style>
 </head>
 <body>
@@ -188,26 +192,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <i class="bi bi-plus-circle-fill"></i> Añadir más campos de selección
                     </button>
 
-                    <div class="mb-4">
-                        <label class="form-label text-muted small fw-bold">DUEÑO DEL HOTEL</label>
-                        <select name="propietario_uuid" class="form-select">
-                            <?php mysqli_data_seek($res_propietarios, 0); while($prop = mysqli_fetch_assoc($res_propietarios)): ?>
-                                <option value="<?= $prop['uuid'] ?>" <?= ($hotel['propietario_uuid'] == $prop['uuid']) ? 'selected' : '' ?>>
-                                    <?= $prop['first_name'] . ' ' . $prop['last_name'] ?>
-                                </option>
-                            <?php endwhile; ?>
-                        </select>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">DUEÑO DEL HOTEL</label>
+                            <select name="propietario_uuid" class="form-select">
+                                <?php mysqli_data_seek($res_propietarios, 0); while($prop = mysqli_fetch_assoc($res_propietarios)): ?>
+                                    <option value="<?= $prop['uuid'] ?>" <?= ($hotel['propietario_uuid'] == $prop['uuid']) ? 'selected' : '' ?>>
+                                        <?= $prop['first_name'] . ' ' . $prop['last_name'] ?>
+                                    </option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">ESTADO OPERATIVO</label>
+                            <select name="id_status" class="form-select <?= ($hotel['id_status'] == 7) ? 'status-maint' : '' ?>">
+                                <?php while($st = mysqli_fetch_assoc($res_status_opciones)): ?>
+                                    <option value="<?= $st['id_status'] ?>" <?= ($hotel['id_status'] == $st['id_status']) ? 'selected' : '' ?>>
+                                        <?= ($st['id_status'] == 7) ? 'Fuera de servicio (Mantenimiento)' : $st['nombre'] ?>
+                                    </option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="d-flex gap-3">
-
-            <a href="hoteles.php" class="btn btn-light w-50 fw-bold py-2 rounded-pill border shadow-sm text-muted">
-            CANCELAR
-            </a>
-            
-            <button type="submit" class="btn btn-primary w-50 fw-bold py-2 rounded-pill shadow-sm">
-        ACTUALIZAR INFORMACIÓN
-            </button>
+                        <a href="hoteles.php" class="btn btn-light w-50 fw-bold py-2 rounded-pill border shadow-sm text-muted">
+                            CANCELAR
+                        </a>
+                        <button type="submit" class="btn btn-primary w-50 fw-bold py-2 rounded-pill shadow-sm">
+                            ACTUALIZAR INFORMACIÓN
+                        </button>
                     </div>
                 </form>
             </div>
@@ -216,19 +230,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </div>
 
 <script>
-// Marcar fotos para desactivar
 function marcarBorrado(id, checkbox) {
     const div = document.getElementById('foto_' + id);
     checkbox.checked ? div.classList.add('marked-delete') : div.classList.remove('marked-delete');
 }
 
-// Lógica del botón inteligente
 function verificarArchivos(input) {
     const btn = document.getElementById('btn-mas-fotos');
     if (input.files.length > 0) {
-        btn.style.display = 'inline-block'; // Mostrar si hay archivos
+        btn.style.display = 'inline-block';
     } else {
-        btn.style.display = 'none'; // Ocultar si se quitan
+        btn.style.display = 'none';
     }
 }
 
@@ -240,7 +252,6 @@ function agregarInputFoto() {
     contenedor.appendChild(nuevoDiv);
 }
 
-// Ubicación Fetch
 async function cargarUbicacion(id, tipo, selectDestino, idPreseleccionado = null) {
     if(!id) return;
     const body = tipo === 'estado' ? 'pais_id=' + id : 'estado_id=' + id;

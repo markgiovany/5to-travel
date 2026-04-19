@@ -14,7 +14,7 @@ $condiciones = [];
 if (!empty($status_val)) {
     $condiciones[] = "c.id_status = '$status_val'";
 } else {
-    $condiciones[] = "c.id_status IN (1, 2)";
+    $condiciones[] = "c.id_status IN (1, 2, 7)";
 }
 
 if (!empty($search_val)) {
@@ -24,12 +24,7 @@ if (!empty($search_val)) {
 $filtro_sql = " WHERE " . implode(" AND ", $condiciones);
 
 $query = "SELECT c.id_catalogo, c.uuid, c.nombre, c.descripcion, u.first_name, u.last_name, s.nombre as estado_nombre, c.id_status,
-          -- Sumamos la disponibilidad de todos los tipos de habitación del hotel
-          (SELECT SUM(ch.disponibilidad) FROM cat_catalogo_habitacion ch WHERE ch.id_catalogo = c.id_catalogo) as capacidad_total,
-          -- Contamos cuántas de esas habitaciones están reservadas actualmente
-          (SELECT COUNT(*) FROM reservas r 
-           INNER JOIN cat_catalogo_habitacion ch ON r.id_habitacion = ch.id_habitacion 
-           WHERE ch.id_catalogo = c.id_catalogo) as total_reservadas
+          (SELECT COUNT(*) FROM cat_catalogo_habitacion ch WHERE ch.id_catalogo = c.id_catalogo) as habitaciones_totales
           FROM catalogo c
           INNER JOIN usr_users u ON c.propietario_uuid = u.uuid 
           INNER JOIN status s ON c.id_status = s.id_status
@@ -37,7 +32,7 @@ $query = "SELECT c.id_catalogo, c.uuid, c.nombre, c.descripcion, u.first_name, u
           ORDER BY c.id_catalogo DESC";
 
 $resultado = mysqli_query($config, $query);
-$res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status IN (1, 2)");
+$res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status IN (1, 2, 7)");
 ?>
 
 <!DOCTYPE html>
@@ -122,7 +117,7 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
 
             <div class="d-flex align-items-center gap-2">
                 <?php if(!empty($search_val) || !empty($status_val)): ?>
-                    <a href="hoteles.php" class="btn btn-link text-muted p-0" title="Limpiar filtros">
+                    <a href="hoteles.php" class="btn btn-link text-muted p-0 me-1" title="Limpiar filtros">
                         <i class="bi bi-x-circle fs-5"></i>
                     </a>
                 <?php endif; ?>
@@ -130,7 +125,7 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
                 <div style="width: 300px;">
                     <form method="GET" class="input-group input-group-sm">
                         <?php if(!empty($status_val)) echo '<input type="hidden" name="status" value="'.$status_val.'">'; ?>
-                        <input type="text" name="search" class="form-control rounded-start-pill" placeholder="Buscar hotel nombre/propietario..." value="<?php echo htmlspecialchars($search_val); ?>">
+                        <input type="text" name="search" class="form-control rounded-start-pill" placeholder="Buscar hotel..." value="<?php echo htmlspecialchars($search_val); ?>">
                         <button class="btn btn-dark rounded-end-pill px-3" type="submit"><i class="bi bi-search"></i></button>
                     </form>
                 </div>
@@ -146,7 +141,7 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
                                 <th>Nombre del Hotel</th>
                                 <th>Propietario</th>
                                 <th class="text-center">Estatus</th>
-                                <th class="text-center">Habitaciones</th>
+                                <th class="text-center">Habitaciones Totales</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
@@ -157,42 +152,41 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
                                     <td>
                                         <a href="habitaciones.php?u=<?= $hotel['uuid'] ?>" class="hotel-link text-decoration-none text-reset">
                                             <div class="fw-bold"><?php echo $hotel['nombre']; ?></div>
-                                        <div class="text-muted small"><?php echo mb_strimwidth($hotel['descripcion'], 0, 45, "..."); ?></div>
+                                            <div class="text-muted small"><?php echo mb_strimwidth($hotel['descripcion'], 0, 45, "..."); ?></div>
                                         </a>
                                     </td>
-
                                     <td class="small fw-bold">
                                         <?php echo $hotel['first_name'] . " " . $hotel['last_name']; ?>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge border rounded-pill text-dark fw-normal px-2">
-                                            <i class="bi bi-circle-fill dot me-1" style="color: <?= ($hotel['id_status']==1) ? '#198754' : '#dc3545' ?>;"></i>
+                                            <?php 
+                                                // Definición de colores por ID de estatus
+                                                $color_dot = '#dc3545'; // Rojo por defecto (Inactivo)
+                                                if($hotel['id_status'] == 1) $color_dot = '#198754'; // Verde (Activo)
+                                                if($hotel['id_status'] == 7) $color_dot = '#ffc107'; // Amarillo (Mantenimiento)
+                                            ?>
+                                            <i class="bi bi-circle-fill dot me-1" style="color: <?= $color_dot ?>;"></i>
                                             <?= $hotel['estado_nombre'] ?>
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <?php 
-                                        $total = $hotel['capacidad_total'] ?? 0;
-                                            $reservadas = $hotel['total_reservadas'] ?? 0;
-                                            $disponibles = $total - $reservadas;
-                                            $clase_badge = ($disponibles <= 0) ? 'bg-danger-subtle text-danger' : 'bg-light text-dark';
-                                        ?>
-                                        <span class="badge border rounded-pill px-3 <?php echo $clase_badge; ?>">
+                                        <span class="badge border rounded-pill px-3 bg-light text-dark">
                                             <i class="bi bi-door-open me-1"></i> 
-                                            <?php echo "$disponibles / $total"; ?> habs.
+                                            <?php echo $hotel['habitaciones_totales']; ?> habs.
                                         </span>
                                     </td>
                                     <td class="text-center">
                                         <?php if($hotel['id_status'] == 1): ?>
-                                            <a href="delete_hotel.php?u=<?= $hotel['uuid'] ?>" class="btn btn-sm text-danger" title="Eliminar" onclick="return confirm('Eliminar hotel?')">
+                                            <a href="delete_hotel.php?u=<?= $hotel['uuid'] ?>" class="btn btn-sm text-danger" title="Eliminar" onclick="return confirm('¿Desea dar de baja este hotel?')">
                                                 <i class="bi bi-trash"></i>
                                             </a>
                                         <?php else: ?>
+                                            <!-- Muestra reactivar si está Inactivo (2) o Mantenimiento (7) -->
                                             <a href="reactivar_hotel.php?u=<?= $hotel['uuid'] ?>" class="btn btn-sm text-success" title="Reactivar">
-                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                                <i class="bi bi-arrow-counterclockwise"></i>
                                             </a>
                                         <?php endif; ?>
-
                                         <a href="edit_hotel.php?u=<?= $hotel['uuid'] ?>" class="btn btn-sm text-primary" title="Editar">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
