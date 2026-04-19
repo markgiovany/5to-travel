@@ -9,8 +9,12 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 
 $role_val = isset($_GET['role']) ? mysqli_real_escape_string($config, $_GET['role']) : '';
 $search_val = isset($_GET['search']) ? mysqli_real_escape_string($config, $_GET['search']) : '';
+$status_val = isset($_GET['status']) ? mysqli_real_escape_string($config, $_GET['status']) : '';
 
 $condiciones = [];
+if (!empty($status_val)) {
+    $condiciones[] = "l.id_status = '$status_val'";
+}
 if (!empty($role_val)) {
     $condiciones[] = "l.role = '$role_val'";
 }
@@ -23,19 +27,22 @@ if (count($condiciones) > 0) {
     $filtro = " WHERE " . implode(" AND ", $condiciones);
 }
 
-$query = "SELECT u.uuid, u.first_name, u.last_name, t.telefono, l.role, e.email, u.created_at 
+$query = "SELECT u.uuid, u.first_name, u.last_name, t.telefono, l.role, e.email, u.created_at, s.nombre AS estado_nombre, l.id_status
           FROM usr_users u
           LEFT JOIN usr_emails e ON u.uuid = e.user_uuid 
           LEFT JOIN usr_users_login l ON u.uuid = l.user_uuid
           LEFT JOIN usr_telefonos t ON u.uuid = t.user_uuid
+          LEFT JOIN status s ON l.id_status = s.id_status
           $filtro
-          ORDER BY u.created_at DESC";
+          ORDER BY u.first_name ASC, u.last_name ASC";
 
 $resultado = mysqli_query($config, $query);
 
 if (!$resultado) {
     die("Error en la consulta: " . mysqli_error($config));
 }
+
+$res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status IN (1, 2, 4)");
 ?>
 
 <!DOCTYPE html>
@@ -47,6 +54,17 @@ if (!$resultado) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../styles/admin_dashboard.css">
+    <style>
+        .action-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            min-width: 120px;
+        }
+        .status-link {
+            text-decoration: none !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -55,18 +73,14 @@ if (!$resultado) {
         <div class="p-4 text-center">
             <img src="../imagenes/brooking.png" alt="Logo" width="140">
         </div>
-        
         <ul class="nav flex-column mb-auto">
             <li><a href="admin_dashboard.php" class="nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
             <li><a href="users.php" class="nav-link active"><i class="bi bi-people"></i> Usuarios</a></li>
             <li><a href="hoteles.php" class="nav-link"><i class="bi bi-building"></i> Hoteles</a></li>
             <li><a href="reservaciones.php" class="nav-link"><i class="bi bi-calendar-check"></i> Reservaciones</a></li>
         </ul>
-
         <div class="p-3 border-top">
-            <a href="../auth/logout.php" class="nav-link text-danger">
-                <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
-            </a>
+            <a href="../auth/logout.php" class="nav-link text-danger"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>
         </div>
     </div>
 
@@ -79,95 +93,129 @@ if (!$resultado) {
                 </a>
             </div>
             <div class="d-flex align-items-center">
-                <span class="me-3 text-muted">Admin <strong><?php echo $_SESSION['first_name'] ?? 'Admin'; ?></strong></span>
+                <span class="me-3 text-muted">Admin, <strong><?php echo $_SESSION['first_name'] ?? 'Admin'; ?></strong></span>
                 <img src="https://ui-avatars.com/api/?name=<?php echo $_SESSION['first_name'] ?? 'Admin'; ?>&background=6f42c1&color=fff" class="rounded-circle" width="40">
             </div>
         </div>
+        <?php if (isset($_GET['msg'])): ?>
+            <?php if ($_GET['msg'] == 'added'): ?>
+                <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>¡Excelente!</strong> El usuario ha sido registrado correctamente.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php elseif ($_GET['msg'] == 'updated' || $_GET['msg'] == 'status_updated'): ?>
+                <div class="alert alert-info alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <strong>¡Actualizado!</strong> Los cambios del usuario se guardaron con éxito.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php elseif ($_GET['msg'] == 'error'): ?>
+                <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+                    <i class="bi bi-x-circle-fill me-2"></i>
+                    <strong>Error:</strong> Ocurrió un problema al procesar la solicitud.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <?php endif; ?>
+        <?php endif; ?>
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="d-flex gap-2">
-                <a href="users.php?search=<?php echo $search_val; ?>" class="btn btn-sm rounded-pill px-3 <?php echo !isset($_GET['role']) ? 'btn-dark' : 'btn-outline-dark'; ?>">Todos</a>
-                <a href="users.php?role=admin&search=<?php echo $search_val; ?>" class="btn btn-sm rounded-pill px-3 <?php echo (isset($_GET['role']) && $_GET['role'] == 'admin') ? 'btn-primary' : 'btn-outline-primary'; ?>">Administradores</a>
-                <a href="users.php?role=propietario&search=<?php echo $search_val; ?>" class="btn btn-sm rounded-pill px-3 <?php echo (isset($_GET['role']) && $_GET['role'] == 'propietario') ? 'btn-warning text-white' : 'btn-outline-warning'; ?>">Propietarios</a>
-                <a href="users.php?role=user&search=<?php echo $search_val; ?>" class="btn btn-sm rounded-pill px-3 <?php echo (isset($_GET['role']) && $_GET['role'] == 'user') ? 'btn-secondary' : 'btn-outline-secondary'; ?>">Usuarios</a>
+                <a href="users.php?search=<?php echo $search_val; ?>&status=<?php echo $status_val; ?>" class="btn btn-sm rounded-pill px-3 <?php echo !isset($_GET['role']) || $_GET['role'] == '' ? 'btn-dark' : 'btn-outline-dark'; ?>">Todos</a>
+                <a href="users.php?role=admin&search=<?php echo $search_val; ?>&status=<?php echo $status_val; ?>" class="btn btn-sm rounded-pill px-3 <?php echo ($role_val == 'admin') ? 'btn-primary' : 'btn-outline-primary'; ?>">Administradores</a>
+                <a href="users.php?role=propietario&search=<?php echo $search_val; ?>&status=<?php echo $status_val; ?>" class="btn btn-sm rounded-pill px-3 <?php echo ($role_val == 'propietario') ? 'btn-warning text-white' : 'btn-outline-warning'; ?>">Propietarios</a>
+                <a href="users.php?role=user&search=<?php echo $search_val; ?>&status=<?php echo $status_val; ?>" class="btn btn-sm rounded-pill px-3 <?php echo ($role_val == 'user') ? 'btn-secondary' : 'btn-outline-secondary'; ?>">Usuarios</a>
             </div>
 
-            <div style="width: 300px;">
-                <form method="GET" class="input-group input-group-sm">
-                    <?php if(!empty($role_val)): ?>
-                        <input type="hidden" name="role" value="<?php echo $role_val; ?>">
-                    <?php endif; ?>
-                    <input type="text" name="search" class="form-control rounded-start-pill" placeholder="Buscar usuario..." value="<?php echo htmlspecialchars($search_val); ?>">
-                    <button class="btn btn-dark rounded-end-pill px-3" type="submit"><i class="bi bi-search"></i></button>
-                </form>
+            <div class="d-flex align-items-center gap-2">
+                <?php if(!empty($search_val) || !empty($role_val) || !empty($status_val)): ?>
+                    <a href="users.php" class="btn btn-link text-muted p-0" title="Limpiar filtros">
+                        <i class="bi bi-x-circle fs-5"></i>
+                    </a>
+                <?php endif; ?>
+                
+                <div style="width: 300px;">
+                    <form method="GET" class="input-group input-group-sm">
+                        <?php if(!empty($role_val)) echo '<input type="hidden" name="role" value="'.$role_val.'">'; ?>
+                        <?php if(!empty($status_val)) echo '<input type="hidden" name="status" value="'.$status_val.'">'; ?>
+                        <input type="text" name="search" class="form-control rounded-start-pill" placeholder="Buscar usuario..." value="<?php echo htmlspecialchars($search_val); ?>">
+                        <button class="btn btn-dark rounded-end-pill px-3" type="submit"><i class="bi bi-search"></i></button>
+                    </form>
+                </div>
             </div>
         </div>
 
-        <?php if(isset($_GET['msg'])): ?>
-            <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
-                <?php 
-                    if($_GET['msg'] == 'deleted') echo '¡Usuario eliminado correctamente!';
-                    elseif($_GET['msg'] == 'added') echo '¡Usuario creado con éxito!';
-                    else echo '¡Datos actualizados!';
-                ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+        <div class="mb-4">
+            <small class="text-muted fw-bold me-2">ESTADO:</small>
+            <a href="users.php?role=<?php echo $role_val; ?>&search=<?php echo $search_val; ?>" class="status-link btn btn-xs <?php echo empty($status_val) ? 'fw-bold text-dark' : 'text-muted'; ?>" style="font-size: 0.8rem;">Todos</a>
+            <?php while($s = mysqli_fetch_assoc($res_status_list)): ?>
+                <a href="users.php?role=<?php echo $role_val; ?>&search=<?php echo $search_val; ?>&status=<?php echo $s['id_status']; ?>" 
+                   class="status-link btn btn-xs ms-2 <?php echo ($status_val == $s['id_status']) ? 'fw-bold text-dark text-decoration-underline' : 'text-muted'; ?>" 
+                   style="font-size: 0.8rem;">
+                    <?php echo $s['nombre']; ?>
+                </a>
+            <?php endwhile; ?>
+        </div>
 
         <div class="card stat-card shadow-sm border-0 rounded-3">
             <div class="card-body p-4">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0 text-center">
                         <thead class="table-light">
                             <tr>
-                                <th>Nombre Completo</th>
-                                <th>Contacto</th>
-                                <th>Rol</th>
-                                <th>UUID / ID</th>
+                                <th class="text-start">Nombre Completo</th>
+                                <th class="text-start">Contacto</th>
+                                <th>Rol / Estado</th>
                                 <th>Registro</th>
-                                <th class="text-center">Acciones</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if(mysqli_num_rows($resultado) > 0): ?>
                                 <?php while($row = mysqli_fetch_assoc($resultado)): ?>
-                                <tr>
-                                    <td><strong><?php echo $row['first_name'] . " " . $row['last_name']; ?></strong></td>
-                                    <td>
-                                        <div class="small fw-bold"><?php echo $row['email'] ?? 'Sin correo'; ?></div>
-                                        <div class="text-muted small">
-                                            <i class="bi bi-telephone"></i> <?php echo !empty($row['telefono']) ? $row['telefono'] : 'Sin teléfono'; ?>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <?php 
-                                            $badge_class = "bg-secondary text-white"; 
-                                            $r = $row['role'] ?? 'user';
-                                            if($r == 'admin') $badge_class = "bg-primary text-white";
-                                            if($r == 'propietario') $badge_class = "bg-warning text-white";
-                                        ?>
-                                        <span class="badge <?php echo $badge_class; ?> rounded-pill px-3 text-capitalize">
-                                            <?php echo $r; ?>
-                                        </span>
-                                    </td>
-                                    <td class="text-muted small"><?php echo substr($row['uuid'], 0, 8); ?>...</td>
-                                    <td><span class="small"><?php echo ($row['created_at']) ? date('d M, Y', strtotime($row['created_at'])) : 'N/A'; ?></span></td>
-                                    <td class="text-center">
-                                        <a href="delete_user.php?u=<?php echo $row['uuid']; ?>" class="btn btn-sm text-danger" onclick="return confirm('¿Borrar este usuario?')">
-                                            <i class="bi bi-trash"></i>
+                                    
+                                        <td class="text-start">
+                                            <a href="view_user.php?u=<?php echo $row['uuid']; ?>" class="text-decoration-none text-reset"><strong><?php echo $row['first_name'] . " " . $row['last_name']; ?></strong>
                                         </a>
-                                        <a href="edit_user.php?u=<?php echo $row['uuid']; ?>" class="btn btn-sm text-primary ms-1">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                <?php endwhile; ?>
+                                        </td>
+                                <td class="text-start">
+                                    <div class="small fw-bold"><?php echo $row['email'] ?? 'Sin correo'; ?></div>
+                                    <div class="text-muted small"><i class="bi bi-telephone"></i>                           <?php echo !empty($row['telefono']) ? $row['telefono'] : 'Sin teléfono'; ?></div>
+                                </td>
+                                <td>
+                                    <?php 
+                                $badge_class = "bg-secondary text-white"; 
+                                $r = $row['role'] ?? 'user';
+                                if($r == 'admin') $badge_class = "bg-primary text-white";
+                                if($r == 'propietario') $badge_class = "bg-warning text-white";
+                            ?>
+                            <span class="badge <?php echo $badge_class; ?> rounded-pill px-3 text-capitalize mb-1"><?php echo $r; ?></span>
+                            <br>
+                            <small class="text-muted"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem; color: <?php echo ($row['id_status']==1) ? '#198754' : (($row['id_status']==2) ? '#dc3545' : '#ffc107'); ?>;"></i><?php echo $row['estado_nombre']; ?></small>
+                        </td>
+                        <td><span class="small"><?php echo ($row['created_at']) ? date('d M, Y', strtotime($row['created_at'])) : 'N/A'; ?></span></td>
+
+                        <td class="text-center">
+                            <div class="action-container">
+                                <?php if($row['id_status'] == 1):?>
+                                    <a href="status_user.php?u=<?php echo $row['uuid']; ?>&to=2" class="btn btn-sm text-danger" title="Eliminar" onclick="return confirm('Eliminar usuario?')">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                <?php elseif($row['id_status'] == 2 || $row['id_status'] == 4):?>
+                                    <a href="status_user.php?u=<?php echo $row['uuid']; ?>&to=1" class="btn btn-sm text-success" title="Reactivar">
+                                        <i class="bi-arrow-counterclockwise"></i>
+                                    </a>
+                                <?php endif; ?>
+
+                                <a href="edit_user.php?u=<?php echo $row['uuid']; ?>" title="Editar" class="btn btn-sm text-primary">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6" class="text-center py-5 text-muted">
-                                        <p class="mb-2">Sin coincidencias</p>
-                                        <a href="users.php" class="btn btn-sm btn-outline-secondary rounded-pill">Limpiar filtros</a>
-                                    </td>
+                                    <td colspan="6" class="text-center py-5 text-muted">Sin coincidencias</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
