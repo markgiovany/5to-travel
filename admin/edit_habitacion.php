@@ -34,21 +34,24 @@ if (isset($_GET['uh'])) {
 }
 
 $res_tipos = mysqli_query($config, "SELECT * FROM cat_tipo ORDER BY nombre ASC");
+// Consulta de estados permitidos: Activo(1), Inactivo(2), Mantenimiento(7)
+$res_status_opciones = mysqli_query($config, "SELECT id_status, nombre FROM status WHERE id_status IN (1, 2, 7)");
 
-// actualicacao
+// ACTUALIZACIÓN
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nombre_hab = mysqli_real_escape_string($config, $_POST['nombre_hab']);
     $descripcion_hab = mysqli_real_escape_string($config, $_POST['descripcion_hab']);
     $capacidad = mysqli_real_escape_string($config, $_POST['capacidad']);
     $precio = mysqli_real_escape_string($config, $_POST['precio']);
-    $disponibilidad = mysqli_real_escape_string($config, $_POST['disponibilidad']);
+    // SE ELIMINÓ LA VARIABLE $disponibilidad
     $tipo = mysqli_real_escape_string($config, $_POST['tipo']);
+    $id_status = intval($_POST['id_status']); 
     $hotel_uuid = mysqli_real_escape_string($config, $_POST['hotel_uuid']);
 
     mysqli_begin_transaction($config);
 
     try {
-        // borrao pa' fotos
+        // borrado pa' fotos
         if (isset($_POST['borrar_fotos'])) {
             foreach ($_POST['borrar_fotos'] as $id_img_borrar) {
                 $id_img_borrar = intval($id_img_borrar);
@@ -58,14 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
 
-        // Actualización de datos principales
+        // Actualización de datos principales (SE QUITÓ disponibilidad = '$disponibilidad')
         mysqli_query($config, "UPDATE cat_catalogo_habitacion SET 
                         nombre = '$nombre_hab', 
                         descripcion = '$descripcion_hab',
                         capacidad = '$capacidad',
                         precio = '$precio',
-                        disponibilidad = '$disponibilidad',
-                        id_tipo = '$tipo' 
+                        id_tipo = '$tipo',
+                        id_status = '$id_status' 
                         WHERE id_habitacion = '$id_hab_int'");
 
         if (isset($_FILES['foto']) && !empty($_FILES['foto']['name'][0])) {
@@ -132,7 +135,6 @@ $res_fotos = mysqli_query($config, "SELECT i.* FROM cat_imagen i
             <a href="../auth/logout.php" class="nav-link text-danger"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>
         </div>
     </div>
-    </div>
 
     <div class="content">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -188,13 +190,19 @@ $res_fotos = mysqli_query($config, "SELECT i.* FROM cat_imagen i
                             <input type="number" step="0.01" name="precio" class="form-control rounded-pill" value="<?php echo $habitacion['precio']; ?>" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted">STOCK DISPONIBLE</label>
-                            <input type="number" name="disponibilidad" class="form-control rounded-pill" value="<?php echo $habitacion['disponibilidad']; ?>" required>
+                            <label class="form-label small fw-bold text-muted">ESTADO OPERATIVO</label>
+                            <select name="id_status" class="form-select rounded-pill">
+                                <?php mysqli_data_seek($res_status_opciones, 0); while($st = mysqli_fetch_assoc($res_status_opciones)): ?>
+                                    <option value="<?= $st['id_status'] ?>" <?= ($habitacion['id_status'] == $st['id_status']) ? 'selected' : '' ?>>
+                                        <?= $st['nombre'] ?>
+                                    </option>
+                                <?php endwhile; ?>
+                            </select>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted mb-3">GALERÍA ACTUAL (Clic en X para marcar borrado)</label>
+                        <label class="form-label small fw-bold text-muted mb-3">GALERÍA ACTUAL</label>
                         <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded-3 border">
                             <?php if(mysqli_num_rows($res_fotos) > 0): ?>
                                 <?php while ($img = mysqli_fetch_assoc($res_fotos)): ?>
