@@ -174,10 +174,10 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
                                 <?php while($row = mysqli_fetch_assoc($resultado)): ?>
                                     
                                         <td class="text-start">
-                                            <a href="view_user.php?u=<?php echo $row['uuid']; ?>" class="text-decoration-none text-reset"><strong><?php echo $row['first_name'] . " " . $row['last_name']; ?></strong>
+                                            <a href="view_user.php?u=<?php echo $row['uuid']; ?>" class="text-decoration-none text-dark"><strong><?php echo $row['first_name'] . " " . $row['last_name']; ?></strong>
                                         </a>
                                         </td>
-                                <td class="text-start">
+                                <td class="text-start text-dark">
                                     <div class="small fw-bold"><?php echo $row['email'] ?? 'Sin correo'; ?></div>
                                     <div class="text-muted small"><i class="bi bi-telephone"></i>                           <?php echo !empty($row['telefono']) ? $row['telefono'] : 'Sin teléfono'; ?></div>
                                 </td>
