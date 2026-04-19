@@ -46,7 +46,7 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Brooking | Control de Reservaciones</title>
+    <title>Brooking | Gestión de Reservaciones</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../styles/admin_dashboard.css">
@@ -72,7 +72,7 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
 
     <div class="content">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold m-0">Control de Reservaciones</h2>
+            <h2 class="fw-bold m-0">Gestión de Reservaciones</h2>
             <div class="d-flex align-items-center">
                 <span class="me-3 text-muted">Admin <strong><?php echo $_SESSION['first_name'] ?? 'Admin'; ?></strong></span>
                 <img src="https://ui-avatars.com/api/?name=<?php echo $_SESSION['first_name'] ?? 'Admin'; ?>&background=6f42c1&color=fff" class="rounded-circle" width="40">

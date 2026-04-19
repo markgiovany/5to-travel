@@ -150,12 +150,12 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
                                 <?php while($hotel = mysqli_fetch_assoc($resultado)): ?>
                                 <tr>
                                     <td>
-                                        <a href="habitaciones.php?u=<?= $hotel['uuid'] ?>" class="hotel-link text-decoration-none text-reset">
+                                        <a href="habitaciones.php?u=<?= $hotel['uuid'] ?>" class="hotel-link text-decoration-none text-dark">
                                             <div class="fw-bold"><?php echo $hotel['nombre']; ?></div>
                                             <div class="text-muted small"><?php echo mb_strimwidth($hotel['descripcion'], 0, 45, "..."); ?></div>
                                         </a>
                                     </td>
-                                    <td class="small fw-bold">
+                                    <td class="small fw-bold text-dark">
                                         <?php echo $hotel['first_name'] . " " . $hotel['last_name']; ?>
                                     </td>
                                     <td class="text-center">
@@ -182,7 +182,6 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
                                                 <i class="bi bi-trash"></i>
                                             </a>
                                         <?php else: ?>
-                                            <!-- Muestra reactivar si está Inactivo (2) o Mantenimiento (7) -->
                                             <a href="reactivar_hotel.php?u=<?= $hotel['uuid'] ?>" class="btn btn-sm text-success" title="Reactivar">
                                                 <i class="bi bi-arrow-counterclockwise"></i>
                                             </a>
