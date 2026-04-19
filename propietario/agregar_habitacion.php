@@ -1,6 +1,9 @@
 <?php
 session_start();
 include("../config/config.php");
+require_once "../config/cloudinary_config.php";
+
+use Cloudinary\Api\Upload\UploadApi;
 
 if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
     header("Location: ../auth/login.php");
@@ -20,57 +23,109 @@ $estados = mysqli_query($config, "SELECT * FROM status");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $uuid = uniqid();
-    $numero = $_POST['numero'];
-    $id_catalogo = $_POST['id_catalogo'];
-    $id_tipo = $_POST['id_tipo'];
-    $precio = $_POST['precio'];
-    $id_status = $_POST['id_status'];
+    $id_catalogo = intval($_POST['id_catalogo']);
+    $id_tipo = intval($_POST['id_tipo']);
+    $precio = floatval($_POST['precio']);
+    $id_status = intval($_POST['id_status']);
+    $cantidad = isset($_POST['cantidad']) ? intval($_POST['cantidad']) : 1;
 
-    /* 1. INSERT HABITACIÓN (PRIMERO) */
-    $insert = mysqli_query($config, "
-        INSERT INTO res_habitacion 
-        (uuid_habitacion, numero, id_catalogo, precio, id_status)
-        VALUES 
-        ('$uuid', '$numero', '$id_catalogo', '$precio', '$id_status')
+    /* 🔥 VALIDACIÓN SEGURA (EVITA ERROR FK) */
+    $checkHotel = mysqli_query($config, "
+        SELECT id_catalogo 
+        FROM catalogo 
+        WHERE id_catalogo = '$id_catalogo'
+        LIMIT 1
     ");
 
-    if ($insert) {
+    if (mysqli_num_rows($checkHotel) == 0) {
+        die("❌ Error: el hotel seleccionado no existe o no es válido.");
+    }
 
-        $id_habitacion = mysqli_insert_id($config);
+    if ($cantidad <= 0) {
+        $error = "La cantidad debe ser mayor a 0";
+    } else {
 
-        /* 2. RELACIÓN TIPO */
-        mysqli_query($config, "
-            INSERT INTO cat_catalogo_habitacion (id_catalogo, id_tipo)
-            VALUES ('$id_catalogo', '$id_tipo')
-        ");
+        mysqli_begin_transaction($config);
 
-        /* 3. IMAGEN (YA CON ID CORRECTO) */
-        if (!empty($_FILES['imagen']['name'])) {
+        try {
 
-            $carpeta = "../imagenes/habitaciones/";
-            if (!is_dir($carpeta)) {
-                mkdir($carpeta, 0777, true);
-            }
+            $ids_habitaciones = [];
+            $upload = new UploadApi();
 
-            $nombreImg = time() . "_" . basename($_FILES["imagen"]["name"]);
-            $ruta = $carpeta . $nombreImg;
+            for ($i = 0; $i < $cantidad; $i++) {
 
-            if (move_uploaded_file($_FILES["imagen"]["tmp_name"], $ruta)) {
+                $uuid = uniqid();
+                $numero = "HAB-" . time() . "-" . ($i + 1);
 
-                mysqli_query($config, "
-                    INSERT INTO cat_imagen 
-                    (id_catalogo, id_habitacion, url_imagen, id_status)
+                $insert = mysqli_query($config, "
+                    INSERT INTO res_habitacion 
+                    (uuid_habitacion, id_catalogo, numero, precio, id_status)
                     VALUES 
-                    ('$id_catalogo', '$id_habitacion', 'imagenes/habitaciones/$nombreImg', 1)
+                    ('$uuid', '$id_catalogo', '$numero', '$precio', '$id_status')
+                ");
+
+                if (!$insert) {
+                    throw new Exception("Error al crear habitación #" . ($i + 1));
+                }
+
+                $id_habitacion = mysqli_insert_id($config);
+                $ids_habitaciones[] = $id_habitacion;
+
+                /* relación tipo */
+                mysqli_query($config, "
+                    INSERT INTO cat_catalogo_habitacion (id_catalogo, id_tipo)
+                    VALUES ('$id_catalogo', '$id_tipo')
                 ");
             }
-        }
 
-        header("Location: agregar_habitacion.php?ok=1");
-        exit();
-    } else {
-        echo "Error: " . mysqli_error($config);
+            /* 🖼 IMAGEN (CLOUDINARY + CACHE HASH) */
+            if (!empty($_FILES['imagen']['name'])) {
+
+                $tmp_name = $_FILES['imagen']['tmp_name'];
+
+                if ($_FILES['imagen']['error'] == 0) {
+
+                    $file_hash = md5_file($tmp_name);
+
+                    $check_img = mysqli_query($config, "
+                        SELECT url_imagen 
+                        FROM cat_imagen 
+                        WHERE hash_archivo = '$file_hash' 
+                        LIMIT 1
+                    ");
+
+                    if (mysqli_num_rows($check_img) > 0) {
+                        $img_data = mysqli_fetch_assoc($check_img);
+                        $url_final = $img_data['url_imagen'];
+                    } else {
+                        $resultado = $upload->upload($tmp_name, [
+                            'folder' => 'habitaciones_propietario'
+                        ]);
+                        $url_final = $resultado['secure_url'];
+                    }
+
+                    foreach ($ids_habitaciones as $id_hab) {
+
+                        mysqli_query($config, "
+                            INSERT INTO cat_imagen 
+                            (id_catalogo, id_habitacion, url_imagen, hash_archivo, id_status)
+                            VALUES 
+                            ('$id_catalogo', '$id_hab', '$url_final', '$file_hash', 1)
+                        ");
+                    }
+                }
+            }
+
+            mysqli_commit($config);
+
+            header("Location: agregar_habitacion.php?ok=1");
+            exit();
+
+        } catch (Exception $e) {
+
+            mysqli_rollback($config);
+            $error = $e->getMessage();
+        }
     }
 }
 ?>
@@ -87,11 +142,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <div class="container py-5">
 
-<h3 class="mb-3">🏨 Agregar Habitación</h3>
+<h3 class="mb-3">🏨 Agregar Habitación PRO</h3>
 
 <a href="propietario_dashboard.php" class="btn btn-outline-primary mb-3">
 ← Volver al Dashboard
 </a>
+
+<?php if(isset($error)): ?>
+<div class="alert alert-danger"><?php echo $error; ?></div>
+<?php endif; ?>
 
 <form method="POST" enctype="multipart/form-data">
 
@@ -115,11 +174,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <?php endwhile; ?>
 </select>
 
-<!-- NÚMERO -->
-<input type="number" name="numero" class="form-control mb-3" placeholder="Número de habitación" required>
-
 <!-- PRECIO -->
 <input type="number" step="0.01" name="precio" class="form-control mb-3" placeholder="Precio" required>
+
+<!-- CANTIDAD -->
+<label class="form-label fw-bold small text-muted">
+CANTIDAD DE HABITACIONES
+</label>
+<input type="number" name="cantidad" class="form-control mb-3" value="1" required>
 
 <!-- STATUS -->
 <select name="id_status" class="form-select mb-3" required>
@@ -134,7 +196,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!-- IMAGEN -->
 <input type="file" name="imagen" class="form-control mb-3">
 
-<button class="btn btn-success w-100">Guardar habitación</button>
+<button class="btn btn-success w-100">
+Guardar habitaciones
+</button>
 
 </form>
 

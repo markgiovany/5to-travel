@@ -10,5 +10,3 @@ $config = mysqli_connect($host,$user,$pass,$db);
 if(!$config){
     die("Error de conexión");
 }
-
-?>

@@ -8,9 +8,9 @@ if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
 }
 
 $propietario_uuid = $_SESSION['user_uuid'];
-$nombre_usuario = $_SESSION['first_name'] ?? "Esteban";
+$nombre_usuario = $_SESSION['first_name'] ?? "Usuario";
 
-/* ELIMINAR HOTEL (SAFE) */
+/* ELIMINAR HOTEL */
 if (isset($_GET['delete'])) {
 
     $id_delete = (int)$_GET['delete'];
@@ -21,7 +21,6 @@ if (isset($_GET['delete'])) {
 
         mysqli_query($config, "DELETE FROM cat_imagen WHERE id_catalogo = $id_delete");
         mysqli_query($config, "DELETE FROM cat_catalogo_habitacion WHERE id_catalogo = $id_delete");
-        mysqli_query($config, "DELETE FROM res_habitacion WHERE id_catalogo = $id_delete");
         mysqli_query($config, "DELETE FROM catalogo WHERE id_catalogo = $id_delete");
 
         mysqli_commit($config);
@@ -37,11 +36,10 @@ if (isset($_GET['delete'])) {
 
 /* HOTELES */
 $sql_hoteles = "
-SELECT c.*
-FROM catalogo c
-WHERE c.propietario_uuid = '$propietario_uuid'
-AND (c.id_status IS NULL OR c.id_status != 6)
-ORDER BY c.id_catalogo DESC
+SELECT * FROM catalogo 
+WHERE propietario_uuid = '$propietario_uuid'
+AND (id_status IS NULL OR id_status != 6)
+ORDER BY id_catalogo DESC
 ";
 
 $res_hoteles = mysqli_query($config, $sql_hoteles);
@@ -57,13 +55,15 @@ $res_hoteles = mysqli_query($config, $sql_hoteles);
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <style>
-:root { --blue-dark: #4b62f4; --sidebar-width: 250px; }
+:root {
+    --blue-dark: #4b62f4;
+    --sidebar-width: 250px;
+}
 
 body {
     background-color: #f4f6f9;
     display: flex;
     min-height: 100vh;
-    overflow-x: hidden;
 }
 
 .sidebar {
@@ -72,7 +72,6 @@ body {
     border-right: 1px solid #dee2e6;
     position: fixed;
     height: 100%;
-    z-index: 1000;
 }
 
 .sidebar .nav-link {
@@ -102,13 +101,10 @@ body {
     padding: 15px 30px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
 }
 
-.card-custom {
-    border: none;
-    border-radius: 12px;
-    overflow: hidden;
+.hotel-row {
+    cursor: pointer;
 }
 </style>
 </head>
@@ -122,26 +118,30 @@ body {
     </div>
 
     <ul class="nav nav-pills flex-column mb-auto">
-        <li><a href="propietario_dashboard.php" class="nav-link active">
-            <i class="bi bi-speedometer2 me-2"></i> Dashboard
-        </a></li>
+        <li>
+            <a href="propietario_dashboard.php" class="nav-link active">
+                <i class="bi bi-speedometer2 me-2"></i> Panel de Control
+            </a>
+        </li>
 
-        <li><a href="mis_reservaciones.php" class="nav-link">
-            <i class="bi bi-calendar-check me-2"></i> Reservaciones
-        </a></li>
+        <li>
+            <a href="mis_reservaciones.php" class="nav-link">
+                <i class="bi bi-calendar-check me-2"></i> Reservaciones
+            </a>
+        </li>
 
-        <li><a href="mis_pagos.php" class="nav-link">
-            <i class="bi bi-cash-coin me-2"></i> Pagos
-        </a></li>
+        <li>
+            <a href="mis_pagos.php" class="nav-link">
+                <i class="bi bi-cash-coin me-2"></i> Pagos
+            </a>
+        </li>
     </ul>
 
     <hr>
 
-    <div class="p-2">
-        <a href="../auth/logout.php" class="btn btn-danger w-100">
-            <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
-        </a>
-    </div>
+    <a href="../auth/logout.php" class="btn btn-danger w-100">
+        Cerrar Sesión
+    </a>
 </div>
 
 <!-- MAIN -->
@@ -152,10 +152,10 @@ body {
     <span>Bienvenido, <strong><?php echo htmlspecialchars($nombre_usuario); ?></strong></span>
 </div>
 
-<div class="card shadow-sm card-custom">
+<div class="card shadow-sm">
 
 <div class="card-header bg-white d-flex justify-content-between align-items-center">
-    <h5 class="mb-0 fw-bold">Hoteles</h5>
+    <h5 class="mb-0">Hoteles</h5>
 
     <div>
         <a href="agregar_hotel.php" class="btn btn-primary btn-sm">+ Hotel</a>
@@ -166,12 +166,13 @@ body {
 <div class="card-body table-responsive">
 
 <table class="table table-hover align-middle">
+
 <thead class="table-light">
 <tr>
     <th>Imagen</th>
     <th>Hotel</th>
     <th>Descripción</th>
-    <th>Tipos de habitaciones</th>
+    <th>Tipos</th>
     <th>Acciones</th>
 </tr>
 </thead>
@@ -183,74 +184,148 @@ body {
 <?php
 $id = $row['id_catalogo'];
 
-/* IMAGEN */
 $res_img = mysqli_query($config, "
 SELECT url_imagen 
 FROM cat_imagen 
 WHERE id_catalogo = '$id'
-LIMIT 1
 ");
 
-$img = mysqli_fetch_assoc($res_img)['url_imagen'] ?? null;
+$imgs = [];
+while($img = mysqli_fetch_assoc($res_img)){
+    $imgs[] = $img['url_imagen'];
+}
 
-/* TIPOS DE HABITACIÓN */
 $res_tipos = mysqli_query($config, "
 SELECT t.nombre
 FROM cat_catalogo_habitacion ch
 INNER JOIN cat_tipo t ON t.id_tipo = ch.id_tipo
 WHERE ch.id_catalogo = '$id'
 ");
+
+$tipos = [];
+while($t = mysqli_fetch_assoc($res_tipos)){
+    $tipos[] = $t['nombre'];
+}
 ?>
 
-<tr>
+<tr class="hotel-row"
+data-bs-toggle="modal"
+data-bs-target="#modal<?php echo $id; ?>">
 
-<!-- IMAGEN -->
 <td>
-<?php if($img): ?>
-    <img src="/5to-travel/<?php echo $img; ?>"
-         width="55"
-         height="55"
-         style="object-fit:cover;border-radius:6px;">
+<?php if(!empty($imgs)): ?>
+    <img src="<?php echo $imgs[0]; ?>" width="65" height="65"
+    style="object-fit:cover;border-radius:10px;">
 <?php else: ?>
-    <div style="width:55px;height:55px;background:#ccc;border-radius:6px;"></div>
+    <div style="width:65px;height:65px;background:#ddd;border-radius:10px;"></div>
 <?php endif; ?>
 </td>
 
-<!-- HOTEL -->
-<td class="fw-bold"><?php echo htmlspecialchars($row['nombre']); ?></td>
+<td class="fw-bold">
+    <div class="d-flex justify-content-between align-items-center">
+        <span><?php echo htmlspecialchars($row['nombre']); ?></span>
 
-<!-- DESCRIPCIÓN -->
-<td class="text-muted small">
-<?php echo htmlspecialchars(substr($row['descripcion'],0,80)); ?>...
-</td>
-
-<!-- TIPOS -->
-<td>
-<?php while($t = mysqli_fetch_assoc($res_tipos)): ?>
-    <span class="badge bg-primary me-1 mb-1">
-        <?php echo $t['nombre']; ?>
-    </span>
-<?php endwhile; ?>
-</td>
-
-<!-- ACCIONES -->
-<td>
-    <div class="btn-group">
-
-        <a href="editar.php?id=<?php echo $id; ?>" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-pencil"></i>
-        </a>
-
-        <a href="propietario_dashboard.php?delete=<?php echo $id; ?>" 
-           class="btn btn-outline-danger btn-sm"
-           onclick="return confirm('¿Seguro que deseas eliminar este hotel?')">
-            <i class="bi bi-trash"></i>
-        </a>
-
+        <span class="badge bg-success ms-2">
+            💰 $<?php echo number_format($row['precio_min'],2); ?> - 
+            $<?php echo number_format($row['precio_max'],2); ?>
+        </span>
     </div>
 </td>
 
+<td class="text-muted small">
+<?php echo substr($row['descripcion'],0,70); ?>...
+</td>
+
+<td>
+<?php foreach($tipos as $t): ?>
+    <span class="badge bg-primary me-1 mb-1"><?php echo $t; ?></span>
+<?php endforeach; ?>
+</td>
+
+<td>
+<a href="editar.php?id=<?php echo $id; ?>" class="btn btn-outline-primary btn-sm">
+<i class="bi bi-pencil"></i>
+</a>
+
+<a href="propietario_dashboard.php?delete=<?php echo $id; ?>"
+class="btn btn-outline-danger btn-sm"
+onclick="return confirm('¿Eliminar hotel?')">
+<i class="bi bi-trash"></i>
+</a>
+</td>
+
 </tr>
+
+<!-- MODAL (ÚNICO CAMBIO AQUÍ: PRECIOS MEJORADOS) -->
+<div class="modal fade" id="modal<?php echo $id; ?>" tabindex="-1">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+
+<div class="modal-header">
+<h5><?php echo $row['nombre']; ?></h5>
+<button class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+
+<?php if(!empty($imgs)): ?>
+<div id="carousel<?php echo $id; ?>" class="carousel slide mb-3"
+data-bs-ride="carousel"
+data-bs-interval="3000">
+
+<div class="carousel-inner">
+
+<?php foreach($imgs as $index => $img): ?>
+<div class="carousel-item <?php echo $index == 0 ? 'active' : ''; ?>">
+<img src="<?php echo $img; ?>"
+style="width:100%;height:250px;object-fit:cover;border-radius:10px;">
+</div>
+<?php endforeach; ?>
+
+</div>
+
+<button class="carousel-control-prev" type="button"
+data-bs-target="#carousel<?php echo $id; ?>" data-bs-slide="prev">
+<span class="carousel-control-prev-icon"></span>
+</button>
+
+<button class="carousel-control-next" type="button"
+data-bs-target="#carousel<?php echo $id; ?>" data-bs-slide="next">
+<span class="carousel-control-next-icon"></span>
+</button>
+
+</div>
+<?php endif; ?>
+
+<p><?php echo $row['descripcion']; ?></p>
+
+<hr>
+
+<div class="mb-2">
+<strong>💰 Rango de precios:</strong><br>
+
+<span class="badge bg-success fs-6">
+Min: $<?php echo number_format($row['precio_min'], 2); ?>
+</span>
+
+<span class="badge bg-danger fs-6 ms-2">
+Max: $<?php echo number_format($row['precio_max'], 2); ?>
+</span>
+
+</div>
+
+<div class="mb-2">
+<strong>🏷️ Tipos:</strong><br>
+<?php foreach($tipos as $t): ?>
+    <span class="badge bg-primary me-1 mb-1"><?php echo $t; ?></span>
+<?php endforeach; ?>
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
 
 <?php endwhile; ?>
 
@@ -258,7 +333,6 @@ WHERE ch.id_catalogo = '$id'
 </table>
 
 </div>
-
 </div>
 
 </div>
