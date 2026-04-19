@@ -28,6 +28,7 @@ $where_clauses = ["ch.id_catalogo = '$id_hotel'"];
 // --- VARIABLES DE FILTRO ---
 $search_val = isset($_GET['search_hab']) ? mysqli_real_escape_string($config, $_GET['search_hab']) : '';
 $tipo_val = isset($_GET['tipo']) ? mysqli_real_escape_string($config, $_GET['tipo']) : '';
+$status_val = isset($_GET['status']) ? mysqli_real_escape_string($config, $_GET['status']) : '';
 
 if (!empty($search_val)) {
     $where_clauses[] = "ch.nombre LIKE '%$search_val%'";
@@ -37,18 +38,25 @@ if (!empty($tipo_val)) {
     $where_clauses[] = "ch.id_tipo = '$tipo_val'";
 }
 
+if (!empty($status_val)) {
+    $where_clauses[] = "ch.id_status = '$status_val'";
+}
+
 $where_sql = " WHERE " . implode(" AND ", $where_clauses);
 
-// --- QUERY PRINCIPAL ---
-$query = "SELECT ch.*, t.nombre as tipo_nombre,
+// --- QUERIES ---
+$query = "SELECT ch.*, t.nombre as tipo_nombre, s.nombre as estado_nombre,
           (SELECT COUNT(*) FROM reservas r WHERE r.id_habitacion = ch.id_habitacion) as ocupadas 
           FROM cat_catalogo_habitacion ch
           LEFT JOIN cat_tipo t ON ch.id_tipo = t.id_tipo
+          LEFT JOIN status s ON ch.id_status = s.id_status
           $where_sql 
           ORDER BY ch.precio ASC";
 
 $resultado = mysqli_query($config, $query);
 $res_tipos_lista = mysqli_query($config, "SELECT * FROM cat_tipo");
+// Obtenemos solo Activo(1), Inactivo(2), Mantenimiento(7)
+$res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status IN (1, 2, 7) ORDER BY FIELD(id_status, 1, 2, 7)"); 
 
 if (!$resultado) {
     die("Error en la consulta SQL: " . mysqli_error($config));
@@ -64,11 +72,13 @@ if (!$resultado) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../styles/admin_dashboard.css">
+    <style>
+        .dot { font-size: 0.6rem; vertical-align: middle; }
+    </style>
 </head>
 <body>
 
 <div class="d-flex">
-    <!-- Sidebar (Igual que el original) -->
     <div class="sidebar d-flex flex-column shadow-sm">
         <div class="p-4 text-center">
             <img src="../imagenes/brooking.png" alt="Logo" width="140">
@@ -102,6 +112,7 @@ if (!$resultado) {
                 <img src="https://ui-avatars.com/api/?name=<?php echo $_SESSION['first_name'] ?? 'Admin'; ?>&background=6f42c1&color=fff" class="rounded-circle" width="40">
             </div>
         </div>
+
         <?php if (isset($_GET['msg'])): ?>
             <?php if ($_GET['msg'] == 'added'): ?>
                 <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
@@ -129,9 +140,29 @@ if (!$resultado) {
                 </div>
             <?php endif; ?>
         <?php endif; ?>
+
+        <div class="mb-4">
+            <small class="text-muted fw-bold me-2">ESTADO:</small>
+            <a href="habitaciones.php?u=<?php echo $uuid_hotel; ?>&tipo=<?php echo urlencode($tipo_val); ?>&search_hab=<?php echo urlencode($search_val); ?>" 
+               class="status-link btn btn-xs <?php echo empty($status_val) ? 'fw-bold text-dark text-decoration-none' : 'text-muted'; ?>" 
+               style="font-size: 0.8rem;">Todos</a>
+            
+            <?php 
+            mysqli_data_seek($res_status_list, 0);
+            while($s = mysqli_fetch_assoc($res_status_list)): 
+            ?>
+                <a href="habitaciones.php?u=<?php echo $uuid_hotel; ?>&tipo=<?php echo urlencode($tipo_val); ?>&search_hab=<?php echo urlencode($search_val); ?>&status=<?php echo $s['id_status']; ?>" 
+                   class="status-link btn btn-xs ms-2 <?php echo ($status_val == $s['id_status']) ? 'fw-bold text-dark text-decoration-none' : 'text-muted'; ?>" 
+                   style="font-size: 0.8rem;">
+                    <?php echo $s['nombre']; ?>
+                </a>
+            <?php endwhile; ?>
+        </div>
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <form method="GET" class="d-flex align-items-center gap-3 flex-grow-1">
                 <input type="hidden" name="u" value="<?php echo $uuid_hotel; ?>">
+                <input type="hidden" name="status" value="<?php echo $status_val; ?>">
 
                 <div style="min-width: 220px;">
                     <label class="small fw-bold text-muted mb-1 d-block" style="margin-left: 10px; font-size: 0.7rem; letter-spacing: 0.5px;">TIPO DE HABITACIÓN</label>
@@ -158,16 +189,8 @@ if (!$resultado) {
                         </button>
                     </div>
                 </div>
-
-                <?php if(!empty($search_val) || !empty($tipo_val)): ?>
-                    <div class="align-self-end mb-1">
-                        <a href="habitaciones.php?u=<?php echo $uuid_hotel; ?>" class="btn btn-link text-muted p-0" title="Limpiar filtros">
-                            <i class="bi bi-x-circle-fill fs-5"></i>
-                        </a>
-                    </div>
-                <?php endif; ?>
             </form>
-<a href="hoteles.php" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm">
+            <a href="hoteles.php" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm">
                 <i class="bi bi-arrow-left"></i> Volver a la lista
             </a>
         </div>
@@ -180,17 +203,14 @@ if (!$resultado) {
                             <tr>
                                 <th>Habitación / Tipo</th>
                                 <th class="text-center">Capacidad</th>
-                                <th class="text-center">Disponibles</th>
+                                <th class="text-center">Estatus</th>
                                 <th class="text-center">Precio</th>
                                 <th class="text-center pe-4">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if(mysqli_num_rows($resultado) > 0): ?>
-                                <?php while($hab = mysqli_fetch_assoc($resultado)): 
-                                    $libres = $hab['disponibilidad'] - $hab['ocupadas'];
-                                    $clase_badge = ($libres <= 0) ? 'bg-danger' : (($libres <= 2) ? 'bg-warning text-dark' : 'bg-success');
-                                ?>
+                                <?php while($hab = mysqli_fetch_assoc($resultado)): ?>
                                 <tr>
                                     <td>
                                         <div class="fw-bold"><?php echo $hab['nombre']; ?></div>
@@ -204,8 +224,9 @@ if (!$resultado) {
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge <?php echo $clase_badge; ?> rounded-pill px-3">
-                                            <i class="bi bi-box-seam"></i> <?php echo $libres; ?> / <?php echo $hab['disponibilidad']; ?>
+                                        <span class="badge border rounded-pill text-dark fw-normal px-2">
+                                            <i class="bi bi-circle-fill dot me-1" style="color: <?= ($hab['id_status']==1) ? '#198754' : (($hab['id_status']==7) ? '#ffc107' : '#dc3545') ?>;"></i>
+                                            <?= $hab['estado_nombre'] ?>
                                         </span>
                                     </td>
                                     <td class="text-center text-success fw-bold">
