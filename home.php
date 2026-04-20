@@ -2,7 +2,7 @@
 session_start();
 include("config/config.php"); 
 
-$query = "SELECT c.nombre, i.url_imagen 
+$query = "SELECT c.id_catalogo, c.nombre, i.url_imagen 
           FROM catalogo c
          LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
           ORDER BY RAND()
@@ -14,6 +14,8 @@ $catalogo_hoteles = array();
 
 while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
     $catalogo_hoteles[$fila['nombre']] = array(
+        "id" => $fila['id_catalogo'],
+        "nombre" => $fila['nombre'],
         "imagen" => $fila['url_imagen'] ?? 'https://images.unsplash.com/photo-1566073771259-6a8506099945'
     );
 }
@@ -145,7 +147,7 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
     ?>
       <div class="col-md-3">
         <div class="hotel-card">
-          <a href="lugares-info.html">
+          <a href="lugares-info.php?id=<?php echo $datos['id']; ?>">
             <img src="<?php echo $datos['imagen']; ?>" class="img-fluid">
           </a>
           <div class="hotel-info">
@@ -157,147 +159,6 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
     <?php endforeach; ?>
 </div>
 </div>
-</section>
-<section class="destinos-section py-5">
-  <div class="container text-center text-white">
-    <h2 class="fw-bold">Destinos Populares</h2>
-    <p class="mb-5 opacity-75">Viaja por el Mundo, con confianza</p>
-
-    <div id="carouselDestinos" class="carousel slide" data-bs-ride="false">
-      <div class="carousel-inner">
-        
-        <div class="carousel-item active">
-          <div class="d-flex justify-content-center gap-3">
-            <div class="destino-item">
-              <div class="img-circle">
-              <a href="card-info.html"><img src="https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=400" alt="Torre Eiffel"></a>
-              </div>
-              <h6>Torre Eiffel</h6> 
-              <span>356 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1772473492334-e64515e7-00e3-4b48-a12f-acdf16318a82.webp" alt="Machu Picchu"></a></div>
-              <h6>Machu Picchu</h6>
-              <span>210 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400" alt="La Gran Muralla"></a></div>
-              <h6>La Gran Muralla</h6>
-              <span>180 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1772473524243-45f5f268-06af-443c-9f71-a2c7b5ba5277.webp" alt="E. Libertad"></a></div>
-              <h6>E. Libertad</h6>
-              <span>420 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1772473343990-2373e245-301d-498f-a6ff-118417fdaf33.webp" alt="Taj Mahal"></a></div>
-              <h6>Taj Mahal</h6>
-              <span>170 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1772474078580-dc9e55e5-c13d-4cc2-a5a0-a0c28ef16b70.webp" alt="Rio de janeiro"></a></div>
-              <h6>Rio de janeiro</h6>
-              <span>120 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1772474103850-ec8dabb8-832a-4118-8b4d-44d2e458aa1e.webp" alt="Praga"></a></div>
-              <h6>Praga</h6>
-              <span>100 Tours</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="carousel-item">
-          <div class="d-flex justify-content-center gap-3">
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=400" alt="Praga"></a></div>
-              <h6>Sidney</h6>
-              <span>180 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400" alt="Coliseo"></a></div>
-              <h6>Coliseo</h6>
-              <span>500 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://images.unsplash.com/photo-1474044159687-1ee9f3a51722?w=400" alt="Gran Cañón"></a></div>
-              <h6>Gran Cañón</h6>
-              <span>120 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=400" alt="Santorini"></a></div>
-              <h6>Santorini</h6>
-              <span>310 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400" alt="Londres"></a></div>
-              <h6>Londres</h6>
-              <span>450 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1772474173366-94f580f8-a3fc-4028-b270-ca849fdee764.webp" alt="Estambul"></a></div>
-              <h6>Estambul</h6>
-              <span>150 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1772474216033-1e41c5b3-aa04-4f46-b315-a5063f1305ff.webp" alt="Lisboa"></a></div>
-              <h6>Lisboa</h6>
-              <span>423 Tours</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="carousel-item">
-          <div class="d-flex justify-content-center gap-3">
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1773024724252-ef2e7748-d437-4b65-8123-8cbd138d3641.webp" alt="Praga"></a></div>
-              <h6>Praga</h6>
-              <span>100 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=400" alt="Praga"></a></div>
-              <h6>Giza</h6>
-              <span>100 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1772473391793-c662922e-7025-4750-8686-1e31699ac68a.webp" alt="Venecia"></a></div>
-              <h6>Venecia</h6>
-              <span>260 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1772473423551-4c1abca1-fe1b-4526-96ae-daf23eede645.webp" alt="Petra"></a></div>
-              <h6>Petra</h6>
-              <span>115 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400" alt="Bali"></a></div>
-              <h6>Bali</h6>
-              <span>200 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1772474263686-6c9265f6-4ed6-4c57-95da-55fbd5576bf7.webp" alt="Atenaz"></a></div>
-              <h6>Atenaz</h6>
-              <span>320 Tours</span>
-            </div>
-            <div class="destino-item">
-              <div class="img-circle"><a href="card-info.html"><img src="https://image2url.com/r2/default/images/1772474346570-2f1be8f6-2481-4c86-b38b-b59a39c6ef54.webp" alt="Kioto"></a></div>
-              <h6>Kioto</h6>
-              <span>210 Tours</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <button class="carousel-control-prev" type="button" data-bs-target="#carouselDestinos" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-      </button>
-      <button class="carousel-control-next" type="button" data-bs-target="#carouselDestinos" data-bs-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-      </button>
-    </div>
-  </div>
 </section>
 
   <footer class="main-footer">
