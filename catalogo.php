@@ -2,172 +2,237 @@
 session_start(); 
 include("config/config.php"); 
 
-if (!isset($_SESSION['user_uuid'])) {
-    header("Location: index.php");
-    exit();
-}
+/**
+ * 1. PROCESAMIENTO DE FILTROS
+ */
+$min = isset($_GET['min']) && $_GET['min'] !== '' ? floatval($_GET['min']) : 0;
+$max = isset($_GET['max']) && $_GET['max'] !== '' ? floatval($_GET['max']) : 999999;
+$stars = isset($_GET['estrellas']) ? intval($_GET['estrellas']) : 0;
 
-$query = "SELECT c.id_catalogo, c.nombre, c.descripcion, c.precio, u.direccion, i.url_imagen 
+$pais_id = isset($_GET['pais']) ? intval($_GET['pais']) : 0;
+$estado_id = isset($_GET['estado']) ? intval($_GET['estado']) : 0;
+$ciudad_id = isset($_GET['ciudad']) ? intval($_GET['ciudad']) : 0;
+
+$filtros_activos = ($min > 0 || $max < 999999 || $stars > 0 || $pais_id > 0 || $estado_id > 0 || $ciudad_id > 0) ? 1 : 0;
+
+/**
+ * 2. CARGAR SELECTORES (Tablas: countries, states, cities)
+ */
+$countries_res = mysqli_query($config, "SELECT id, name FROM countries ORDER BY name ASC");
+$states_res = mysqli_query($config, "SELECT id, name FROM states ORDER BY name ASC");
+$cities_res = mysqli_query($config, "SELECT id, name FROM cities ORDER BY name ASC");
+
+/**
+ * 3. QUERY PRINCIPAL
+ */
+$query = "SELECT 
+            c.id_catalogo, c.nombre, 
+            u.direccion AS ubicacion_real,
+            (SELECT MIN(h.precio) FROM cat_catalogo_habitacion h WHERE h.id_catalogo = c.id_catalogo) AS precio_min,
+            (SELECT i.url_imagen FROM cat_imagen i WHERE i.id_catalogo = c.id_catalogo LIMIT 1) AS url_imagen,
+            (SELECT AVG(ca.estrellas) FROM calif_hoteles ca WHERE ca.id_hotel = c.id_catalogo) AS promedio_estrellas
           FROM catalogo c
           LEFT JOIN cat_ubicacion u ON c.id_ubicacion = u.id_ubicacion
-          LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
-          LIMIT 16";
+          WHERE c.id_status = (SELECT id_status FROM status WHERE nombre IN ('Active', 'Activo') LIMIT 1)";
 
+if ($pais_id > 0) $query .= " AND u.country_id = $pais_id";
+if ($estado_id > 0) $query .= " AND u.state_id = $estado_id";
+if ($ciudad_id > 0) $query .= " AND u.city_id = $ciudad_id";
+
+if ($min > 0) $query .= " AND EXISTS (SELECT 1 FROM cat_catalogo_habitacion h WHERE h.id_catalogo = c.id_catalogo AND h.precio >= $min)";
+if ($max < 999999) $query .= " AND EXISTS (SELECT 1 FROM cat_catalogo_habitacion h WHERE h.id_catalogo = c.id_catalogo AND h.precio <= $max)";
+
+$query .= " HAVING 1=1";
+if ($stars > 0) $query .= " AND (promedio_estrellas >= $stars OR promedio_estrellas IS NULL)";
+
+$query .= " LIMIT 20";
 $resultado = mysqli_query($config, $query);
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BookingEngineer | Catálogo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="styles/styles.css"> 
-    <link rel="stylesheet" href="styles/catalogo.css">
-    <link rel="stylesheet" href="styles/filtros.css">
+    <link rel="stylesheet" href="styles/styles.css">
+    <style>
+        body { background-color: #fcfcfc; }
+        .hotel-card { border-radius: 16px; overflow: hidden; transition: 0.3s; background: #fff; border: 1px solid #eee; height: 100%; }
+        .hotel-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
+        .image-box { height: 180px; width: 100%; }
+        .image-box img { width: 100%; height: 100%; object-fit: cover; }
+        .fav-checkbox input:checked + i { color: #FF385C !important; }
+        .fav-icon { color: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); cursor: pointer; }
+        
+        /* Botón de Filtros Estilo Pro */
+        .btn-filter-toggle {
+            background: white; border: 1px solid #ddd; border-radius: 12px;
+            padding: 10px 20px; font-weight: 600; font-size: 14px; transition: 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-filter-toggle:hover { background: #f8f9fa; border-color: #222; }
+
+        /* Offcanvas Personalizado (A la izquierda) */
+        .offcanvas-start { width: 350px !important; border-right: none; border-radius: 0 20px 20px 0; }
+    </style>
 </head>
 <body>
 
 <header class="main-header">
     <div class="glass-nav">
-        <a href="index.php" class="logo">
-            <img src="imagenes/brooking.png" alt="Logo">
-        </a>
-        <div class="nav-links">
-            <a href="#">Destinos</a>
-            <a href="catalogo.php">Catálogo</a>
-            <a href="favoritos.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                <i class="bi bi-heart-fill"></i> Mis Favoritos
+        <?php 
+    $enlace_logo = isset($_SESSION['user_uuid']) ? 'home.php' : 'index.php'; 
+?>
+<a href="<?= $enlace_logo; ?>" class="logo">
+    <img src="imagenes/brooking.png" alt="Logo" width="140">
+</a>
+        <div class="nav-links d-flex align-items-center gap-3">
+            <a href="favoritos.php" class="text-decoration-none text-dark fw-medium small">
+                <i class="bi bi-heart me-1"></i> Favoritos
             </a>
-            <div class="dropdown">
-                <div class="user-pill" data-bs-toggle="dropdown" aria-expanded="false" role="button">
-                    <i class="bi bi-list"></i>
-                    <div class="user-avatar">
-                       <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="display: block; fill: #717171; height: 30px; width: 30px;">
-                           <path d="m16 .7c-8.437 0-15.3 6.863-15.3 15.3s6.863 15.3 15.3 15.3 15.3-6.863 15.3-15.3-6.863-15.3-15.3-15.3zm0 28c-4.021 0-7.605-1.884-9.933-4.81a12.425 12.425 0 0 1 2.245-2.903l.445-.4c1.886-1.637 4.191-2.487 7.243-2.487s5.357.85 7.243 2.487l.445.4a12.425 12.425 0 0 1 2.245 2.903c-2.328 2.926-5.912 4.81-9.933 4.81zm9.328-7.387c-.012-.02-.023-.04-.035-.06a10.428 10.428 0 0 0-6.191-3.653c1.789-1.344 2.898-3.411 2.898-5.7 0-3.97-3.23-7.2-7.2-7.2s-7.2 3.23-7.2 7.2c0 2.289 1.109 4.356 2.898 5.7a10.428 10.428 0 0 0-6.191 3.653c-.012.02-.023.04-.035.06a13.31 13.31 0 0 1-2.573-7.913c0-7.345 5.955-13.3 13.3-13.3s13.3 5.955 13.3 13.3c0 2.924-1.01 5.614-2.711 7.913z"></path>
-                       </svg>
+            <?php if (isset($_SESSION['user_uuid'])): ?>
+                <div class="dropdown d-inline-block">
+                    <div class="user-pill d-flex align-items-center gap-2 border rounded-pill px-2 py-1" data-bs-toggle="dropdown" role="button">
+                        <i class="bi bi-list text-dark"></i>
+                        <div class="user-avatar bg-light rounded-circle p-1"><i class="bi bi-person-fill text-secondary"></i></div>
                     </div>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                        <li><a class="dropdown-item fw-bold" href="perfil.php">Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="auth/logout.php">Cerrar sesión</a></li>
+                    </ul>
                 </div>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-                    <li><a class="dropdown-item" href="auth/logout.php">Cerrar sesión</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#">Centro de ayuda</a></li>
-                </ul>
-            </div>
+            <?php else: ?>
+                <a href="login.php" class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-person-circle"></i> Login
+                </a>
+            <?php endif; ?>
         </div>
     </div>
 </header>
 
-<div style="height: 100px;"></div>
+<div style="height: 110px;"></div>
 
-<section class="be-filter-container">
-    <div class="container-fluid px-lg-5">
-        <div class="d-flex align-items-center flex-wrap gap-2">
-            
-            <div class="dropdown">
-                <button class="be-filter-trigger dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                    Precio
-                </button>
-                <div class="dropdown-menu be-filter-menu shadow">
-                    <div class="be-filter-title">Rango de precio</div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label class="small text-muted">Mínimo</label>
-                            <input type="number" class="form-control" placeholder="$0">
-                        </div>
-                        <div class="col-6">
-                            <label class="small text-muted">Máximo</label>
-                            <input type="number" class="form-control" placeholder="$5000+">
-                        </div>
-                    </div>
-                    <button class="be-btn-apply">Aplicar</button>
+<div class="container-fluid px-lg-5 py-4">
+    <!-- Título y Botón Alineados -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Catálogo de Hoteles</h2>
+            <p class="text-muted small mb-0">Encuentra tu próximo destino con nosotros.</p>
+        </div>
+        <!-- BOTÓN QUE ABRE EL PANEL DESDE LA IZQUIERDA -->
+        <button class="btn-filter-toggle shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#filtrosPanel">
+            <i class="bi bi-sliders"></i> Filtros 
+            <?php if($filtros_activos): ?><span class="badge bg-dark rounded-circle" style="font-size: 10px;">!</span><?php endif; ?>
+        </button>
+    </div>
+
+    <!-- PANEL LATERAL (OFFCANVAS) -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="filtrosPanel">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title fw-bold">Filtros Avanzados</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-4">
+            <form action="catalogo.php" method="GET">
+                <h6 class="fw-bold mb-3 small text-uppercase text-muted">Ubicación</h6>
+                <div class="mb-4">
+                    <select name="pais" class="form-select mb-2 rounded-3">
+                        <option value="0">País</option>
+                        <?php while($p = mysqli_fetch_assoc($countries_res)): ?>
+                            <option value="<?= $p['id'] ?>" <?= $pais_id == $p['id'] ? 'selected' : '' ?>><?= $p['name'] ?></option>
+                        <?php endwhile; ?>
+                    </select>
+                    <select name="estado" class="form-select mb-2 rounded-3">
+                        <option value="0">Estado</option>
+                        <?php while($e = mysqli_fetch_assoc($states_res)): ?>
+                            <option value="<?= $e['id'] ?>" <?= $estado_id == $e['id'] ? 'selected' : '' ?>><?= $e['name'] ?></option>
+                        <?php endwhile; ?>
+                    </select>
+                    <select name="ciudad" class="form-select rounded-3">
+                        <option value="0">Ciudad</option>
+                        <?php while($c = mysqli_fetch_assoc($cities_res)): ?>
+                            <option value="<?= $c['id'] ?>" <?= $ciudad_id == $c['id'] ? 'selected' : '' ?>><?= $c['name'] ?></option>
+                        <?php endwhile; ?>
+                    </select>
                 </div>
-            </div>
 
-            <div class="dropdown">
-                <button class="be-filter-trigger dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                    Estrellas
-                </button>
-                <div class="dropdown-menu be-filter-menu shadow">
-                    <div class="be-filter-title">Categoría</div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" id="be-star5">
-                        <label class="form-check-label" for="be-star5">5 Estrellas <i class="bi bi-star-fill text-warning"></i></label>
-                    </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" id="be-star4">
-                        <label class="form-check-label" for="be-star4">4 Estrellas <i class="bi bi-star-fill text-warning"></i></label>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="be-star3">
-                        <label class="form-check-label" for="be-star3">3 Estrellas <i class="bi bi-star-fill text-warning"></i></label>
-                    </div>
-                    <button class="be-btn-apply">Aplicar</button>
+                <hr class="my-4 opacity-25">
+
+                <h6 class="fw-bold mb-3 small text-uppercase text-muted">Presupuesto Máximo</h6>
+                <div class="input-group mb-5">
+                    <span class="input-group-text bg-white border-end-0 rounded-start-3">$</span>
+                    <input type="number" name="max" class="form-control border-start-0 rounded-end-3" placeholder="Ej. 5000" value="<?= $max < 999999 ? $max : '' ?>">
                 </div>
-            </div>
 
-            <a href="catalogo.php" class="be-link-clear">Limpiar</a>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-dark py-3 rounded-4 fw-bold">Ver resultados</button>
+                    <a href="catalogo.php" class="btn btn-link text-muted small">Borrar filtros</a>
+                </div>
+            </form>
         </div>
     </div>
-</section>
 
-<div class="container-fluid px-lg-5 py-5">
-    <div class="mb-5 text-center"> 
-        <h2 class="fw-bold text-dark">Catálogo de Hoteles</h2>
-        <p class="text-muted">Explora las mejores opciones disponibles para tu viaje</p>
-    </div>
-
-    <div class="row g-4">
-        <?php while($hotel = mysqli_fetch_assoc($resultado)): 
-            $es_fav = (isset($_SESSION['favoritos']) && in_array($hotel['id_catalogo'], $_SESSION['favoritos'])) ? 'checked' : '';
-        ?>
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <a href="lugares-info.html?id=<?php echo $hotel['id_catalogo']; ?>" class="hotel-card-link">
-                <article class="hotel-card shadow-sm">
-                    <div class="image-box">
-                        <img src="<?php echo $hotel['url_imagen'] ?? 'img/placeholder.jpg'; ?>" alt="<?php echo $hotel['nombre']; ?>">
-                        <label class="fav-checkbox" onclick="event.stopPropagation();">
-                            <input type="checkbox" hidden <?php echo $es_fav; ?> onchange="toggleFavorito(<?php echo $hotel['id_catalogo']; ?>)">
-                            <i class="bi bi-heart-fill"></i>
+    <!-- GRID DE HOTELES (SIEMPRE 4 COLUMNAS) -->
+    <main>
+        <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4">
+            <?php while($hotel = mysqli_fetch_assoc($resultado)): 
+                $rating = $hotel['promedio_estrellas'] ? number_format($hotel['promedio_estrellas'], 1) : "Nuevo";
+            ?>
+            <div class="col">
+                <article class="hotel-card shadow-sm d-flex flex-column">
+                    <div class="image-box position-relative">
+                        <img src="<?= !empty($hotel['url_imagen']) ? $hotel['url_imagen'] : 'imagenes/placeholder.jpg'; ?>" alt="Hotel">
+                        <label class="fav-checkbox position-absolute top-0 end-0 m-3">
+                            <input type="checkbox" id="fav-<?= $hotel['id_catalogo']; ?>" hidden onchange="toggleFavorito(<?= $hotel['id_catalogo']; ?>)">
+                            <i class="bi bi-heart-fill fs-5 fav-icon"></i>
                         </label>
                     </div>
-                    <div class="info-box">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="category"><?php echo $hotel['categoria'] ?? 'Hotel'; ?></span>
-                            <span class="rating-simulated">
-                                <i class="bi bi-star-fill text-warning"></i> 
-                                <?php echo number_format(4 + (mt_rand() / mt_getrandmax()), 1); ?>
-                            </span>
-                        </div>
-                        <h3 class="hotel-title"><?php echo $hotel['nombre']; ?></h3>
-                        <p class="location text-truncate"><i class="bi bi-geo-alt"></i> <?php echo $hotel['direccion'] ?? 'Ubicación no disponible'; ?></p>
-                        <div class="footer-card">
-                            <div class="price-data">
-                                <?php if($hotel['precio']): ?>
-                                    <span class="new-p">$<?php echo number_format($hotel['precio'], 0); ?> <small>MXN</small></span>
-                                <?php else: ?>
-                                    <span class="new-p">Ver precio</span>
-                                <?php endif; ?>
-                            </div>
-                            <span class="btn-fake">Detalles</span>
+                    <div class="p-3">
+                        <h6 class="fw-bold mb-1 text-truncate small"><?= htmlspecialchars($hotel['nombre']); ?></h6>
+                        <p class="text-muted mb-2 text-truncate" style="font-size: 11px;">
+                            <i class="bi bi-geo-alt me-1 text-danger"></i><?= htmlspecialchars($hotel['ubicacion_real'] ?? 'Sin ubicación'); ?>
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-3">
+                            <span class="fw-bold fs-6 text-dark">$<?= number_format($hotel['precio_min'], 0); ?> <small class="text-muted" style="font-size: 10px;">MXN</small></span>
+                            <a href="lugares-info.php?id=<?= $hotel['id_catalogo']; ?>" class="text-dark"><i class="bi bi-arrow-right-circle-fill fs-4 opacity-75"></i></a>
                         </div>
                     </div>
                 </article>
-            </a>
+            </div>
+            <?php endwhile; ?>
         </div>
-        <?php endwhile; ?>
-    </div>
+    </main>
 </div>
 
+<footer class="py-4 border-top mt-5 bg-white text-center">
+    <div class="container">
+        <p class="text-muted mb-0 small">
+            &copy; 2026 <strong>BookingEngineering</strong>. Todos los derechos reservados.
+        </p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 function toggleFavorito(idHotel) {
-    const formData = new FormData();
-    formData.append('id', idHotel);
-    fetch('guardar_favorito.php', { method: 'POST', body: formData });
+    let favoritos = JSON.parse(localStorage.getItem('mis_favoritos')) || [];
+    if (favoritos.includes(idHotel)) {
+        favoritos = favoritos.filter(fav => fav !== idHotel);
+    } else {
+        favoritos.push(idHotel);
+    }
+    localStorage.setItem('mis_favoritos', JSON.stringify(favoritos));
 }
-</script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+document.addEventListener("DOMContentLoaded", () => {
+    let favoritosLocales = JSON.parse(localStorage.getItem('mis_favoritos')) || [];
+    favoritosLocales.forEach(id => {
+        let input = document.getElementById(`fav-${id}`);
+        if(input) input.checked = true;
+    });
+});
+</script>
 </body>
 </html>
