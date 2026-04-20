@@ -6,7 +6,7 @@ $query = "SELECT c.id_catalogo, c.nombre, i.url_imagen
           FROM catalogo c
          LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
           ORDER BY RAND()
-          LIMIT 8";
+          LIMIT 12";
 
 $resultado_hoteles = mysqli_query($config, $query);
 

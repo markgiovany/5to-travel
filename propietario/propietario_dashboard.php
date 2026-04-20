@@ -117,30 +117,14 @@ body {
     </div>
 
     <ul class="nav nav-pills flex-column mb-auto">
-        <li>
-            <a href="propietario_dashboard.php" class="nav-link active">
-                <i class="bi bi-speedometer2 me-2"></i> Panel de Control
-            </a>
-        </li>
-
-        <li>
-            <a href="mis_reservaciones.php" class="nav-link">
-                <i class="bi bi-calendar-check me-2"></i> Reservaciones
-            </a>
-        </li>
-
-        <li>
-            <a href="mis_pagos.php" class="nav-link">
-                <i class="bi bi-cash-coin me-2"></i> Pagos
-            </a>
-        </li>
+        <li><a href="propietario_dashboard.php" class="nav-link active">Panel</a></li>
+        <li><a href="mis_reservaciones.php" class="nav-link">Reservaciones</a></li>
+        <li><a href="mis_pagos.php" class="nav-link">Pagos</a></li>
     </ul>
 
     <hr>
 
-    <a href="../auth/logout.php" class="btn btn-danger w-100">
-        Cerrar Sesión
-    </a>
+    <a href="../auth/logout.php" class="btn btn-danger w-100">Cerrar Sesión</a>
 </div>
 
 <div class="main-content">
@@ -182,11 +166,13 @@ body {
 <?php
 $id = $row['id_catalogo'];
 
-/* IMÁGENES */
+/* IMÁGENES HOTEL */
 $res_img = mysqli_query($config, "
 SELECT url_imagen 
 FROM cat_imagen 
 WHERE id_catalogo = '$id'
+AND id_habitacion IS NULL
+ORDER BY id_imagen DESC
 ");
 
 $imgs = [];
@@ -194,7 +180,7 @@ while($img = mysqli_fetch_assoc($res_img)){
     $imgs[] = $img['url_imagen'];
 }
 
-/* TIPOS DE HABITACIÓN ACTUALIZADOS (DISTINCT PARA EVITAR DUPLICADOS) */
+/* TIPOS (TABLA PRINCIPAL) */
 $res_tipos = mysqli_query($config, "
 SELECT DISTINCT t.nombre
 FROM cat_catalogo_habitacion ch
@@ -206,11 +192,21 @@ $tipos = [];
 while($t = mysqli_fetch_assoc($res_tipos)){
     $tipos[] = $t['nombre'];
 }
+
+/* PRECIOS */
+$res_precio = mysqli_query($config, "
+SELECT MIN(precio) AS precio_min, MAX(precio) AS precio_max
+FROM cat_catalogo_habitacion
+WHERE id_catalogo = '$id'
+");
+
+$precio_data = mysqli_fetch_assoc($res_precio);
+
+$precio_min = $precio_data['precio_min'] ?? 0;
+$precio_max = $precio_data['precio_max'] ?? 0;
 ?>
 
-<tr class="hotel-row"
-data-bs-toggle="modal"
-data-bs-target="#modal<?php echo $id; ?>">
+<tr class="hotel-row" data-bs-toggle="modal" data-bs-target="#modal<?php echo $id; ?>">
 
 <td>
 <?php if(!empty($imgs)): ?>
@@ -226,8 +222,8 @@ data-bs-target="#modal<?php echo $id; ?>">
         <span><?php echo htmlspecialchars($row['nombre']); ?></span>
 
         <span class="badge bg-success ms-2">
-            💰 $<?php echo number_format($row['precio_min'],2); ?> - 
-            $<?php echo number_format($row['precio_max'],2); ?>
+            💰 $<?php echo number_format($precio_min,2); ?> - 
+            $<?php echo number_format($precio_max,2); ?>
         </span>
     </div>
 </td>
@@ -260,6 +256,7 @@ onclick="return confirm('¿Eliminar hotel?')">
 
 </tr>
 
+<!-- MODAL FINAL -->
 <div class="modal fade" id="modal<?php echo $id; ?>" tabindex="-1">
 <div class="modal-dialog modal-lg">
 <div class="modal-content">
@@ -271,14 +268,29 @@ onclick="return confirm('¿Eliminar hotel?')">
 
 <div class="modal-body">
 
-<?php if(!empty($imgs)): ?>
+<?php
+/* IMÁGENES MODAL */
+$res_img_modal = mysqli_query($config, "
+SELECT url_imagen 
+FROM cat_imagen 
+WHERE id_catalogo = '$id'
+AND id_habitacion IS NULL
+ORDER BY id_imagen DESC
+");
+
+$imgs_modal = [];
+while($imgm = mysqli_fetch_assoc($res_img_modal)){
+    $imgs_modal[] = $imgm['url_imagen'];
+}
+?>
+
+<?php if(!empty($imgs_modal)): ?>
 <div id="carousel<?php echo $id; ?>" class="carousel slide mb-3"
-data-bs-ride="carousel"
-data-bs-interval="3000">
+data-bs-ride="carousel">
 
 <div class="carousel-inner">
 
-<?php foreach($imgs as $index => $img): ?>
+<?php foreach($imgs_modal as $index => $img): ?>
 <div class="carousel-item <?php echo $index == 0 ? 'active' : ''; ?>">
 <img src="<?php echo $img; ?>"
 style="width:100%;height:250px;object-fit:cover;border-radius:10px;">
@@ -286,46 +298,39 @@ style="width:100%;height:250px;object-fit:cover;border-radius:10px;">
 <?php endforeach; ?>
 
 </div>
-
-<button class="carousel-control-prev" type="button"
-data-bs-target="#carousel<?php echo $id; ?>" data-bs-slide="prev">
-<span class="carousel-control-prev-icon"></span>
-</button>
-
-<button class="carousel-control-next" type="button"
-data-bs-target="#carousel<?php echo $id; ?>" data-bs-slide="next">
-<span class="carousel-control-next-icon"></span>
-</button>
-
 </div>
 <?php endif; ?>
 
+<hr>
+
+<!-- DESCRIPCIÓN -->
+<p><strong>📝 Descripción del hotel:</strong></p>
 <p><?php echo $row['descripcion']; ?></p>
 
 <hr>
 
-<div class="mb-2">
-<strong>💰 Rango de precios:</strong><br>
+<!-- TIPOS -->
+<div>
+<strong>🏷 Tipos de habitaciones:</strong><br>
 
-<span class="badge bg-success fs-6">
-Min: $<?php echo number_format($row['precio_min'], 2); ?>
-</span>
-
-<span class="badge bg-danger fs-6 ms-2">
-Max: $<?php echo number_format($row['precio_max'], 2); ?>
-</span>
-
-</div>
-
-<div class="mb-2">
-<strong>🏷️ Tipos disponibles actualmente:</strong><br>
 <?php if(empty($tipos)): ?>
-    <span class="text-muted small">No se han definido tipos aún.</span>
+    <span class="text-muted">No hay habitaciones registradas</span>
 <?php else: ?>
     <?php foreach($tipos as $t): ?>
         <span class="badge bg-primary me-1 mb-1"><?php echo $t; ?></span>
     <?php endforeach; ?>
 <?php endif; ?>
+</div>
+
+<hr>
+
+<!-- PRECIOS -->
+<div>
+<strong>💰 Rango de precios:</strong><br>
+
+<span class="badge bg-success">Min: $<?php echo number_format($precio_min,2); ?></span>
+<span class="badge bg-danger ms-2">Max: $<?php echo number_format($precio_max,2); ?></span>
+
 </div>
 
 </div>
