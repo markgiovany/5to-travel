@@ -1,3 +1,27 @@
+<?php
+session_start();
+include("config/config.php"); 
+
+$id_hotel = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+if ($id_hotel > 0) {
+    $sql_detalle = "SELECT c.*,  u.direccion, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.name AS nombre_pais
+                    FROM catalogo c
+                    LEFT JOIN cat_ubicacion u ON c.id_ubicacion = u.id_ubicacion
+                    LEFT JOIN cities ciu ON u.city_id = ciu.id
+                    LEFT JOIN states est ON ciu.state_id = est.id
+                    LEFT JOIN countries pais ON est.country_id = pais.id
+                    WHERE c.id_catalogo = $id_hotel";
+    
+    $res_detalle = mysqli_query($config, $sql_detalle);
+    $hotel = mysqli_fetch_assoc($res_detalle);
+
+} else {
+    header("Location: home.php");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,33 +68,22 @@
     <section class="datos-lugar">
         <div class="container">
             <div class="titulo-lugar">
-                <h1>La Maison</h1>
-            </div>
-
-            <div class="servicios-section">
-                <h3 class="section-subtitle">Este lugar te ofrece:</h3>
-                <div class="row text-center g-4">
-                    <div class="col-6 col-md-2"><div class="servicio-card"><i class="bi bi-p-circle"></i> <h5>Estacionamiento Gratis</h5></div></div>
-                    <div class="col-6 col-md-2"><div class="servicio-card"><i class="bi bi-wifi"></i><h5>Wifi Alta Velocidad</h5></div></div>
-                    <div class="col-6 col-md-2"><div class="servicio-card"><img src="imagenes/comida.svg" alt=""><h5>Desayuno</h5></div></div>
-                    <div class="col-6 col-md-2"><div class="servicio-card"><i class="bi bi-water"></i><h5>Piscina</h5></div></div>
-                    <div class="col-6 col-md-2"><div class="servicio-card"><img src="imagenes/pets.svg" alt=""><h5>Mascotas</h5></div></div>
-                    <div class="col-6 col-md-2"><div class="servicio-card"><img src="imagenes/gym.svg" alt=""><h5>Gimnasio</h5></div></div>
-                </div>
+                <h1><?php echo htmlspecialchars($hotel['nombre']); ?></h1>
             </div>
 
             <div class="row info-extra">
                 <div class="col-md-7">
                     <div class="descripcion-lugar">
                         <h2>Conoce más</h2>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras malesuada ipsum erat, vitae varius odio ultricies at. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Aliquam sagittis, mauris at mollis malesuada, lectus ante efficitur turpis, aliquet sollicitudin augue lectus vitae metus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Cras sodales facilisis urna vel molestie. Proin nec efficitur enim, in laoreet ipsum. Quisque cursus, arcu sit amet pulvinar elementum, purus lacus luctus sem, ac eleifend nibh lorem quis lacus. Nam a mi risus. Duis dapibus viverra ipsum, nec ullamcorper leo mattis sed. Fusce placerat sed quam ac finibus. Proin sollicitudin ut sapien vitae vehicula. Sed fermentum volutpat ipsum eget tristique. Aenean accumsan arcu non sapien tincidunt commodo.</p>
+                        <p><?php echo htmlspecialchars($hotel['descripcion']); ?></p>
                     </div>
                 </div>
 
                 <div class="col-md-5">
                     <div class="mapa-card">
                         <h4>Ubicación</h4>
-                        <p>Ubicado en un entorno natural con bosque, cascada y riachuelo cercanos, próximo a la cascada Velo de Novia y al lago Avándaro.</p>
+                        <p><?php echo htmlspecialchars($hotel['direccion'])?></p>
+                        <p><?php echo htmlspecialchars($hotel['nombre_pais'])?>, <?php echo htmlspecialchars($hotel['nombre_estado'])?>, <?php echo htmlspecialchars($hotel['nombre_ciudad'])?></p>
                     </div>
                 </div>
             </div>
@@ -89,57 +102,64 @@
         </div>
     </section>
 
+    <?php 
+    $query_hab = "SELECT * FROM cat_catalogo_habitacion WHERE id_catalogo = $id_hotel AND id_status = 1";
+    $res_hab = mysqli_query($config, $query_hab);
+    
+    ?>
     <div class="container">
 
         <div class="row fw-bold mb-3 d-none d-lg-flex border-bottom pb-2">
             <div class="col-lg-3">TIPO DE HABITACIÓN</div>
-            <div class="col-lg-4 text-center">OPCIONES</div>
+            <div class="col-lg-4 text-center">DESCRIPCION</div>
             <div class="col-lg-5 text-center">PRECIO</div>
         </div>
 
+       <?php while($hab = mysqli_fetch_assoc($res_hab)): ?>
         <div class="row mb-4 border rounded shadow-sm bg-white overflow-hidden">
             <div class="col-lg-3 p-0 border-end">
                 <div class="tipo-habitaciones">
                     <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427" class="img-fluid w-100" style="height: 160px; object-fit: cover;">
                     <div class="p-2">
-                        <h6 class="fw-bold mb-1">2 x Grand Room, 2 Double Beds</h6>
-                        <p class="small text-muted mb-3">3 personas en 2 habitaciones</p>
+                        <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($hab['nombre']); ?></h6>
+                        <p class="small text-muted mb-3">Capacidad para <?php echo $hab['capacidad']; ?> personas</p>
+                        
                         <div class="d-flex gap-3 text-muted" style="font-size: 0.8rem;">
                             <span><i class="bi bi-tv"></i> TV</span>
                             <span><i class="bi bi-wifi"></i> Wi-Fi gratis</span>
                         </div>
-                        <a href="#" class="d-block mt-2 small fw-bold text-decoration-none">Ver detalle de la habitación</a>
                     </div>
                 </div>
             </div>
 
             <div class="col-lg-4 p-4 border-end bg-light-subtle">
                 <div class="mb-3">
-                    <p class="text-muted small mb-1"><i class="bi bi-x-lg"></i> No incluye régimen de comida</p>
-                    <p class="text-muted small mb-1"><i class="bi bi-x-lg"></i> No puedes cancelar ni realizar cambios</p>
+                    <p class="small mb-1"><strong>Descripción:</strong></p>
+                    <p class="text-muted small mb-1">
+                        <?php echo htmlspecialchars($hab['descripcion'] ?? 'Sin descripción disponible'); ?>
+                    </p>
                 </div>
             </div>
 
             <div class="col-lg-5 p-4 d-flex flex-column justify-content-center align-items-end">
-
                 <div class="precio_habitacion">        
                     <div class="text-end mb-3">
                         <div class="d-flex align-items-center justify-content-end gap-2">
-                            <h3 class="fw-bold mb-0">MXN$ 34,761</h3>
+                            <h3 class="fw-bold mb-0">MXN$ <?php echo number_format($hab['precio'], 2); ?></h3>
                         </div>
-                        <div class="small text-muted">Final por noche: MXN$ 8,690</div>
+                        <div class="small text-muted">Disponibilidad: <?php echo $hab['disponibilidad']; ?> unidades</div>
                         <div class="small text-muted" style="font-size: 0.75rem;">Impuestos incluidos</div>
                     </div>
                 </div>
 
                 <div class="botones_habitacion">
                     <div class="d-grid gap-2 me-3">
-                        <a href="reservation.html"><button class="btn btn-info">Reservar</button></a>
+                        <a href="reservation.html" class="btn btn-info text-white">Reservar</a>
                     </div>
                 </div>
             </div>
         </div>
-       
+        <?php endwhile; ?>    
     </div>
     
     <footer class="main-footer">
