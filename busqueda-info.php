@@ -22,6 +22,11 @@ if (!empty($ubicacion)) {
                 OR c.nombre LIKE '%$ubi_safe%')";
 }
 
+if (!empty($personas)) {
+    $pers_safe = (int)$personas;
+    $sql .= " AND c.disponibilidad >= $pers_safe";
+}
+
 $sql .= " GROUP BY c.id_catalogo";
 
 $resultado = mysqli_query($config, $sql);
