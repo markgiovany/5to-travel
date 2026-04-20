@@ -194,7 +194,7 @@ while($img = mysqli_fetch_assoc($res_img)){
     $imgs[] = $img['url_imagen'];
 }
 
-/* TIPOS DE HABITACIÓN ACTUALIZADOS (DISTINCT PARA EVITAR DUPLICADOS) */
+/* TIPOS */
 $res_tipos = mysqli_query($config, "
 SELECT DISTINCT t.nombre
 FROM cat_catalogo_habitacion ch
@@ -206,6 +206,20 @@ $tipos = [];
 while($t = mysqli_fetch_assoc($res_tipos)){
     $tipos[] = $t['nombre'];
 }
+
+/* 🔥 FIX: PRECIOS DESDE HABITACIONES */
+$res_precio = mysqli_query($config, "
+SELECT 
+    MIN(precio) AS precio_min,
+    MAX(precio) AS precio_max
+FROM cat_catalogo_habitacion
+WHERE id_catalogo = '$id'
+");
+
+$precio_data = mysqli_fetch_assoc($res_precio);
+
+$precio_min = $precio_data['precio_min'] ?? 0;
+$precio_max = $precio_data['precio_max'] ?? 0;
 ?>
 
 <tr class="hotel-row"
@@ -226,8 +240,8 @@ data-bs-target="#modal<?php echo $id; ?>">
         <span><?php echo htmlspecialchars($row['nombre']); ?></span>
 
         <span class="badge bg-success ms-2">
-            💰 $<?php echo number_format($row['precio_min'],2); ?> - 
-            $<?php echo number_format($row['precio_max'],2); ?>
+            💰 $<?php echo number_format($precio_min,2); ?> - 
+            $<?php echo number_format($precio_max,2); ?>
         </span>
     </div>
 </td>
@@ -260,6 +274,7 @@ onclick="return confirm('¿Eliminar hotel?')">
 
 </tr>
 
+<!-- MODAL -->
 <div class="modal fade" id="modal<?php echo $id; ?>" tabindex="-1">
 <div class="modal-dialog modal-lg">
 <div class="modal-content">
@@ -308,24 +323,13 @@ data-bs-target="#carousel<?php echo $id; ?>" data-bs-slide="next">
 <strong>💰 Rango de precios:</strong><br>
 
 <span class="badge bg-success fs-6">
-Min: $<?php echo number_format($row['precio_min'], 2); ?>
+Min: $<?php echo number_format($precio_min, 2); ?>
 </span>
 
 <span class="badge bg-danger fs-6 ms-2">
-Max: $<?php echo number_format($row['precio_max'], 2); ?>
+Max: $<?php echo number_format($precio_max, 2); ?>
 </span>
 
-</div>
-
-<div class="mb-2">
-<strong>🏷️ Tipos disponibles actualmente:</strong><br>
-<?php if(empty($tipos)): ?>
-    <span class="text-muted small">No se han definido tipos aún.</span>
-<?php else: ?>
-    <?php foreach($tipos as $t): ?>
-        <span class="badge bg-primary me-1 mb-1"><?php echo $t; ?></span>
-    <?php endforeach; ?>
-<?php endif; ?>
 </div>
 
 </div>
