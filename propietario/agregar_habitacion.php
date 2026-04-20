@@ -194,7 +194,7 @@ CANTIDAD DE HABITACIONES
 </select>
 
 <!-- IMAGEN -->
-<input type="file" name="imagen" class="form-control mb-3">
+<input type="file" name="imagen" class="form-control mb-3" accept="image/*">
 
 <button class="btn btn-success w-100">
 Guardar habitaciones
