@@ -10,36 +10,44 @@ if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
 $uuid = $_SESSION['user_uuid'];
 
 /* RESERVAS */
-$sql = "SELECT r.*, c.nombre AS hotel
+$sql = "SELECT r.*, c.nombre AS hotel, 
+               u.first_name, u.last_name, 
+               s.nombre AS estado_nombre
 FROM res_reserva r
 JOIN res_habitacion h ON r.id_habitacion = h.id_habitacion
 JOIN catalogo c ON h.id_catalogo = c.id_catalogo
+JOIN usr_users u ON r.user_uuid = u.uuid
+JOIN status s ON r.id_status = s.id_status
 WHERE c.propietario_uuid = '$uuid'";
 
 $res = mysqli_query($config, $sql);
 
 /* TOTAL DEL MES */
 $total_mes_sql = "
-SELECT COUNT(*) as total
-FROM res_reserva
-WHERE MONTH(created_at) = MONTH(CURRENT_DATE())
-AND YEAR(created_at) = YEAR(CURRENT_DATE())
+SELECT COUNT(r.id_reserva) as total
+FROM res_reserva r
+JOIN res_habitacion h ON r.id_habitacion = h.id_habitacion
+JOIN catalogo c ON h.id_catalogo = c.id_catalogo
+WHERE c.propietario_uuid = '$uuid' 
+AND MONTH(r.created_at) = MONTH(CURRENT_DATE())
+AND YEAR(r.created_at) = YEAR(CURRENT_DATE())
 ";
 
 $total_mes_res = mysqli_query($config, $total_mes_sql);
 $total_mes = mysqli_fetch_assoc($total_mes_res)['total'] ?? 0;
-
 /* GRAFICA */
 $grafica_sql = "
-SELECT DATE_FORMAT(created_at, '%Y-%m') as mes, COUNT(*) as total
-FROM res_reserva
+SELECT DATE_FORMAT(r.created_at, '%Y-%m') as mes, COUNT(r.id_reserva) as total
+FROM res_reserva r
+JOIN res_habitacion h ON r.id_habitacion = h.id_habitacion
+JOIN catalogo c ON h.id_catalogo = c.id_catalogo
+WHERE c.propietario_uuid = '$uuid'
 GROUP BY mes
 ORDER BY mes DESC
 LIMIT 6
 ";
 
 $grafica_res = mysqli_query($config, $grafica_sql);
-
 $labels = [];
 $data = [];
 
@@ -98,7 +106,7 @@ body {
     margin-left: var(--sidebar-width);
     flex-grow: 1;
     padding: 20px;
-    width: 100%;
+    width: calc(100% - var(--sidebar-width));
 }
 
 .top-bar {
@@ -195,13 +203,13 @@ body {
 <tbody>
 <?php while($r=mysqli_fetch_assoc($res)): ?>
 <tr>
-<td><?= $r['user_uuid'] ?></td>
-<td><?= $r['hotel'] ?></td>
+<td><?= htmlspecialchars($r['first_name'] . " " . $r['last_name']) ?></td>
+<td><?= htmlspecialchars($r['hotel']) ?></td>
 <td><?= $r['fecha_entrada'] ?></td>
 <td><?= $r['fecha_salida'] ?></td>
 <td>
 <span class="badge bg-primary">
-<?= $r['estado'] ?>
+<?= $r['estado_nombre'] ?>
 </span>
 </td>
 </tr>
