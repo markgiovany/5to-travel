@@ -5,6 +5,7 @@ include("config/config.php");
 $query = "SELECT c.id_catalogo, c.nombre, i.url_imagen 
           FROM catalogo c
          LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
+         GROUP BY c.id_catalogo
           ORDER BY RAND()
           LIMIT 12";
 

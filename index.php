@@ -7,7 +7,7 @@ $query = "SELECT c.id_catalogo, c.nombre, i.url_imagen
           LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
           GROUP BY c.id_catalogo
           ORDER BY RAND()
-          LIMIT 20";
+          LIMIT 12";
 
 $resultado_hoteles = mysqli_query($config, $query);
 
@@ -39,7 +39,7 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
 
 <header class="main-header">
 <div class="glass-nav">
-    <a href="index.html" class="logo">
+    <a href="index.php" class="logo">
         <img src="imagenes/brooking.png" alt="Logo">
     </a>
 
@@ -59,39 +59,41 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
         <h1>Encuentra tu próximo <span class="text-gradient">destino ideal</span></h1>
         <p>Reserva hoteles, casas y experiencias únicas en todo el mundo.</p>
         
-        <div class="smart-search">
-            <div class="search-field">
-                <span class="label">UBICACIÓN</span>
-                <input type="text" placeholder="¿A dónde quieres ir?">
-            </div>
+        <form action="busqueda-info.php" method="GET">
+          <div class="smart-search">
+              <div class="search-field">
+                  <span class="label">UBICACIÓN</span>
+                  <input type="text" name="ubicacion" placeholder="¿A dónde quieres ir?">
+              </div>
 
-            <div class="divider"></div> 
-            
-            <div class="search-field">
-                <span class="label">ENTRADA</span>
-                <input type="date">
-            </div>
+              <div class="divider"></div> 
+              
+              <div class="search-field">
+                  <span class="label">ENTRADA</span>
+                  <input type="date" name="entrada">
+              </div>
 
-            <div class="divider"></div> 
-            
-            <div class="search-field">
-                <span class="label">SALIDA</span>
-                <input type="date">
-            </div>
+              <div class="divider"></div> 
+              
+              <div class="search-field">
+                  <span class="label">SALIDA</span>
+                  <input type="date" name="salida">
+              </div>
 
-            <div class="divider"></div> 
-            
-            <div class="search-field">
-                <span class="label">PERSONAS</span>
-                <input type="text" placeholder="¿Cuántos?">
-            </div>
+              <div class="divider"></div> 
+              
+              <div class="search-field">
+                  <span class="label">PERSONAS</span>
+                  <input type="number" name="personas" placeholder="¿Cuántos?">
+              </div>
 
-            <button class="search-btn" onclick="location.href='busqueda-resultado.html'">
-                <svg width="20" height="20" fill="white" viewBox="0 0 16 16">
-                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85z"/>
-                </svg>
-            </button>
-        </div>
+              <button class="search-btn">
+                  <svg width="20" height="20" fill="white" viewBox="0 0 16 16">
+                      <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                  </svg>
+              </button>
+          </div>
+        </form>
     </div>
 </section>
 

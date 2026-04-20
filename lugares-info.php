@@ -5,12 +5,13 @@ include("config/config.php");
 $id_hotel = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($id_hotel > 0) {
-    $sql_detalle = "SELECT c.*,  u.direccion, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.name AS nombre_pais
+    $sql_detalle = "SELECT c.*,  u.direccion, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.name AS nombre_pais, i.url_imagen
                     FROM catalogo c
                     LEFT JOIN cat_ubicacion u ON c.id_ubicacion = u.id_ubicacion
                     LEFT JOIN cities ciu ON u.city_id = ciu.id
                     LEFT JOIN states est ON ciu.state_id = est.id
                     LEFT JOIN countries pais ON est.country_id = pais.id
+                    LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
                     WHERE c.id_catalogo = $id_hotel";
     
     $res_detalle = mysqli_query($config, $sql_detalle);
@@ -55,7 +56,7 @@ if ($id_hotel > 0) {
     <section class="hero-lugar">
         <div class="container">
             <div class="row g-3"> <div class="col-lg-8">
-                    <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427" class="img-fluid gallery-main" alt="Principal">
+                    <img src="<?php echo !empty($hotel['url_imagen']) ? $hotel['url_imagen'] : 'https://images.unsplash.com/photo-1590490360182-c33d57733427'; ?>" class="img-fluid gallery-main" alt="Principal">
                 </div>
                 <div class="col-lg-4 d-flex flex-column justify-content-between">
                     <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427" class="img-fluid gallery-sub" alt="Sub 1">

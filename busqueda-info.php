@@ -11,7 +11,7 @@ $sql = "SELECT c.*, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.n
         LEFT JOIN cities ciu ON u.city_id = ciu.id
         LEFT JOIN states est ON ciu.state_id = est.id
         LEFT JOIN countries pais ON est.country_id = pais.id
-        LEFT JOIN cat_imagen img ON c.id_catalogo = img.id_catalogo
+        LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
         WHERE 1=1";
 
 if (!empty($ubicacion)) {
@@ -110,7 +110,7 @@ if(!$resultado){
                 <a href="lugares-info.php?id=<?php echo $sugerencias['id_catalogo']; ?>" style="text-decoration: none; color:black">
                     <article class="hotel-card shadow-sm">
                         <div class="image-box">
-                            <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=600" alt="Hotel">
+                            <img src="<?php echo !empty($hotel['url_imagen']) ? $sugerencias['url_imagen'] : 'https://images.unsplash.com/photo-1590490360182-c33d57733427'; ?>" alt="Hotel">
                         </div>
                         <div class="info-box">
                             <h3 class="hotel-title"><?php echo htmlspecialchars($sugerencias['nombre']); ?></h3>
