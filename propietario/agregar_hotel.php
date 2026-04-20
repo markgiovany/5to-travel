@@ -10,6 +10,16 @@ if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
     exit();
 }
 
+/* 🔥 UUID v4 REAL */
+function generar_uuid_v4() {
+    $data = random_bytes(16);
+
+    $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+    $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+
+    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+}
+
 $propietario_uuid = $_SESSION['user_uuid'];
 
 /* PAISES */
@@ -50,28 +60,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             $id_hotel = mysqli_insert_id($config);
 
-            /* 2. INSERT UBICACIÓN (CLAVE) */
-            $uuid_ubicacion = uniqid("ubi_");
+            /* 2. UBICACIÓN CON UUID REAL */
+            $uuid_ubicacion = generar_uuid_v4();
+
+            $direccion = $descripcion;
 
             mysqli_query($config, "
                 INSERT INTO cat_ubicacion
                 (
                     uuid_ubicacion,
                     direccion,
+                    id_status,
                     country_id,
                     state_id,
                     city_id,
-                    id_status,
                     id_catalogo
                 )
                 VALUES
                 (
                     '$uuid_ubicacion',
-                    NULL,
+                    '$direccion',
+                    1,
                     '$pais_id',
                     '$estado_id',
                     '$ciudad_id',
-                    1,
                     '$id_hotel'
                 )
             ");
