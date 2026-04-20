@@ -39,7 +39,6 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
             <img src="imagenes/brooking.png" alt="Logo">
         </a>
         <div class="nav-links">
-            <a href="#">Destinos</a>
             <a href="catalogo.php">Catálogo</a>
             <a href="favoritos.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">
                 <i class="bi bi-heart-fill"></i> Mis Favoritos
@@ -161,44 +160,12 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
 </div>
 </section>
 
-  <footer class="main-footer">
-  <div class="footer-grid">
-    <div class="footer-column">
-      <h3>Soporte</h3>
-      <ul>
-        <li><a href="#">Centro de ayuda</a></li>
-        <li><a href="#">Información de seguridad</a></li>
-        <li><a href="#">Opciones de cancelación</a></li>
-      </ul>
+<footer class="py-4 border-top mt-5 bg-white text-center">
+    <div class="container">
+        <p class="text-muted mb-0 small">
+            &copy; 2026 <strong>BookingEngineering</strong>. Todos los derechos reservados.
+        </p>
     </div>
-    <div class="footer-column">
-      <h3>Compañía</h3>
-      <ul>
-        <li><a href="#">Sobre nosotros</a></li>
-        <li><a href="#">Política de privacidad</a></li>
-        <li><a href="#">Blog de la Comunidad</a></li>
-        <li><a href="#">Términos de servicio</a></li>
-      </ul>
-    </div>
-    <div class="footer-column">
-      <h3>Contacto</h3>
-      <ul>
-        <li><a href="#">Preguntas frecuentes</a></li>
-        <li><a href="#">Ponte en contacto</a></li>
-        <li><a href="#">Patrocinadores</a></li>
-      </ul>
-    </div>
-    <div class="footer-column">
-      <h3>Redes Sociales</h3>
-      <div class="social-icons">
-        <a href="#"><i class="bi bi-facebook"></i></a>
-        <a href="#"><i class="bi bi-twitter-x"></i></a>
-        <a href="#"><i class="bi bi-tiktok"></i></a>
-        <a href="#"><i class="bi bi-youtube"></i></a>
-      </div>
-    </div>
-  </div>
- 
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

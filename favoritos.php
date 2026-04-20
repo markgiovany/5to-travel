@@ -2,17 +2,25 @@
 session_start();
 include("config/config.php");
 
-if (!isset($_SESSION['user_uuid'])) { header("Location: index.php"); exit(); }
+// 1. Recogemos los favoritos de la sesión (PHP)
+$favs_array = isset($_SESSION['favoritos']) ? $_SESSION['favoritos'] : [];
 
-$ids_favs = !empty($_SESSION['favoritos']) ? implode(',', $_SESSION['favoritos']) : '0';
+// 2. Si el usuario viene de JS con más IDs (vía URL), los combinamos
+if (isset($_GET['local_ids'])) {
+    $local_ids = explode(',', $_GET['local_ids']);
+    $favs_array = array_unique(array_merge($favs_array, $local_ids));
+}
 
-$query = "SELECT c.id_catalogo, c.nombre, c.descripcion, c.precio, 
-                 t.nombre_tipo as categoria, u.direccion, i.url_imagen 
+$ids_favs = !empty($favs_array) ? implode(',', array_map('intval', $favs_array)) : '0';
+
+$query = "SELECT 
+            c.id_catalogo, c.nombre, c.descripcion, 
+            u.direccion AS ubicacion_real,
+            (SELECT MIN(h.precio) FROM cat_catalogo_habitacion h WHERE h.id_catalogo = c.id_catalogo) AS precio_min,
+            (SELECT i.url_imagen FROM cat_imagen i WHERE i.id_catalogo = c.id_catalogo LIMIT 1) AS url_imagen
           FROM catalogo c
-          LEFT JOIN cat_tipo t ON c.id_tipo = t.id_tipo
           LEFT JOIN cat_ubicacion u ON c.id_ubicacion = u.id_ubicacion
-          LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
-          WHERE c.id_catalogo IN ($ids_favs)"; 
+          WHERE c.id_catalogo IN ($ids_favs)";
 
 $resultado = mysqli_query($config, $query);
 ?>
@@ -21,46 +29,51 @@ $resultado = mysqli_query($config, $query);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookingEngineer | Catálogo</title>
+    <title>Mis Favoritos | BookingEngineer</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="styles/styles.css"> 
     <link rel="stylesheet" href="styles/catalogo.css">
     <style>
-        .fav-checkbox input:checked + i {
-            color: #ff385c !important;
-        }
+        body { background-color: #fcfcfc; }
+        .fav-checkbox input:checked + i { color: #ff385c !important; }
+        .hotel-card { border-radius: 16px; overflow: hidden; transition: 0.3s; background: #fff; border: 1px solid #eee; height: 100%; }
+        .image-box { height: 180px; width: 100%; position: relative; }
+        .image-box img { width: 100%; height: 100%; object-fit: cover; }
+        .hotel-card-link { text-decoration: none; color: inherit; }
     </style>
 </head>
 <body>
 
 <header class="main-header">
-    <div class="glass-nav">
-        <a href="index.php" class="logo">
-            <img src="imagenes/brooking.png" alt="Logo">
-        </a>
-        <div class="nav-links">
-            <a href="#">Destinos</a>
-            <a href="catalogo.php">Catálogo</a>
-            <a href="favoritos.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                <i class="bi bi-heart-fill"></i> Mis Favoritos
-            </a>
-            
-            <div class="dropdown">
-                <div class="user-pill" data-bs-toggle="dropdown" aria-expanded="false" role="button">
-                    <i class="bi bi-list"></i>
-                    <div class="user-avatar">
-                       <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="display: block; fill: #717171; height: 30px; width: 30px;">
-                           <path d="m16 .7c-8.437 0-15.3 6.863-15.3 15.3s6.863 15.3 15.3 15.3 15.3-6.863 15.3-15.3-6.863-15.3-15.3-15.3zm0 28c-4.021 0-7.605-1.884-9.933-4.81a12.425 12.425 0 0 1 2.245-2.903l.445-.4c1.886-1.637 4.191-2.487 7.243-2.487s5.357.85 7.243 2.487l.445.4a12.425 12.425 0 0 1 2.245 2.903c-2.328 2.926-5.912 4.81-9.933 4.81zm9.328-7.387c-.012-.02-.023-.04-.035-.06a10.428 10.428 0 0 0-6.191-3.653c1.789-1.344 2.898-3.411 2.898-5.7 0-3.97-3.23-7.2-7.2-7.2s-7.2 3.23-7.2 7.2c0 2.289 1.109 4.356 2.898 5.7a10.428 10.428 0 0 0-6.191 3.653c-.012.02-.023.04-.035.06a13.31 13.31 0 0 1-2.573-7.913c0-7.345 5.955-13.3 13.3-13.3s13.3 5.955 13.3 13.3c0 2.924-1.01 5.614-2.711 7.913z"></path>
-                       </svg>
+    <div class="glass-nav container-fluid px-lg-5 d-flex justify-content-between align-items-center py-3 bg-white shadow-sm fixed-top">
+        <!-- Lógica: Si hay sesión iniciada va a home.php, si no, al index -->
+<?php 
+    $enlace_logo = isset($_SESSION['user_uuid']) ? 'home.php' : 'index.php'; 
+?>
+<a href="<?= $enlace_logo; ?>" class="logo">
+    <img src="imagenes/brooking.png" alt="Logo" width="140">
+</a>
+        <div class="nav-links d-flex align-items-center gap-3">
+            <a href="catalogo.php" class="text-decoration-none text-dark fw-medium small">Volver al Catálogo</a>
+            <?php if (isset($_SESSION['user_uuid'])): ?>
+                <div class="dropdown d-inline-block">
+                    <div class="user-pill d-flex align-items-center gap-2 border rounded-pill px-2 py-1" data-bs-toggle="dropdown" role="button">
+                        <i class="bi bi-list text-dark"></i>
+                        <div class="user-avatar bg-light rounded-circle p-1"><i class="bi bi-person-fill text-secondary"></i></div>
                     </div>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                        <li><a class="dropdown-item fw-bold" href="perfil.php">Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="auth/logout.php">Cerrar sesión</a></li>
+                    </ul>
                 </div>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-                    <li><a class="dropdown-item" href="auth/logout.php">Cerrar sesión</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#">Centro de ayuda</a></li>
-                </ul>
-            </div>
+            <?php else: ?>
+                <a href="login.php" class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-person-circle"></i> Login
+                </a>
+            <?php endif; ?>
+        </div>
         </div>
     </div>
 </header>
@@ -69,49 +82,57 @@ $resultado = mysqli_query($config, $query);
 
 <div class="container-fluid px-lg-5 py-5">
     <div class="mb-5 text-center"> 
-        <h2 class="fw-bold text-dark">Catálogo de Hoteles</h2>
-        <p class="text-muted">Explora las mejores opciones disponibles para tu viaje</p>
+        <h2 class="fw-bold text-dark">Mis Favoritos</h2>
+        <p class="text-muted">Los lugares que te han robado el corazón</p>
     </div>
 
     <div class="row g-4">
-        <?php while($hotel = mysqli_fetch_assoc($resultado)): 
-            $es_fav = (isset($_SESSION['favoritos']) && in_array($hotel['id_catalogo'], $_SESSION['favoritos'])) ? 'checked' : '';
-        ?>
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <a href="lugares-info.html?id=<?php echo $hotel['id_catalogo']; ?>" class="hotel-card-link">
+        <?php if(mysqli_num_rows($resultado) > 0): ?>
+            <?php while($hotel = mysqli_fetch_assoc($resultado)): 
+                $es_fav = 'checked'; // Si están aquí, es porque son favoritos
+            ?>
+            <div class="col-12 col-md-6 col-lg-4 col-xl-3" id="card-hotel-<?= $hotel['id_catalogo']; ?>">
                 <article class="hotel-card shadow-sm">
                     <div class="image-box">
-                        <img src="<?php echo $hotel['url_imagen'] ?? 'img/placeholder.jpg'; ?>" alt="<?php echo $hotel['nombre']; ?>">
-                        <label class="fav-checkbox" onclick="event.stopPropagation();">
-                            <input type="checkbox" hidden <?php echo $es_fav; ?> onchange="toggleFavorito(<?php echo $hotel['id_catalogo']; ?>)">
-                            <i class="bi bi-heart-fill"></i>
+                        <img src="<?= $hotel['url_imagen'] ?? 'img/placeholder.jpg'; ?>" alt="<?= $hotel['nombre']; ?>">
+                        <label class="fav-checkbox position-absolute top-0 end-0 m-3" style="z-index: 10;">
+                            <input type="checkbox" hidden <?= $es_fav; ?> onchange="toggleFavorito(<?= $hotel['id_catalogo']; ?>)">
+                            <i class="bi bi-heart-fill fs-5 text-white" style="cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));"></i>
                         </label>
                     </div>
-                    <div class="info-box">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="category"><?php echo $hotel['categoria'] ?? 'Hotel'; ?></span>
-                            <span class="rating-simulated">
-                                <i class="bi bi-star-fill"></i> 
-                                <?php echo number_format(4 + (mt_rand() / mt_getrandmax()), 1); ?>
-                            </span>
-                        </div>
-                        <h3 class="hotel-title"><?php echo $hotel['nombre']; ?></h3>
-                        <p class="location text-truncate"><i class="bi bi-geo-alt"></i> <?php echo $hotel['direccion'] ?? 'Ubicación no disponible'; ?></p>
-                        <div class="footer-card">
-                            <div class="price-data">
-                                <?php if($hotel['precio']): ?>
-                                    <span class="new-p">$<?php echo number_format($hotel['precio'], 0); ?> <small>MXN</small></span>
-                                <?php else: ?>
-                                    <span class="new-p">Ver precio</span>
-                                <?php endif; ?>
+                    <a href="lugares-info.php?id=<?= $hotel['id_catalogo']; ?>" class="hotel-card-link">
+                        <div class="p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-light text-dark border-0 small"><?= $hotel['categoria'] ?? 'Hotel'; ?></span>
+                                <span class="small fw-bold text-warning"><i class="bi bi-star-fill"></i> <?= number_format(4.5, 1); ?></span>
                             </div>
-                            <span class="btn-fake">Detalles</span>
+                            <h6 class="fw-bold text-dark text-truncate"><?= $hotel['nombre']; ?></h6>
+                            <p class="text-muted mb-3 text-truncate" style="font-size: 11px;">
+                                <i class="bi bi-geo-alt text-danger"></i> <?= $hotel['ubicacion_real'] ?? 'Ubicación disponible'; ?>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-auto">
+                                <div class="price-data">
+                                    <?php if($hotel['precio_min']): ?>
+                                        <span class="fw-bold fs-5 text-dark">$<?= number_format($hotel['precio_min'], 0); ?></span>
+                                        <small class="text-muted">MXN</small>
+                                    <?php else: ?>
+                                        <span class="text-secondary small fw-bold">Ver disponibilidad</span>
+                                    <?php endif; ?>
+                                </div>
+                                <i class="bi bi-arrow-right-circle-fill fs-4 text-dark opacity-75"></i>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </article>
-            </a>
-        </div>
-        <?php endwhile; ?>
+            </div>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <div class="col-12 text-center py-5">
+                <i class="bi bi-heartbreak fs-1 text-muted"></i>
+                <h5 class="mt-3">Aún no tienes favoritos</h5>
+                <a href="catalogo.php" class="btn btn-dark rounded-pill px-4 mt-2">Explorar hoteles</a>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -126,13 +147,40 @@ function toggleFavorito(idHotel) {
     })
     .then(response => response.text())
     .then(data => {
-        console.log("Favorito " + data);
+        // Opcional: Remover la card de la vista al quitar el favorito
+        const card = document.getElementById('card-hotel-' + idHotel);
+        if (card) {
+            card.style.opacity = '0';
+            setTimeout(() => card.remove(), 300);
+        }
     });
 }
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Obtener lo que tiene el navegador
+    let favoritosLocales = JSON.parse(localStorage.getItem('mis_favoritos')) || [];
+    
+    // 2. Obtener lo que PHP ya pintó en pantalla (IDs de las cards actuales)
+    let idsEnPantalla = Array.from(document.querySelectorAll('[id^="card-hotel-"]'))
+                             .map(el => parseInt(el.id.replace('card-hotel-', '')));
+
+    // 3. Verificar si falta alguno
+    let faltaAlguno = favoritosLocales.some(id => !idsEnPantalla.includes(id));
+
+    // 4. Si falta info, recargamos la página pasándole los IDs faltantes a PHP
+    if (faltaAlguno && favoritosLocales.length > 0) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has('local_ids')) {
+            window.location.href = `favoritos.php?local_ids=${favoritosLocales.join(',')}`;
+        }
+    }
+});
 </script>
 
-<footer class="main-footer">
-    </footer>
+<footer class="py-4 border-top mt-5 bg-white text-center">
+    <div class="container">
+        <p class="text-muted mb-0 small">&copy; 2026 <strong>BookingEngineering</strong>. Todos los derechos reservados.</p>
+    </div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
