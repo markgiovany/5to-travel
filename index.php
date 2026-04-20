@@ -131,7 +131,7 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
   <div class="col-md-3">
     <div class="hotel-card">
       
-      <a href="hotel.php?id=<?php echo $hotel['id']; ?>">
+      <a href="lugares-info.php?id=<?php echo $hotel['id']; ?>">
         <img src="<?php echo $hotel['imagen']; ?>" class="img-fluid">
       </a>
 
