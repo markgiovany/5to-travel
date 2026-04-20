@@ -111,7 +111,6 @@ body {
 
 <body>
 
-<!-- SIDEBAR -->
 <div class="sidebar d-flex flex-column p-2">
     <div class="text-center py-3">
         <img src="../imagenes/brooking.png" width="160">
@@ -144,7 +143,6 @@ body {
     </a>
 </div>
 
-<!-- MAIN -->
 <div class="main-content">
 
 <div class="top-bar shadow-sm">
@@ -184,6 +182,7 @@ body {
 <?php
 $id = $row['id_catalogo'];
 
+/* IMÁGENES */
 $res_img = mysqli_query($config, "
 SELECT url_imagen 
 FROM cat_imagen 
@@ -195,8 +194,9 @@ while($img = mysqli_fetch_assoc($res_img)){
     $imgs[] = $img['url_imagen'];
 }
 
+/* TIPOS DE HABITACIÓN ACTUALIZADOS (DISTINCT PARA EVITAR DUPLICADOS) */
 $res_tipos = mysqli_query($config, "
-SELECT t.nombre
+SELECT DISTINCT t.nombre
 FROM cat_catalogo_habitacion ch
 INNER JOIN cat_tipo t ON t.id_tipo = ch.id_tipo
 WHERE ch.id_catalogo = '$id'
@@ -237,9 +237,13 @@ data-bs-target="#modal<?php echo $id; ?>">
 </td>
 
 <td>
-<?php foreach($tipos as $t): ?>
-    <span class="badge bg-primary me-1 mb-1"><?php echo $t; ?></span>
-<?php endforeach; ?>
+<?php if(empty($tipos)): ?>
+    <span class="text-muted small">Sin habitaciones</span>
+<?php else: ?>
+    <?php foreach($tipos as $t): ?>
+        <span class="badge bg-primary me-1 mb-1"><?php echo $t; ?></span>
+    <?php endforeach; ?>
+<?php endif; ?>
 </td>
 
 <td>
@@ -256,7 +260,6 @@ onclick="return confirm('¿Eliminar hotel?')">
 
 </tr>
 
-<!-- MODAL (ÚNICO CAMBIO AQUÍ: PRECIOS MEJORADOS) -->
 <div class="modal fade" id="modal<?php echo $id; ?>" tabindex="-1">
 <div class="modal-dialog modal-lg">
 <div class="modal-content">
@@ -315,10 +318,14 @@ Max: $<?php echo number_format($row['precio_max'], 2); ?>
 </div>
 
 <div class="mb-2">
-<strong>🏷️ Tipos:</strong><br>
-<?php foreach($tipos as $t): ?>
-    <span class="badge bg-primary me-1 mb-1"><?php echo $t; ?></span>
-<?php endforeach; ?>
+<strong>🏷️ Tipos disponibles actualmente:</strong><br>
+<?php if(empty($tipos)): ?>
+    <span class="text-muted small">No se han definido tipos aún.</span>
+<?php else: ?>
+    <?php foreach($tipos as $t): ?>
+        <span class="badge bg-primary me-1 mb-1"><?php echo $t; ?></span>
+    <?php endforeach; ?>
+<?php endif; ?>
 </div>
 
 </div>
