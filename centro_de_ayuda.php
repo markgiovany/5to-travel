@@ -158,6 +158,12 @@ $resultado_faq = mysqli_query($config, $query_faq);
             }
             ?>
         </div>
+
+        <div class="text-center mt-4">
+    <button id="btn-cargar-mas" class="btn btn-outline-primary px-4 py-2" style="border-radius: 50px;">
+        Ver más preguntas
+    </button>
+</div>
         
         <div id="sin-resultados">
             No encontramos ninguna pregunta que coincida con tu búsqueda.
@@ -182,13 +188,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const faqItems = document.querySelectorAll('.faq-item');
     const btnCategorias = document.querySelectorAll('#filtro-categorias .nav-link');
     const msjSinResultados = document.getElementById('sin-resultados');
+    const btnCargarMas = document.getElementById('btn-cargar-mas');
+
+    let limiteActual = 10; 
+    const incremento = 10; 
 
     function filtrarContenido() {
         const textoBusqueda = buscador.value.toLowerCase();
         const categoriaActiva = document.querySelector('#filtro-categorias .nav-link.active').getAttribute('data-filter');
         let itemsVisibles = 0;
+        const hayBusquedaActiva = (textoBusqueda !== '') || (categoriaActiva !== 'all');
 
-        faqItems.forEach(item => {
+        faqItems.forEach((item, index) => {
             const pregunta = item.querySelector('.accordion-button').textContent.toLowerCase();
             const respuesta = item.querySelector('.accordion-body').textContent.toLowerCase();
             const categoriaItem = item.getAttribute('data-categoria');
@@ -196,31 +207,53 @@ document.addEventListener('DOMContentLoaded', function() {
             const coincideTexto = pregunta.includes(textoBusqueda) || respuesta.includes(textoBusqueda);
             const coincideCategoria = (categoriaActiva === 'all') || (categoriaActiva === categoriaItem);
 
-            if (coincideTexto && coincideCategoria) {
-                item.style.display = 'block';
-                itemsVisibles++;
+            if (hayBusquedaActiva) {
+                if (coincideTexto && coincideCategoria) {
+                    item.style.display = 'block';
+                    itemsVisibles++;
+                } else {
+                    item.style.display = 'none';
+                }
+                btnCargarMas.style.display = 'none';
             } else {
-                item.style.display = 'none';
+                if (index < limiteActual) {
+                    item.style.display = 'block';
+                    itemsVisibles++;
+                } else {
+                    item.style.display = 'none';
+                }
             }
         });
-
-        if (itemsVisibles === 0) {
+        if (!hayBusquedaActiva) {
+            if (limiteActual >= faqItems.length) {
+                btnCargarMas.style.display = 'none';
+            } else {
+                btnCargarMas.style.display = 'inline-block';
+            }
+        }
+        if (itemsVisibles === 0 && hayBusquedaActiva) {
             msjSinResultados.style.display = 'block';
         } else {
             msjSinResultados.style.display = 'none';
         }
     }
-
+    if(btnCargarMas) {
+        btnCargarMas.addEventListener('click', function() {
+            limiteActual += incremento;
+            filtrarContenido();
+        });
+    }
     buscador.addEventListener('input', filtrarContenido);
 
     btnCategorias.forEach(btn => {
         btn.addEventListener('click', function() {
             btnCategorias.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            
+            limiteActual = 10; 
             filtrarContenido();
         });
     });
+    filtrarContenido();
 });
 </script>
 
