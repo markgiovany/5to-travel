@@ -16,7 +16,7 @@ if (!empty($status_val)) {
     $condiciones[] = "l.id_status = '$status_val'";
 }
 if (!empty($role_val)) {
-    $condiciones[] = "l.role = '$role_val'";
+    $condiciones[] = "u.rol_name = '$role_val'";
 }
 if (!empty($search_val)) {
     $condiciones[] = "(u.first_name LIKE '%$search_val%' OR u.last_name LIKE '%$search_val%' OR e.email LIKE '%$search_val%')";
@@ -27,7 +27,7 @@ if (count($condiciones) > 0) {
     $filtro = " WHERE " . implode(" AND ", $condiciones);
 }
 
-$query = "SELECT u.uuid, u.first_name, u.last_name, t.telefono, l.role, e.email, u.created_at, s.nombre AS estado_nombre, l.id_status
+$query = "SELECT u.uuid, u.first_name, u.last_name, t.telefono, u.rol_name, e.email, u.created_at, s.nombre AS estado_nombre, l.id_status
           FROM usr_users u
           LEFT JOIN usr_emails e ON u.uuid = e.user_uuid 
           LEFT JOIN usr_users_login l ON u.uuid = l.user_uuid

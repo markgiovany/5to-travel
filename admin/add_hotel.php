@@ -8,7 +8,7 @@ use Cloudinary\Api\Upload\UploadApi;
 $query_propietarios = "SELECT u.uuid, u.first_name, u.last_name 
                         FROM usr_users u
                         INNER JOIN usr_users_login l ON u.uuid = l.user_uuid
-                        WHERE l.role = 'propietario'";
+                        WHERE u.rol_name = 'propietario'";
 $resultado = mysqli_query($config, $query_propietarios);
 
 // Cargar países para el select
