@@ -101,6 +101,7 @@ $resultado = mysqli_query($config, $query);
                         <li><a class="dropdown-item fw-bold" href="perfil.php">Perfil</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="auth/logout.php">Cerrar sesión</a></li>
+                        <li><a class="dropdown-item" href="centro_de_ayuda.php">Centro de ayuda</a></li>
                     </ul>
                 </div>
             <?php else: ?>

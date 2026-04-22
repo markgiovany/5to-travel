@@ -65,6 +65,7 @@ $resultado = mysqli_query($config, $query);
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
                         <li><a class="dropdown-item fw-bold" href="perfil.php">Perfil</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="centro_de_ayuda.php">Centro de ayuda</a></li>
                         <li><a class="dropdown-item text-danger" href="auth/logout.php">Cerrar sesión</a></li>
                     </ul>
                 </div>
