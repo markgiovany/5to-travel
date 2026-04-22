@@ -36,21 +36,40 @@ if ($id_hotel > 0) {
 </head>
 <body>
     
-    <header class="main-header">
-        <div class="glass-nav">
-            <a href="home.php" class="logo"><img src="imagenes/brooking.png" alt="Logo"></a>
-            <div class="nav-links">
-                <a href="#">Destinos</a>
-                <a href="#">Ofertas</a>
-                <div class="user-pill">
-                    <i class="bi bi-list"></i>
-                    <div class="user-avatar">
-                        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="display: block; fill: #717171; height: 30px; width: 30px;"><path d="m16 .7c-8.437 0-15.3 6.863-15.3 15.3s6.863 15.3 15.3 15.3 15.3-6.863 15.3-15.3-6.863-15.3-15.3-15.3zm0 28c-4.021 0-7.605-1.884-9.933-4.81a12.425 12.425 0 0 1 2.245-2.903l.445-.4c1.886-1.637 4.191-2.487 7.243-2.487s5.357.85 7.243 2.487l.445.4a12.425 12.425 0 0 1 2.245 2.903c-2.328 2.926-5.912 4.81-9.933 4.81zm9.328-7.387c-.012-.02-.023-.04-.035-.06a10.428 10.428 0 0 0-6.191-3.653c1.789-1.344 2.898-3.411 2.898-5.7 0-3.97-3.23-7.2-7.2-7.2s-7.2 3.23-7.2 7.2c0 2.289 1.109 4.356 2.898 5.7a10.428 10.428 0 0 0-6.191 3.653c-.012.02-.023.04-.035.06a13.31 13.31 0 0 1-2.573-7.913c0-7.345 5.955-13.3 13.3-13.3s13.3 5.955 13.3 13.3c0 2.924-1.01 5.614-2.711 7.913z"></path></svg>
+<header class="main-header">
+    <div class="glass-nav container-fluid px-lg-5 d-flex justify-content-between align-items-center py-3 bg-white shadow-sm fixed-top">
+        <!-- Lógica: Si hay sesión iniciada va a home.php, si no, al index -->
+<?php 
+    $enlace_logo = isset($_SESSION['user_uuid']) ? 'home.php' : 'index.php'; 
+?>
+<a href="<?= $enlace_logo; ?>" class="logo">
+    <img src="imagenes/brooking.png" alt="Logo" width="140">
+</a>
+        <div class="nav-links d-flex align-items-center gap-3">
+            <a href="catalogo.php" class="text-decoration-none text-dark fw-medium small">Catálogo</a>
+            <a href="catalogo.php" class="text-decoration-none text-dark fw-medium small"><i class="bi bi-heart me-1"></i> Favoritos</a>
+            <?php if (isset($_SESSION['user_uuid'])): ?>
+                <div class="dropdown d-inline-block">
+                    <div class="user-pill d-flex align-items-center gap-2 border rounded-pill px-2 py-1" data-bs-toggle="dropdown" role="button">
+                        <i class="bi bi-list text-dark"></i>
+                        <div class="user-avatar bg-light rounded-circle p-1"><i class="bi bi-person-fill text-secondary"></i></div>
                     </div>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                        <li><a class="dropdown-item fw-bold" href="perfil.php">Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="centro_de_ayuda.php">Centro de ayuda</a></li>
+                        <li><a class="dropdown-item text-danger" href="auth/logout.php">Cerrar sesión</a></li>
+                    </ul>
                 </div>
-            </div>
+            <?php else: ?>
+                <a href="login.php" class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-person-circle"></i> Login
+                </a>
+            <?php endif; ?>
         </div>
-    </header>
+        </div>
+    </div>
+</header>
 
 
     <section class="hero-lugar">

@@ -75,17 +75,17 @@ $resultado_faq = mysqli_query($config, $query_faq);
 <body>
 
 <header class="main-header">
-    <div class="glass-nav">
-        <a href="index.php" class="logo">
-            <img src="imagenes/brooking.png" alt="Logo">
-        </a>
+    <div class="glass-nav container-fluid px-lg-5 d-flex justify-content-between align-items-center py-3 bg-white shadow-sm fixed-top">
+        <!-- Lógica: Si hay sesión iniciada va a home.php, si no, al index -->
+<?php 
+    $enlace_logo = isset($_SESSION['user_uuid']) ? 'home.php' : 'index.php'; 
+?>
+<a href="<?= $enlace_logo; ?>" class="logo">
+    <img src="imagenes/brooking.png" alt="Logo" width="140">
+</a>
         <div class="nav-links d-flex align-items-center gap-3">
-            <a href="catalogo.php" class="text-decoration-none text-dark fw-medium small">
-                <i></i> Catálogo
-            </a>
-                    <a href="favoritos.php" class="text-decoration-none text-dark fw-medium small">
-                <i class="bi bi-heart me-1"></i> Favoritos
-            </a>
+            <a href="catalogo.php" class="text-decoration-none text-dark fw-medium small">Catálogo</a>
+            <a href="catalogo.php" class="text-decoration-none text-dark fw-medium small"><i class="bi bi-heart me-1"></i> Favoritos</a>
             <?php if (isset($_SESSION['user_uuid'])): ?>
                 <div class="dropdown d-inline-block">
                     <div class="user-pill d-flex align-items-center gap-2 border rounded-pill px-2 py-1" data-bs-toggle="dropdown" role="button">
@@ -95,8 +95,8 @@ $resultado_faq = mysqli_query($config, $query_faq);
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
                         <li><a class="dropdown-item fw-bold" href="perfil.php">Perfil</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="auth/logout.php">Cerrar sesión</a></li>
                         <li><a class="dropdown-item" href="centro_de_ayuda.php">Centro de ayuda</a></li>
+                        <li><a class="dropdown-item text-danger" href="auth/logout.php">Cerrar sesión</a></li>
                     </ul>
                 </div>
             <?php else: ?>
@@ -104,6 +104,7 @@ $resultado_faq = mysqli_query($config, $query_faq);
                     <i class="bi bi-person-circle"></i> Login
                 </a>
             <?php endif; ?>
+        </div>
         </div>
     </div>
 </header>
