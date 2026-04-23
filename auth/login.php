@@ -7,11 +7,12 @@ $email = mysqli_real_escape_string($config, $_POST['email']);
 $password_ingresada = $_POST['password']; // La contraseña plana que puso el usuario
 
 // 2. Buscamos al usuario solo por su email para obtener su hash guardado
-$query = "SELECT e.user_uuid, l.password, l.role, u.first_name 
+$query = "SELECT e.user_uuid, l.password, r.rol AS role, u.first_name, l.id_status
           FROM usr_emails e
           INNER JOIN usr_users_login l ON e.user_uuid = l.user_uuid
           INNER JOIN usr_users u ON e.user_uuid = u.uuid
-          WHERE e.email = '$email' AND l.id_status = 1";
+          INNER JOIN usr_roles r ON l.id_rol = r.id_rol
+          WHERE e.email = '$email'";
 
 $resultado = mysqli_query($config, $query);
 

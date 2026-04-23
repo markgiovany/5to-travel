@@ -9,11 +9,15 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 if (isset($_GET['u']) && isset($_GET['to'])) {
     $uuid = mysqli_real_escape_string($config, $_GET['u']);
     $new_status = (int)$_GET['to'];
-
     $reason = isset($_POST['reason']) ? mysqli_real_escape_string($config, $_POST['reason']) : null;
 
     if ($uuid === $_SESSION['user_uuid'] && ($new_status == 2 || $new_status == 4)) {
-        header("Location: users.php?msg=self_error");
+        $_SESSION['flash'] = [
+            'type'  => 'danger',
+            'title' => 'Error de seguridad',
+            'msg'   => 'No puedes desactivar o suspender tu propia cuenta.'
+        ];
+        header("Location: users.php");
         exit();
     }
 
@@ -42,13 +46,29 @@ if (isset($_GET['u']) && isset($_GET['to'])) {
 
         mysqli_commit($config);
         
-        $loc = isset($_POST['from_profile']) ? "view_user.php?u=$uuid&msg=status_updated" : "users.php?msg=status_updated";
+        $tipo_alerta = ($new_status == $id_activo) ? 'success' : 'warning';
+        $res_nombre_status = mysqli_query($config, "SELECT nombre FROM status WHERE id_status = $new_status");
+        $nombre_status = mysqli_fetch_assoc($res_nombre_status)['nombre'];
+
+        $_SESSION['flash'] = [
+            'type'  => $tipo_alerta,
+            'title' => 'Datos Actualizados ',
+            'msg'   => " Se ha cambiado el estatus a: $nombre_status."
+        ];
+
+        $loc = isset($_POST['from_profile']) ? "view_user.php?u=$uuid" : "users.php";
         header("Location: $loc");
         exit();
 
     } catch (Exception $e) {
         mysqli_rollback($config);
-        die("Error al cambiar el estatus: " . mysqli_error($config));
+        $_SESSION['flash'] = [
+            'type'  => 'danger',
+            'title' => 'Error Crítico',
+            'msg'   => 'No se pudo cambiar el estatus: ' . mysqli_error($config)
+        ];
+        header("Location: users.php");
+        exit();
     }
 
 } else {
