@@ -91,6 +91,7 @@ $resultado = mysqli_query($config, $query);
             <a href="favoritos.php" class="text-decoration-none text-dark fw-medium small">
                 <i class="bi bi-heart me-1"></i> Favoritos
             </a>
+            <a href="centro_de_ayuda.php" class="text-decoration-none text-dark fw-medium small">Centro de ayuda</a>
             <?php if (isset($_SESSION['user_uuid'])): ?>
                 <div class="dropdown d-inline-block">
                     <div class="user-pill d-flex align-items-center gap-2 border rounded-pill px-2 py-1" data-bs-toggle="dropdown" role="button">
@@ -101,7 +102,6 @@ $resultado = mysqli_query($config, $query);
                         <li><a class="dropdown-item fw-bold" href="perfil.php">Perfil</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="auth/logout.php">Cerrar sesión</a></li>
-                        <li><a class="dropdown-item" href="centro_de_ayuda.php">Centro de ayuda</a></li>
                     </ul>
                 </div>
             <?php else: ?>

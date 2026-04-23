@@ -47,7 +47,7 @@ if ($id_hotel > 0) {
 </a>
         <div class="nav-links d-flex align-items-center gap-3">
             <a href="catalogo.php" class="text-decoration-none text-dark fw-medium small">Catálogo</a>
-            <a href="catalogo.php" class="text-decoration-none text-dark fw-medium small"><i class="bi bi-heart me-1"></i> Favoritos</a>
+            <a href="centro_de_ayuda.php" class="text-decoration-none text-dark fw-medium small">Centro de ayuda</a>
             <?php if (isset($_SESSION['user_uuid'])): ?>
                 <div class="dropdown d-inline-block">
                     <div class="user-pill d-flex align-items-center gap-2 border rounded-pill px-2 py-1" data-bs-toggle="dropdown" role="button">
@@ -57,7 +57,7 @@ if ($id_hotel > 0) {
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
                         <li><a class="dropdown-item fw-bold" href="perfil.php">Perfil</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="centro_de_ayuda.php">Centro de ayuda</a></li>
+                        <li><a class="dropdown-item" href="favoritos.php">Favoritos</a></li>
                         <li><a class="dropdown-item text-danger" href="auth/logout.php">Cerrar sesión</a></li>
                     </ul>
                 </div>
