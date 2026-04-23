@@ -30,7 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         mysqli_query($config, "INSERT INTO usr_users_login (user_uuid, password, role) VALUES ('$uuid', '$password', '$role')");
 
         mysqli_commit($config);
-        header("Location: users.php?msg=added"); exit();
+        $_SESSION['flash'] = ['type' => 'success', 'title' => '¡Excelente!', 'msg' => 'El usuario ha sido registrado correctamente.'];
+        header("Location: users.php");
+        exit();
 
     } catch (Exception $e) {
         mysqli_rollback($config);

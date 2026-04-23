@@ -14,13 +14,15 @@ if (!$uuid) {
     exit();
 }
 
-$query = "SELECT u.*, l.role, l.id_status, l.suspension_reason, e.email, t.telefono,
+$query = "SELECT u.*, r.rol AS role_nombre, l.id_status, l.suspension_reason, e.email, t.telefono,
           (SELECT COUNT(*) FROM catalogo WHERE propietario_uuid = u.uuid) as total_hoteles
           FROM usr_users u
-          LEFT JOIN usr_emails e ON u.uuid = e.user_uuid 
           LEFT JOIN usr_users_login l ON u.uuid = l.user_uuid
+          LEFT JOIN usr_roles r ON l.id_rol = r.id_rol
+          LEFT JOIN usr_emails e ON u.uuid = e.user_uuid 
           LEFT JOIN usr_telefonos t ON u.uuid = t.user_uuid
-          WHERE u.uuid = '$uuid'";
+          WHERE u.uuid = '$uuid'
+          LIMIT 1";
 
 $res = mysqli_query($config, $query);
 $user = mysqli_fetch_assoc($res);
@@ -71,11 +73,11 @@ if (!$user) {
             <div class="card-body p-4">
                 
                 <div class="d-flex align-items-center mb-4">
-                    <img src="https://ui-avatars.com/api/?name=<?php echo $user['first_name']; ?>&background=random" class="rounded-circle me-3" width="60">
+                    <img src="https://ui-avatars.com/api/?name=<?php echo urlencode($user['first_name']); ?>&background=random" class="rounded-circle me-3" width="60">
                     <div>
-                        <h4 class="mb-0 fw-bold"><?php echo $user['first_name'] . " " . $user['last_name']; ?></h4>
+                        <h4 class="mb-0 fw-bold"><?php echo htmlspecialchars($user['first_name'] . " " . $user['last_name']); ?></h4>
                         <span class="badge bg-light text-dark border px-3 rounded-pill text-capitalize">
-                            <?php echo $user['role']; ?>
+                            <?php echo htmlspecialchars($user['role_nombre'] ?? 'Sin Rol'); ?>
                         </span>
                     </div>
                 </div>
@@ -83,11 +85,11 @@ if (!$user) {
                 <div class="row mb-4">
                     <div class="col-md-6 mb-3">
                         <label class="form-label text-muted small fw-bold">CORREO ELECTRÓNICO</label>
-                        <p class="form-control-plaintext border-bottom"><?php echo $user['email'] ?? 'N/A'; ?></p>
+                        <p class="form-control-plaintext border-bottom"><?php echo htmlspecialchars($user['email'] ?? 'N/A'); ?></p>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label text-muted small fw-bold">TELÉFONO</label>
-                        <p class="form-control-plaintext border-bottom"><?php echo $user['telefono'] ?? 'N/A'; ?></p>
+                        <p class="form-control-plaintext border-bottom"><?php echo htmlspecialchars($user['telefono'] ?? 'N/A'); ?></p>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label text-muted small fw-bold">FECHA DE REGISTRO</label>
@@ -99,24 +101,22 @@ if (!$user) {
                     </div>
                 </div>
 
-                <!-- Info específica según ROL -->
-                <?php if($user['role'] == 'user'): ?>
+                <?php if(($user['role_nombre'] ?? '') == 'user'): ?>
                     <div class="mb-4">
                         <label class="form-label text-muted small fw-bold"><i class="bi bi-credit-card me-2"></i>MÉTODOS DE PAGO</label>
                         <div class="p-3 bg-light rounded border text-muted italic">No hay métodos de pago agregados.</div>
                     </div>
-                <?php elseif($user['role'] == 'propietario'): ?>
+                <?php elseif(($user['role_nombre'] ?? '') == 'propietario'): ?>
                     <div class="mb-4">
                         <label class="form-label text-muted small fw-bold"><i class="bi bi-building me-2"></i>PROPIEDADES</label>
                         <div class="p-3 bg-light rounded border">
-                            Este propietario tiene <strong><?php echo $user['total_hoteles']; ?></strong> hoteles registrados.
+                            Este propietario tiene <strong><?php echo intval($user['total_hoteles']); ?></strong> hoteles registrados.
                         </div>
                     </div>
                 <?php endif; ?>
 
                 <hr class="my-4">
 
-                <!-- Sección de Suspensión armonizada -->
                 <div class="p-4 rounded-3 <?php echo ($user['id_status'] == 4) ? 'bg-light border-danger border' : 'bg-light border'; ?>">
                     <h5 class="fw-bold mb-3">Gestión de Estado</h5>
                     
@@ -134,7 +134,7 @@ if (!$user) {
                     <?php else: ?>
                         <div class="alert alert-danger border-0 shadow-sm">
                             <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            <strong>Usuario Suspendido:</strong> <?php echo $user['suspension_reason']; ?>
+                            <strong>Usuario Suspendido:</strong> <?php echo htmlspecialchars($user['suspension_reason']); ?>
                         </div>
                         <form action="status_user.php?u=<?php echo $uuid; ?>&to=1" method="POST">
                             <input type="hidden" name="from_profile" value="1">
