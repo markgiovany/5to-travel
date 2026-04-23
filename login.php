@@ -1,3 +1,7 @@
+<?php
+session_start();
+?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -27,6 +31,15 @@
 <div class="right">
 
 <h2>Iniciar Sesión</h2>
+
+<?php if(isset($_SESSION['error_login'])): ?>
+    <div style="background-color: #f8d7da; color: #842029; padding: 10px; border-radius: 5px; margin-bottom: 15px; text-align: center;">
+        <?php 
+            echo $_SESSION['error_login']; 
+            unset($_SESSION['error_login']); 
+        ?>
+    </div>
+<?php endif; ?>
 
 <form action="auth/login.php" method="POST">
 

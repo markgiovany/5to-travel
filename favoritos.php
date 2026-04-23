@@ -56,6 +56,7 @@ $resultado = mysqli_query($config, $query);
 </a>
         <div class="nav-links d-flex align-items-center gap-3">
             <a href="catalogo.php" class="text-decoration-none text-dark fw-medium small">Volver al Catálogo</a>
+            <a href="centro_de_ayuda.php" class="text-decoration-none text-dark fw-medium small">Centro de ayuda</a>
             <?php if (isset($_SESSION['user_uuid'])): ?>
                 <div class="dropdown d-inline-block">
                     <div class="user-pill d-flex align-items-center gap-2 border rounded-pill px-2 py-1" data-bs-toggle="dropdown" role="button">
