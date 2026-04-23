@@ -23,7 +23,7 @@ if (isset($_GET['u'])) {
     if (!$hotel) { header("Location: hoteles.php"); exit(); }
 }
 
-$res_propietarios = mysqli_query($config, "SELECT u.uuid, u.first_name, u.last_name FROM usr_users u INNER JOIN usr_users_login l ON u.uuid = l.user_uuid WHERE u.rol_name IN ('propietario', 'admin')");
+$res_propietarios = mysqli_query($config, "SELECT u.uuid, u.first_name, u.last_name FROM usr_users u INNER JOIN usr_users_login l ON u.uuid = l.user_uuid WHERE l.role IN ('propietario', 'admin')");
 
 $res_status_opciones = mysqli_query($config, "SELECT id_status, nombre FROM status WHERE id_status IN (1, 2, 7)");
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
