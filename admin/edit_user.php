@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // 4. Consultar los datos actuales para llenar el formulario
-$query = "SELECT u.first_name, u.last_name, u.rol_name, e.email, t.telefono 
+$query = "SELECT u.first_name, u.last_name, l.role, e.email, t.telefono 
           FROM usr_users u
           LEFT JOIN usr_emails e ON u.uuid = e.user_uuid 
           LEFT JOIN usr_users_login l ON u.uuid = l.user_uuid
