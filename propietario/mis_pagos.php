@@ -16,7 +16,7 @@ c.nombre,
 s.nombre AS estado_nombre
 FROM res_registro_pago p
 JOIN res_reserva r ON p.id_reserva = r.id_reserva
-JOIN res_habitacion h ON r.id_habitacion = h.id_habitacion
+JOIN cat_catalogo_habitacion h ON r.id_habitacion = h.id_habitacion
 JOIN catalogo c ON h.id_catalogo = c.id_catalogo
 LEFT JOIN status s ON p.id_status = s.id_status
 WHERE c.propietario_uuid = '$uuid'";
