@@ -204,6 +204,6 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
         </div>
     </div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
