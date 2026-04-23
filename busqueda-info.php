@@ -3,7 +3,7 @@ session_start();
 include("config/config.php"); 
 
 $ubicacion = isset($_GET['ubicacion']) ? $_GET['ubicacion'] : '';
-$personas  = isset($_GET['personas'])  ? $_GET['personas']  : '';
+$personas  = !empty($_GET['personas']) ? (int)$_GET['personas'] : 0;
 
 $sql = "SELECT c.*, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.name AS nombre_pais
         FROM catalogo c
@@ -12,7 +12,12 @@ $sql = "SELECT c.*, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.n
         LEFT JOIN states est ON ciu.state_id = est.id
         LEFT JOIN countries pais ON est.country_id = pais.id
         LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
-        WHERE 1=1";
+        INNER JOIN cat_catalogo_habitacion h ON c.id_catalogo = h.id_catalogo
+        WHERE h.disponibilidad >= 0";
+
+if ($personas > 0) {
+    $sql .= " AND h.capacidad >= $personas";
+}
 
 if (!empty($ubicacion)) {
     $ubi_safe = mysqli_real_escape_string($config, $ubicacion);
@@ -20,6 +25,16 @@ if (!empty($ubicacion)) {
                 OR est.name LIKE '%$ubi_safe%' 
                 OR pais.name LIKE '%$ubi_safe%' 
                 OR c.nombre LIKE '%$ubi_safe%')";
+}
+
+$entrada = $_GET['entrada'] ?? '';
+$salida = $_GET['salida'] ?? '';
+
+if (!empty($entrada) && !empty($salida)) {
+    if ($salida <= $entrada) {
+        header("Location: index.php?error_fecha=1&entrada=$entrada&salida=$salida");
+        exit(); 
+    }
 }
 
 $sql .= " GROUP BY c.id_catalogo";
@@ -83,10 +98,11 @@ if(!$resultado){
     <?php 
         }
     } else {
-        $query_sugerencias = "SELECT c.nombre, c.precio_min, ciu.name AS nombre_ciudad, c.id_catalogo 
+        $query_sugerencias = "SELECT c.nombre, h.precio, ciu.name AS nombre_ciudad, c.id_catalogo 
                               FROM catalogo c
                               LEFT JOIN cat_ubicacion u ON c.id_ubicacion = u.id_ubicacion
                               LEFT JOIN cities ciu ON u.city_id = ciu.id
+                              LEFT JOIN cat_catalogo_habitacion h ON c.id_catalogo = h.id_catalogo
                               GROUP BY c.id_catalogo
                               ORDER BY RAND() LIMIT 12";
         $res_sugerencias = mysqli_query($config, $query_sugerencias);
@@ -112,7 +128,7 @@ if(!$resultado){
                             <p class="location"><i class="bi bi-geo-alt"></i> <?php echo !empty($sugerencias['nombre_ciudad']) ? htmlspecialchars($sugerencias['nombre_ciudad']) : 'Ubicación pendiente'; ?></p>
                             <div class="footer-card">
                                 <div class="price-data">
-                                    <span class="new-p"><?php echo number_format($sugerencias['precio_min'] ?? 0, 0); ?> <small>MXN</small></span>
+                                    <span class="new-p"><?php echo number_format($sugerencias['precio'] ?? 0, 0); ?> <small>MXN</small></span>
                                 </div>
                             </div>
                         </div>

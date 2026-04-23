@@ -20,6 +20,44 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
         "imagen" => $fila['url_imagen'] ?? 'https://images.unsplash.com/photo-1566073771259-6a8506099945'
     );
 }
+
+$entrada = isset($_GET['entrada']) ? $_GET['entrada'] : '';
+$salida = isset($_GET['salida']) ? $_GET['salida'] : '';
+
+$hoy = date('Y-m-d');
+if (!empty($entrada) && $entrada < $hoy) {
+    $entrada = $hoy; 
+    $error_fecha = "La fecha de entrada no puede ser anterior a hoy.";
+}
+
+if (!empty($entrada) && !empty($salida)) {
+    if ($salida <= $entrada) {
+        $mañana = date('Y-m-d', strtotime($entrada . ' +1 day'));
+        $salida = $mañana;
+        $error_fecha = "La fecha de salida debe ser posterior a la entrada.";
+        header("Location: index.php?error_fecha=1&entrada=$entrada&salida=$salida");
+        exit();
+    }
+}
+
+if (!empty($entrada)) {
+    $fecha_min_salida = date('Y-m-d', strtotime($entrada . ' +1 day'));
+} else {
+    $fecha_min_salida = date('Y-m-d', strtotime('+1 day'));
+}
+
+if (isset($error_fecha)): ?>
+    <div style="color: #ff4d4d; background: rgba(255, 77, 77, 0.1); padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-top: 10px; text-align: center;">
+        <i class="bi bi-exclamation-circle"></i> <?php echo $error_fecha; ?>
+    </div>
+<?php endif; 
+
+$query_auto = "SELECT name FROM  cities 
+        UNION SELECT name FROM states 
+        UNION SELECT name FROM countries  
+        ORDER BY name ASC";
+$res_auto = mysqli_query($config, $query_auto);        
+
 ?>
 
 <!DOCTYPE html>
@@ -46,8 +84,6 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
     <div class="nav-links">
         <a href="catalogo.php">Catálogo</a>
 
-        <a href="centro_de_ayuda.php">Centro de ayuda</a>
-
         <a href="Login.php" class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-2">
             <i class="bi bi-person-circle"></i> Login
         </a>
@@ -65,28 +101,34 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
           <div class="smart-search">
               <div class="search-field">
                   <span class="label">UBICACIÓN</span>
-                  <input type="text" name="ubicacion" placeholder="¿A dónde quieres ir?">
+                  <input type="text" name="ubicacion" list="destinos_list" placeholder="¿A dónde quieres ir? " autocomplete="on">
+
+                  <datalist id="destinos_list">
+                    <?php while($row = mysqli_fetch_assoc($res_auto)): ?>
+                    <option value="<?php echo htmlspecialchars($row['name']); ?>"></option>
+                    <?php endwhile; ?>
+                  </datalist>
               </div>
 
               <div class="divider"></div> 
               
               <div class="search-field">
                   <span class="label">ENTRADA</span>
-                  <input type="date" name="entrada">
+                  <input type="date" name="entrada" value="<?php echo $entrada; ?>" min="<?php echo date('Y-m-d'); ?>">
               </div>
 
               <div class="divider"></div> 
               
               <div class="search-field">
                   <span class="label">SALIDA</span>
-                  <input type="date" name="salida">
+                  <input type="date" name="salida" value="<?php echo $salida; ?>" min="<?php echo $fecha_min_salida ?>"required >
               </div>
 
               <div class="divider"></div> 
               
               <div class="search-field">
                   <span class="label">PERSONAS</span>
-                  <input type="number" name="personas" placeholder="¿Cuántos?">
+                  <input type="number" name="personas" placeholder="¿Cuántos?" min="0" max="20">
               </div>
 
               <button class="search-btn">
@@ -100,53 +142,52 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
 </section>
 
 <section class="ofertas-section py-5">
-<div class="container">
+  <div class="container">
 
-<div class="row text-center mb-5">
-    <div class="col-md-4">
+    
+    <div class="row text-center mb-5">
+      <div class="col-md-4">
         <div class="beneficio-card">
-            <i class="bi bi-tag"></i>
-            <h5>Ofertas exclusivas</h5>
-            <p>Encuentra las mejores promociones y precios exclusivos.</p>
+          <i class="bi bi-tag"></i>
+          <h5>Ofertas exclusivas</h5>
+          <p>Encuentra las mejores promociones y precios exclusivos.</p>
         </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="beneficio-card">
-            <i class="bi bi-shield-check"></i>
-            <h5>Reserva segura</h5>
-            <p>Tus datos están protegidos y tu reservación es 100% confiable.</p>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="beneficio-card">
-            <i class="bi bi-headset"></i>
-            <h5>Atención 24/7</h5>
-            <p>Disponible para ayudarte en cualquier momento.</p>
-        </div>
-    </div>
-</div>
-
-<!-- 🔥 HOTELES -->
-<div class="row g-4">
-<?php foreach ($catalogo_hoteles as $hotel): ?>
-  <div class="col-md-3">
-    <div class="hotel-card">
-      
-      <a href="lugares-info.php?id=<?php echo $hotel['id']; ?>">
-        <img src="<?php echo $hotel['imagen']; ?>" class="img-fluid">
-      </a>
-
-      <div class="hotel-info">
-        <h6><?php echo $hotel['nombre']; ?></h6>
       </div>
 
-    </div>
-  </div>
-<?php endforeach; ?>
-</div>
+      <div class="col-md-4">
+        <div class="beneficio-card">
+          <i class="bi bi-shield-check"></i>
+          <h5>Reserva segura</h5>
+          <p>Tus datos están protegidos y tu reservación es 100% confiable.</p>
+        </div>
+      </div>
 
+      <div class="col-md-4">
+        <div class="beneficio-card">
+          <i class="bi bi-headset"></i>
+          <h5>Atención 24/7</h5>
+          <p>Disponible para ayudarte en cualquier momento.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+    <?php 
+    foreach ($catalogo_hoteles as $nombre => $datos): 
+    ?>
+      <div class="col-md-3">
+        <div class="hotel-card">
+          <a href="lugares-info.php?id=<?php echo $datos['id']; ?>">
+            <img src="<?php echo $datos['imagen']; ?>" class="img-fluid">
+          </a>
+          <div class="hotel-info">
+            <h6><?php echo $datos['nombre']; ?></h6>
+            <p><?php /* echo number_format($datos['precio'], 2); */ ?></p>
+          </div>
+        </div>
+      </div>
+    <?php endforeach; ?>
+</div>
 </div>
 </section>
 
@@ -159,6 +200,7 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
+
+
 </html>
