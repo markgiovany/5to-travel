@@ -9,16 +9,15 @@ if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
 
 $uuid = $_SESSION['user_uuid'];
 
-/* RESERVAS */
 $sql = "SELECT r.*, c.nombre AS hotel, 
                u.first_name, u.last_name, 
                s.nombre AS estado_nombre
 FROM res_reserva r
-JOIN res_habitacion h ON r.id_habitacion = h.id_habitacion
-JOIN catalogo c ON h.id_catalogo = c.id_catalogo
+JOIN catalogo c ON r.id_catalogo = c.id_catalogo
 JOIN usr_users u ON r.user_uuid = u.uuid
 JOIN status s ON r.id_status = s.id_status
-WHERE c.propietario_uuid = '$uuid'";
+WHERE s.propietario_uuid = '$uuid'
+AND s.nombre != 'inactivo'";
 
 $res = mysqli_query($config, $sql);
 
@@ -26,12 +25,10 @@ $res = mysqli_query($config, $sql);
 $total_mes_sql = "
 SELECT COUNT(r.id_reserva) as total
 FROM res_reserva r
-JOIN res_habitacion h ON r.id_habitacion = h.id_habitacion
-JOIN catalogo c ON h.id_catalogo = c.id_catalogo
-WHERE c.propietario_uuid = '$uuid' 
-AND MONTH(r.created_at) = MONTH(CURRENT_DATE())
-AND YEAR(r.created_at) = YEAR(CURRENT_DATE())
-";
+JOIN catalogo c ON r.id_catalogo = c.id_catalogo
+WHERE c.propietario_uuid = '$uuid'
+AND MONTH (r.created_at) = MONTH(CURRENT_DATE())
+AND YEAR (r.created_at) = YEAR (CURRENT_DATE())";
 
 $total_mes_res = mysqli_query($config, $total_mes_sql);
 $total_mes = mysqli_fetch_assoc($total_mes_res)['total'] ?? 0;
@@ -39,7 +36,7 @@ $total_mes = mysqli_fetch_assoc($total_mes_res)['total'] ?? 0;
 $grafica_sql = "
 SELECT DATE_FORMAT(r.created_at, '%Y-%m') as mes, COUNT(r.id_reserva) as total
 FROM res_reserva r
-JOIN res_habitacion h ON r.id_habitacion = h.id_habitacion
+JOIN cat_catalogo_habitacion h ON r.id_habitacion = h.id_habitacion
 JOIN catalogo c ON h.id_catalogo = c.id_catalogo
 WHERE c.propietario_uuid = '$uuid'
 GROUP BY mes

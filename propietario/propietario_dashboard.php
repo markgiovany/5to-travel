@@ -2,47 +2,20 @@
 session_start();
 include("../config/config.php");
 
-if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
-    header("Location: ../auth/login.php");
+if (!isset($_SESSION['user_uuid'])) {
+    header("location:../auth/login.php");
     exit();
 }
-
+  
 $propietario_uuid = $_SESSION['user_uuid'];
-$nombre_usuario = $_SESSION['first_name'] ?? "Usuario";
-
-/* ELIMINAR HOTEL */
-if (isset($_GET['delete'])) {
-
-    $id_delete = (int)$_GET['delete'];
-
-    mysqli_begin_transaction($config);
-
-    try {
-
-        mysqli_query($config, "DELETE FROM cat_imagen WHERE id_catalogo = $id_delete");
-        mysqli_query($config, "DELETE FROM cat_catalogo_habitacion WHERE id_catalogo = $id_delete");
-        mysqli_query($config, "DELETE FROM catalogo WHERE id_catalogo = $id_delete");
-
-        mysqli_commit($config);
-
-        header("Location: propietario_dashboard.php");
-        exit();
-
-    } catch (Exception $e) {
-        mysqli_rollback($config);
-        die("Error eliminando hotel: " . $e->getMessage());
-    }
-}
 
 /* HOTELES */
-$sql_hoteles = "
-SELECT * FROM catalogo 
-WHERE propietario_uuid = '$propietario_uuid'
-AND (id_status IS NULL OR id_status != 6)
-ORDER BY id_catalogo DESC
-";
+$sql_hoteles = "SELECT * FROM catalogo
+                WHERE propietario_uuid = '$propietario_uuid'
+                AND (id_satatus IS NULL OR id_status != 2)
+                ORDER BY id_catalogo DESC";
 
-$res_hoteles = mysqli_query($config, $sql_hoteles);
+$res_hoteles = mysqli_query($config, "SELECT * FROM catalogo WHERE propietario_uuid='$propietario_uuid' AND id_status != 2");
 ?>
 
 <!DOCTYPE html>
@@ -131,8 +104,7 @@ body {
 
 <div class="top-bar shadow-sm">
     <h5 class="mb-0">Panel de Control</h5>
-    <span>Bienvenido, <strong><?php echo htmlspecialchars($nombre_usuario); ?></strong></span>
-</div>
+<span class="mb-0">Bienvenido, <strong><?php echo htmlspecialchars($nombre_usuario ?? 'Usuario'); ?></strong></span></div>
 
 <div class="card shadow-sm">
 
@@ -247,12 +219,11 @@ $precio_max = $precio_data['precio_max'] ?? 0;
 <i class="bi bi-pencil"></i>
 </a>
 
-<a href="propietario_dashboard.php?delete=<?php echo $id; ?>"
-class="btn btn-outline-danger btn-sm"
-onclick="return confirm('¿Eliminar hotel?')">
-<i class="bi bi-trash"></i>
+<a href="eliminar.php?id=<?php echo $id; ?>" 
+   class="btn btn-outline-danger btn-sm" 
+   onclick="return confirm('¿Eliminar hotel?')">
+   <i class="bi bi-trash"></i>
 </a>
-</td>
 
 </tr>
 
