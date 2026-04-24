@@ -106,11 +106,11 @@ $res_auto = mysqli_query($config, $query_auto);
     </div>
 </header>
 
-<section class="hero-section">
+<section class="hero-section" style="height:500px; background:#fafafa;">
     <div class="hero-overlay"></div>
     <div class="hero-content">
         <h1>Encuentra tu próximo <span class="text-gradient">destino ideal</span></h1>
-        <p>Reserva hoteles, casas y experiencias únicas en todo el mundo.</p>
+        
         
           <form action="busqueda-info.php" method="GET">
           <div class="smart-search">

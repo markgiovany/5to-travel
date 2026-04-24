@@ -91,55 +91,6 @@ $res_auto = mysqli_query($config, $query_auto);
 </div>
 </header>
 
-<section class="hero-section">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-        <h1>Encuentra tu próximo <span class="text-gradient">destino ideal</span></h1>
-        <p>Reserva hoteles, casas y experiencias únicas en todo el mundo.</p>
-        
-        <form action="busqueda-info.php" method="GET">
-          <div class="smart-search">
-              <div class="search-field">
-                  <span class="label">UBICACIÓN</span>
-                  <input type="text" name="ubicacion" list="destinos_list" placeholder="¿A dónde quieres ir? " autocomplete="on">
-
-                  <datalist id="destinos_list">
-                    <?php while($row = mysqli_fetch_assoc($res_auto)): ?>
-                    <option value="<?php echo htmlspecialchars($row['name']); ?>"></option>
-                    <?php endwhile; ?>
-                  </datalist>
-              </div>
-
-              <div class="divider"></div> 
-              
-              <div class="search-field">
-                  <span class="label">ENTRADA</span>
-                  <input type="date" name="entrada" value="<?php echo $entrada; ?>" min="<?php echo date('Y-m-d'); ?>">
-              </div>
-
-              <div class="divider"></div> 
-              
-              <div class="search-field">
-                  <span class="label">SALIDA</span>
-                  <input type="date" name="salida" value="<?php echo $salida; ?>" min="<?php echo $fecha_min_salida ?>"required >
-              </div>
-
-              <div class="divider"></div> 
-              
-              <div class="search-field">
-                  <span class="label">PERSONAS</span>
-                  <input type="number" name="personas" placeholder="¿Cuántos?" min="0" max="20">
-              </div>
-
-              <button class="search-btn">
-                  <svg width="20" height="20" fill="white" viewBox="0 0 16 16">
-                      <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                  </svg>
-              </button>
-          </div>
-        </form>
-    </div>
-</section>
 
 <section class="ofertas-section py-5">
   <div class="container">
