@@ -19,7 +19,7 @@ $tipos = mysqli_query($config, "SELECT * FROM cat_tipo");
 
 /*  consulta dinámica */
 $sql = "SELECT 
-    ch.id_habitacion,
+    ch.uuid,
     ch.nombre,
     c.nombre AS hotel,
     t.nombre AS tipo,
@@ -45,7 +45,7 @@ if (!empty($tipo)) {
     $sql .= " AND ch.id_tipo = $tipo";
 }
 
-$sql .= " ORDER BY ch.id_habitacion DESC";
+$sql .= " ORDER BY ch.uuid DESC";
 
 $res = mysqli_query($config, $sql);
 ?>
@@ -255,6 +255,7 @@ body {
 <thead class="table-light">
 <tr>
     <th>Habitación / Tipo</th>
+    <th>Hotel</th>
     <th>Capacidad</th>
     <th>Estatus</th>
     <th>Precio</th>
@@ -269,16 +270,27 @@ body {
 <tr>
 
 <td>
-    <strong><?= $row['tipo'] ?></strong><br>
-    
+    <strong><?= !empty($row['nombre']) ? $row['nombre'] : 'Sin nombre' ?></strong><br>
+    <small class="text-muted"><?= $row['tipo'] ?></small>
+</td>
+
+<td>
+    <?= $row['hotel'] ?>
 </td>
 
 <td><?= $row['capacidad'] ?> pers.</td>
 
 <td>
-    <span class="badge bg-success">
-        <?= $row['estado'] ?? 'Activo' ?>
-    </span>
+<?php
+$color = 'bg-success';
+
+if ($row['estado'] == 'Inactivo') $color = 'bg-secondary';
+if ($row['estado'] == 'Mantenimiento') $color = 'bg-warning';
+?>
+
+<span class="badge <?= $color ?>">
+    <?= $row['estado'] ?? 'Activo' ?>
+</span>
 </td>
 
 <td>
@@ -289,13 +301,14 @@ body {
 
 <td class="text-end">
 
-<a href="editar_habitacion.php?id=<?= $row['id_habitacion'] ?>" 
+<a href="editar_habitacion.php?uuid=<?= $row['uuid'] ?>" 
 class="btn btn-outline-primary btn-sm">
     <i class="bi bi-pencil"></i>
 </a>
 
-<a href="eliminar.php?id=<?= $row['id_habitacion'] ?>" 
-class="btn btn-outline-danger btn-sm">
+<a href="eliminar_habitacion.php?uuid=<?= $row['uuid'] ?>" 
+class="btn btn-outline-danger btn-sm"
+onclick="return confirm('¿Desactivar esta habitación?')">
     <i class="bi bi-trash"></i>
 </a>
 

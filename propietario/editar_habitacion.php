@@ -7,16 +7,16 @@ if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
     exit();
 }
 
-$id = $_GET['id'] ?? 0;
-$uuid = $_SESSION['user_uuid'];
+$uuid = $_GET['uuid'] ?? '';
+$user_uuid = $_SESSION['user_uuid'];
 
 /* obtener habitación */
 $sql = "SELECT ch.*, t.nombre AS tipo_nombre
 FROM cat_catalogo_habitacion ch
 INNER JOIN catalogo c ON c.id_catalogo = ch.id_catalogo
 LEFT JOIN cat_tipo t ON t.id_tipo = ch.id_tipo
-WHERE ch.id_habitacion = '$id' 
-AND c.propietario_uuid = '$uuid'";
+WHERE ch.uuid = '$uuid' 
+AND c.propietario_uuid = '$user_uuid'";
 
 $res = mysqli_query($config, $sql);
 $habitacion = mysqli_fetch_assoc($res);
@@ -27,6 +27,7 @@ if (!$habitacion) {
 
 /* tipos */
 $tipos = mysqli_query($config, "SELECT * FROM cat_tipo");
+$estados = mysqli_query($config, "SELECT * FROM status");
 
 /* update */
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -35,15 +36,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $capacidad = intval($_POST['capacidad']);
     $precio = floatval($_POST['precio']);
     $tipo = intval($_POST['tipo']);
+    $estado = intval($_POST['estado']);
 
     mysqli_query($config, "
-        UPDATE cat_catalogo_habitacion 
-        SET nombre='$nombre',
-            capacidad='$capacidad',
-            precio='$precio',
-            id_tipo='$tipo'
-        WHERE id_habitacion='$id'
-    ");
+    UPDATE cat_catalogo_habitacion 
+    SET nombre='$nombre',
+        capacidad='$capacidad',
+        precio='$precio',
+        id_tipo='$tipo',
+        id_status='$estado'
+    WHERE uuid='$uuid'
+");
 
     header("Location: habitaciones.php");
     exit();
@@ -123,6 +126,20 @@ class="form-control" required>
 <input type="number" step="0.01" name="precio"
 value="<?= $habitacion['precio'] ?>"
 class="form-control" required>
+</div>
+
+<!-- estatus -->
+<div class="mb-3">
+<label class="form-label small text-muted">ESTATUS</label>
+
+<select name="estado" class="form-select">
+<?php while($e = mysqli_fetch_assoc($estados)): ?>
+<option value="<?= $e['id_status'] ?>"
+<?= $habitacion['id_status'] == $e['id_status'] ? 'selected' : '' ?>>
+<?= $e['nombre'] ?>
+</option>
+<?php endwhile; ?>
+</select>
 </div>
 
 <button class="btn btn-primary w-100">
