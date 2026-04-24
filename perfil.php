@@ -28,8 +28,8 @@ $user = mysqli_fetch_assoc(mysqli_query($config, $query_user));
 
 /* 2. CONSULTA: VISTOS RECIENTES */
 $result_recientes = mysqli_query($config, "
-    SELECT c.id_catalogo, c.nombre, 
-    (SELECT MIN(precio) FROM cat_catalogo_habitacion WHERE id_catalogo = c.id_catalogo) as precio, 
+    SELECT c.id_catalogo, c.nombre, c.descripcion,
+    (SELECT MIN(precio) FROM cat_catalogo_habitacion WHERE id_catalogo = c.id_catalogo) as precio_min, 
     i.url_imagen 
     FROM vistos_recientes v
     JOIN catalogo c ON v.id_catalogo = c.id_catalogo
@@ -43,9 +43,16 @@ $result_recientes = mysqli_query($config, "
     ORDER BY v.fecha DESC LIMIT 4
 ");
 
-/* 3. CONSULTA: HISTORIAL DE RESERVAS */
+/* 3. CONSULTA: HISTORIAL (Ajustada con GROUP BY para eliminar duplicados visuales) */
 $result_historial = mysqli_query($config, "
-    SELECT DISTINCT c.nombre, ch.precio, i.url_imagen, r.fecha_entrada, r.fecha_salida
+    SELECT 
+        r.id_reserva, 
+        c.nombre as hotel_nombre, 
+        ch.nombre as nombre_habitacion, 
+        ch.precio, 
+        i.url_imagen, 
+        r.fecha_entrada, 
+        r.fecha_salida
     FROM res_reserva r
     JOIN cat_catalogo_habitacion ch ON r.id_habitacion = ch.id_habitacion
     JOIN catalogo c ON ch.id_catalogo = c.id_catalogo
@@ -55,6 +62,7 @@ $result_historial = mysqli_query($config, "
         GROUP BY id_catalogo
     ) i ON c.id_catalogo = i.id_catalogo
     WHERE r.user_uuid = '$user_id'
+    GROUP BY r.id_reserva 
     ORDER BY r.fecha_entrada DESC
 ");
 
@@ -83,7 +91,9 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
         .item-row { background: #ffffff; border-radius: 16px; padding: 18px; margin-bottom: 15px; border: 1px solid #f1f5f9; transition: 0.3s; display: flex; align-items: center; }
         .item-row:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
         .profile-img { width: 120px; height: 120px; border-radius: 50%; border: 5px solid var(--accent-blue); object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
-        .form-control, .form-select { border-radius: 12px; border: 1px solid #e2e8f0; padding: 12px; background: #fcfcfc; }
+        .form-control { border-radius: 12px; border: 1px solid #e2e8f0; padding: 12px; background: #fcfcfc; }
+        .table-habitaciones { font-size: 0.85rem; border-radius: 10px; overflow: hidden; }
+        .table-habitaciones thead { background: #f8fafc; }
     </style>
 </head>
 <body>
@@ -156,11 +166,18 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
                 <h4 class="mb-4 fw-bold">Vistos recientemente</h4>
                 <div class="row g-3">
                     <?php if(mysqli_num_rows($result_recientes) > 0): ?>
-                        <?php while($r = mysqli_fetch_assoc($result_recientes)): ?>
+                        <?php while($r = mysqli_fetch_assoc($result_recientes)): 
+                            $id_h = $r['id_catalogo'];
+                            $q_habs = mysqli_query($config, "SELECT * FROM cat_catalogo_habitacion WHERE id_catalogo = '$id_h'");
+                            $habitaciones = [];
+                            while($hb = mysqli_fetch_assoc($q_habs)) { $habitaciones[] = $hb; }
+                            $habs_json = htmlspecialchars(json_encode($habitaciones), ENT_QUOTES, 'UTF-8');
+                        ?>
                             <div class="col-md-6">
-                                <div class="item-row" style="cursor:pointer;" onclick="verDetalleReserva('<?php echo htmlspecialchars($r['nombre']); ?>', 'Visto recientemente', 'N/A', '<?php echo number_format($r['precio'], 2); ?>', '<?php echo $r['url_imagen']; ?>')">
+                                <div class="item-row" style="cursor:pointer;" 
+                                     onclick="verFichaHotel('<?php echo addslashes($r['nombre']); ?>', '<?php echo $r['url_imagen']; ?>', '<?php echo addslashes($r['descripcion']); ?>', '<?php echo $habs_json; ?>')">
                                     <img src="<?php echo !empty($r['url_imagen']) ? $r['url_imagen'] : 'imagenes/placeholder.jpg'; ?>" width="80" height="80" class="rounded-4 me-3" style="object-fit: cover;">
-                                    <div><h6 class="mb-1 fw-bold"><?php echo $r['nombre']; ?></h6><span class="badge bg-success bg-opacity-10 text-success">$<?php echo number_format($r['precio'], 2); ?></span></div>
+                                    <div><h6 class="mb-1 fw-bold"><?php echo $r['nombre']; ?></h6><span class="badge bg-success bg-opacity-10 text-success">$<?php echo number_format($r['precio_min'], 2); ?></span></div>
                                 </div>
                             </div>
                         <?php endwhile; ?>
@@ -175,10 +192,15 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
             <div class="card-profile">
                 <h4 class="mb-4 fw-bold">Mi Historial de Viajes</h4>
                 <?php while($h = mysqli_fetch_assoc($result_historial)): ?>
-                    <div class="item-row justify-content-between" style="cursor:pointer;" onclick="verDetalleReserva('<?php echo $h['nombre']; ?>', '<?php echo $h['fecha_entrada']; ?>', '<?php echo $h['fecha_salida']; ?>', '<?php echo number_format($h['precio'], 2); ?>', '<?php echo $h['url_imagen']; ?>')">
+                    <div class="item-row justify-content-between" style="cursor:pointer;" 
+                         onclick="verDetalleReserva('<?php echo addslashes($h['hotel_nombre']); ?>', '<?php echo $h['fecha_entrada']; ?>', '<?php echo $h['fecha_salida']; ?>', '<?php echo number_format($h['precio'], 2); ?>', '<?php echo $h['url_imagen']; ?>', '<?php echo $h['nombre_habitacion']; ?>')">
                         <div class="d-flex align-items-center">
-                            <img src="<?php echo $h['url_imagen']; ?>" width="100" height="75" class="rounded-3 me-3" style="object-fit: cover;">
-                            <div><h6 class="mb-1 fw-bold text-primary"><?php echo $h['nombre']; ?></h6><small class="text-muted"><?php echo $h['fecha_entrada']; ?></small></div>
+                            <img src="<?php echo !empty($h['url_imagen']) ? $h['url_imagen'] : 'imagenes/placeholder.jpg'; ?>" width="100" height="75" class="rounded-3 me-3" style="object-fit: cover;">
+                            <div>
+                                <h6 class="mb-1 fw-bold text-primary"><?php echo $h['hotel_nombre']; ?></h6>
+                                <small class="text-muted d-block"><?php echo $h['nombre_habitacion']; ?></small>
+                                <small class="text-muted"><?php echo $h['fecha_entrada']; ?></small>
+                            </div>
                         </div>
                         <span class="badge rounded-pill bg-primary">Completado</span>
                     </div>
@@ -188,14 +210,45 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
     </main>
 
     <div class="modal fade" id="modalDetalle" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content" style="border-radius: 20px; overflow: hidden;">
-                <div id="mImg" style="height: 200px; background-size: cover; background-position: center;"></div>
-                <div class="modal-body p-4 text-center">
-                    <h4 id="mNombre" class="fw-bold text-primary"></h4>
-                    <p id="mFechas" class="text-muted"></p>
-                    <h3 id="mPrecio" class="text-success fw-bold"></h3>
-                    <button class="btn btn-dark w-100 rounded-pill mt-3" data-bs-dismiss="modal">Cerrar</button>
+                <div id="mImg" style="height: 250px; background-size: cover; background-position: center;"></div>
+                <div class="modal-body p-4">
+                    <div class="text-center mb-4">
+                        <h3 id="mNombre" class="fw-bold text-primary"></h3>
+                        <p id="mUbicacion" class="text-muted small"><i class="bi bi-geo-alt"></i> <span>Ubicación registrada</span></p>
+                    </div>
+                    
+                    <div class="row mb-4 text-center bg-light p-3 rounded-4">
+                        <div class="col-6 border-end">
+                            <small class="text-muted d-block">Fecha Entrada</small>
+                            <strong id="mCheckIn">--</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Fecha Salida</small>
+                            <strong id="mCheckOut">--</strong>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold" id="mTituloDesc">Descripción</h6>
+                    <p id="mDescripcion" class="text-muted small mb-4"></p>
+
+                    <h6 class="fw-bold mb-3" id="mTituloHab">Habitaciones</h6>
+                    <div class="table-responsive">
+                        <table class="table table-habitaciones border">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Capacidad</th>
+                                    <th>Servicios</th>
+                                    <th>Precio</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mHabitacionesBody"></tbody>
+                        </table>
+                    </div>
+
+                    <button class="btn btn-dark w-100 rounded-pill mt-4" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -214,11 +267,47 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
             document.getElementById("btnEdit").style.display = "none";
             document.getElementById("btnSave").style.display = "flex";
         }
-        function verDetalleReserva(nombre, entrada, salida, precio, imagen) {
+
+        function verFichaHotel(nombre, imagen, desc, habsJson) {
             document.getElementById('mNombre').innerText = nombre;
-            document.getElementById('mFechas').innerText = "Entrada: " + entrada + " | Salida: " + salida;
-            document.getElementById('mPrecio').innerText = "$" + precio;
-            document.getElementById('mImg').style.backgroundImage = "url('" + imagen + "')";
+            document.getElementById('mImg').style.backgroundImage = "url('" + (imagen || 'imagenes/placeholder.jpg') + "')";
+            document.getElementById('mDescripcion').innerText = desc || 'Sin descripción adicional.';
+            document.getElementById('mTituloHab').innerText = "Habitaciones Disponibles";
+            
+            const body = document.getElementById('mHabitacionesBody');
+            body.innerHTML = '';
+            const habs = JSON.parse(habsJson);
+            
+            if(habs.length > 0) {
+                habs.forEach(h => {
+                    body.innerHTML += `
+                        <tr>
+                            <td><strong>${h.nombre || 'Habitación'}</strong></td>
+                            <td>${h.capacidad || 'N/A'} pers.</td>
+                            <td><small>TV, Wi-Fi</small></td>
+                            <td class="text-success fw-bold">MXN$ ${parseFloat(h.precio).toLocaleString()}</td>
+                        </tr>`;
+                });
+            }
+            new bootstrap.Modal(document.getElementById('modalDetalle')).show();
+        }
+
+        function verDetalleReserva(hotel, entrada, salida, precio, imagen, tipoHab) {
+            document.getElementById('mNombre').innerText = hotel;
+            document.getElementById('mImg').style.backgroundImage = "url('" + (imagen || 'imagenes/placeholder.jpg') + "')";
+            document.getElementById('mCheckIn').innerText = entrada;
+            document.getElementById('mCheckOut').innerText = salida;
+            document.getElementById('mDescripcion').innerText = "Reserva confirmada.";
+            document.getElementById('mTituloHab').innerText = "Habitación Reservada";
+            
+            document.getElementById('mHabitacionesBody').innerHTML = `
+                <tr>
+                    <td><strong>${tipoHab}</strong></td>
+                    <td>Estándar</td>
+                    <td><small>Servicio incluido</small></td>
+                    <td class="text-primary fw-bold">$${precio}</td>
+                </tr>`;
+                
             new bootstrap.Modal(document.getElementById('modalDetalle')).show();
         }
     </script>
