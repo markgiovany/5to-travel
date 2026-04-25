@@ -9,230 +9,307 @@ if (!isset($_SESSION['user_uuid'])) {
 
 $user_id = $_SESSION['user_uuid'];
 
-/* DATOS USUARIO */
-$query_user = "
-SELECT u.first_name, u.last_name, e.email, t.telefono
-FROM usr_users u
-LEFT JOIN usr_emails e ON u.uuid = e.user_uuid
-LEFT JOIN usr_telefonos t ON u.uuid = t.user_uuid
-WHERE u.uuid = '$user_id'
-";
+/* --- LÓGICA PARA REGISTRAR VISTO RECIENTE --- */
+if (isset($_GET['id'])) {
+    $id_view = mysqli_real_escape_string($config, $_GET['id']);
+    $fecha_actual = date("Y-m-d H:i:s");
+    mysqli_query($config, "INSERT INTO vistos_recientes (user_id, id_catalogo, fecha) 
+                           VALUES ('$user_id', '$id_view', '$fecha_actual') 
+                           ON DUPLICATE KEY UPDATE fecha = '$fecha_actual'");
+}
+
+/* 1. CONSULTA: DATOS DEL USUARIO */
+$query_user = "SELECT u.first_name, u.last_name, e.email, t.telefono 
+                FROM usr_users u 
+                LEFT JOIN usr_emails e ON u.uuid = e.user_uuid 
+                LEFT JOIN usr_telefonos t ON u.uuid = t.user_uuid 
+                WHERE u.uuid = '$user_id'";
 $user = mysqli_fetch_assoc(mysqli_query($config, $query_user));
 
-/* RECIENTES */
+/* 2. CONSULTA: VISTOS RECIENTES */
 $result_recientes = mysqli_query($config, "
-SELECT c.nombre, c.precio, i.url_imagen 
-FROM vistos_recientes v
-JOIN catalogo c ON v.id_catalogo = c.id_catalogo
-LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
-WHERE v.user_id = '$user_id'
-ORDER BY v.fecha DESC LIMIT 4
+    SELECT c.id_catalogo, c.nombre, c.descripcion,
+    (SELECT MIN(precio) FROM cat_catalogo_habitacion WHERE id_catalogo = c.id_catalogo) as precio_min, 
+    i.url_imagen 
+    FROM vistos_recientes v
+    JOIN catalogo c ON v.id_catalogo = c.id_catalogo
+    LEFT JOIN (
+        SELECT id_catalogo, MAX(url_imagen) as url_imagen 
+        FROM cat_imagen 
+        GROUP BY id_catalogo
+    ) i ON c.id_catalogo = i.id_catalogo
+    WHERE v.user_id = '$user_id'
+    GROUP BY c.id_catalogo
+    ORDER BY v.fecha DESC LIMIT 4
 ");
 
-/* HISTORIAL */
+/* 3. CONSULTA: HISTORIAL (Ajustada con GROUP BY para eliminar duplicados visuales) */
 $result_historial = mysqli_query($config, "
-SELECT c.nombre, c.precio, i.url_imagen, r.fecha_entrada, r.fecha_salida
-FROM res_reserva r
-JOIN res_habitacion h ON r.id_habitacion = h.id_habitacion
-JOIN catalogo c ON h.id_catalogo = c.id_catalogo
-LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
-WHERE r.user_uuid = '$user_id'
+    SELECT 
+        r.id_reserva, 
+        c.nombre as hotel_nombre, 
+        ch.nombre as nombre_habitacion, 
+        ch.precio, 
+        i.url_imagen, 
+        r.fecha_entrada, 
+        r.fecha_salida
+    FROM res_reserva r
+    JOIN cat_catalogo_habitacion ch ON r.id_habitacion = ch.id_habitacion
+    JOIN catalogo c ON ch.id_catalogo = c.id_catalogo
+    LEFT JOIN (
+        SELECT id_catalogo, MAX(url_imagen) as url_imagen 
+        FROM cat_imagen 
+        GROUP BY id_catalogo
+    ) i ON c.id_catalogo = i.id_catalogo
+    WHERE r.user_uuid = '$user_id'
+    GROUP BY r.id_reserva 
+    ORDER BY r.fecha_entrada DESC
 ");
 
-/* PAGOS */
-$result_pago = mysqli_query($config, "
-SELECT * FROM metodos_pago WHERE user_id = '$user_id'
-");
+/* 4. CONSULTA: MÉTODOS DE PAGO */
+$result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uuid = '$user_id' AND id_status = 1");
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Perfil</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<style>
-
-/* SIDEBAR */
-.sidebar {
-    height: 100vh;
-    padding: 20px;
-    background: #f1f5f9 !important;
-    border-right: 1px solid #ddd;
-}
-
-/* BOTONES */
-.sidebar button {
-    width: 100%;
-    margin-bottom: 12px;
-    border-radius: 10px;
-    border: none;
-    background: #e2e8f0;
-    color: #333;
-    padding: 10px;
-    font-weight: 500;
-    transition: 0.3s;
-}
-
-.sidebar button:hover {
-    background: #cbd5e1;
-}
-
-.sidebar button.active {
-    background: #0ea5e9;
-    color: white;
-}
-
-/* TARJETAS */
-.card {
-    border-radius: 15px;
-    background: white;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-/* PERFIL */
-.profile-img {
-    width: 100px;
-    border-radius: 50%;
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de Usuario - 5to Travel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        :root { --accent-blue: #0ea5e9; --main-bg: #0f2027; }
+        body { font-family: 'Inter', sans-serif; background: #f4f7f6; }
+        .sidebar { height: 100vh; padding: 25px; background: #ffffff !important; border-right: 1px solid #e5e7eb; position: fixed; width: 280px; z-index: 100; }
+        .sidebar .nav-link { width: 100%; margin-bottom: 10px; border-radius: 12px; border: none; background: transparent; color: #64748b; padding: 12px 20px; font-weight: 600; text-align: left; transition: 0.3s; }
+        .sidebar .nav-link:hover { background: #f8fafc; color: var(--accent-blue); }
+        .sidebar .nav-link.active { background: var(--accent-blue); color: white; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25); }
+        .main-content { margin-left: 280px; padding: 40px; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); min-height: 100vh; }
+        .card-profile { border-radius: 24px; background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: none; padding: 35px; }
+        .item-row { background: #ffffff; border-radius: 16px; padding: 18px; margin-bottom: 15px; border: 1px solid #f1f5f9; transition: 0.3s; display: flex; align-items: center; }
+        .item-row:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .profile-img { width: 120px; height: 120px; border-radius: 50%; border: 5px solid var(--accent-blue); object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        .form-control { border-radius: 12px; border: 1px solid #e2e8f0; padding: 12px; background: #fcfcfc; }
+        .table-habitaciones { font-size: 0.85rem; border-radius: 10px; overflow: hidden; }
+        .table-habitaciones thead { background: #f8fafc; }
+    </style>
 </head>
-
 <body>
 
-<div class="container-fluid">
-    <div class="row">
-
-        <!-- SIDEBAR -->
-        <div class="col-md-3 sidebar" style="background:#f1f5f9 !important;">
-            <h4>Mi Panel</h4>
-
-            <button class="btn active" onclick="mostrar('perfil', this)">Mi Perfil</button>
-            <button class="btn" onclick="mostrar('recientes', this)">Vistos Recientes</button>
-            <button class="btn" onclick="mostrar('pagos', this)">Métodos de Pago</button>
-            <button class="btn" onclick="mostrar('historial', this)">Historial</button>
-
-            <a href="home.php" class="btn btn-danger mt-3">Salir</a>
+    <nav class="sidebar">
+        <div class="text-center mb-5">
+            <h3 class="fw-bold text-primary">PERFIL</h3>
+            <small class="text-muted">Tus Datos</small>
         </div>
+        <button class="nav-link active" onclick="mostrar('perfil', this)"><i class="bi bi-person me-2"></i> Mi Perfil</button>
+        <button class="nav-link" onclick="mostrar('recientes', this)"><i class="bi bi-eye me-2"></i> Recientes</button>
+        <button class="nav-link" onclick="mostrar('pagos', this)"><i class="bi bi-credit-card me-2"></i> Métodos de Pago</button>
+        <button class="nav-link" onclick="mostrar('historial', this)"><i class="bi bi-calendar-check me-2"></i> Mis Reservas</button>
+        <div class="mt-auto pt-5">
+            <hr>
+            <a href="home.php" class="btn btn-outline-danger w-100 rounded-pill fw-bold">Salir al Inicio</a>
+        </div>
+    </nav>
 
-        <!-- CONTENIDO DERECHO -->
-        <div class="col-md-9 content" style="background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important; min-height:100vh; padding:30px;">
-
-            <!-- PERFIL -->
-            <div id="perfil" class="seccion">
-                <div class="card p-4 text-center">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="profile-img mb-3">
-
-                    <h4><?php echo $user['first_name']." ".$user['last_name']; ?></h4>
-
-                    <form id="formUsuario" action="auth/actualizar_usuario.php" method="POST">
-
-                        <input type="text" name="nombre" class="form-control mb-2" value="<?php echo $user['first_name']; ?>" disabled>
-                        <input type="text" name="apellido" class="form-control mb-2" value="<?php echo $user['last_name']; ?>" disabled>
-                        <input type="email" name="email" class="form-control mb-2" value="<?php echo $user['email']; ?>" disabled>
-                        <input type="text" name="telefono" class="form-control mb-2" value="<?php echo $user['telefono']; ?>" disabled>
-
-                        <button type="button" class="btn btn-primary" onclick="editar()">Editar</button>
-
-                        <div id="botonesGuardar" style="display:none;">
-                            <button type="submit" class="btn btn-success mt-2">Guardar</button>
-                            <button type="button" class="btn btn-secondary mt-2" onclick="cancelar()">Cancelar</button>
+    <main class="main-content">
+        <section id="perfil" class="seccion-content">
+            <div class="card-profile text-center mx-auto" style="max-width: 600px;">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="profile-img mb-4">
+                <h4 class="fw-bold mb-4"><?php echo $user['first_name']." ".$user['last_name']; ?></h4>
+                <form id="formUser" action="auth/actualizar_usuario.php" method="POST" class="text-start">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label small fw-bold">Nombre</label><input type="text" name="nombre" class="form-control" value="<?php echo $user['first_name']; ?>" disabled required></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">Apellido</label><input type="text" name="apellido" class="form-control" value="<?php echo $user['last_name']; ?>" disabled required></div>
+                        <div class="col-12"><label class="form-label small fw-bold">Correo Electrónico</label><input type="email" name="email" class="form-control" value="<?php echo $user['email']; ?>" disabled required></div>
+                        <div class="col-12"><label class="form-label small fw-bold">Teléfono</label><input type="text" name="telefono" class="form-control" value="<?php echo $user['telefono']; ?>" disabled required minlength="10" maxlength="10"></div>
+                    </div>
+                    <div class="mt-4 pt-2">
+                        <button type="button" id="btnEdit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill" onclick="habilitarEdicion()">Editar mi información</button>
+                        <div id="btnSave" style="display:none;" class="row g-2">
+                            <div class="col-9"><button type="submit" class="btn btn-success w-100 py-3 fw-bold rounded-pill">Guardar Cambios</button></div>
+                            <div class="col-3"><button type="button" class="btn btn-light w-100 py-3 rounded-pill" onclick="location.reload()">X</button></div>
                         </div>
+                    </div>
+                </form>
+            </div>
+        </section>
 
-                    </form>
+        <section id="pagos" class="seccion-content" style="display:none;">
+            <div class="card-profile">
+                <h4 class="mb-4 fw-bold">Gestión de Pagos</h4>
+                <form action="auth/guardar_pago.php" method="POST" class="mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-6"><input type="text" name="titular" class="form-control" placeholder="Nombre en la tarjeta" required></div>
+                        <div class="col-md-6"><input type="text" name="numero" class="form-control" placeholder="Número de Tarjeta (16 dígitos)" maxlength="16" required></div>
+                        <div class="col-md-4"><input type="text" name="expiracion" class="form-control" placeholder="MM/AA" maxlength="5" required></div>
+                        <div class="col-md-4"><input type="password" name="cvv" class="form-control" placeholder="CVV" maxlength="3" required></div>
+                        <div class="col-md-4"><button type="submit" class="btn btn-primary w-100 h-100 rounded-pill fw-bold">Añadir</button></div>
+                    </div>
+                </form>
+                <hr class="my-4">
+                <?php while($p = mysqli_fetch_assoc($result_pago)): ?>
+                    <div class="item-row justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded-4 me-3"><i class="bi bi-wallet2 text-primary"></i></div>
+                            <div><span class="d-block fw-bold"><?php echo $p['nombre_titular']; ?></span><small>•••• <?php echo substr($p['datos_encriptados'], -4); ?></small></div>
+                        </div>
+                        <a href="auth/eliminar_pago.php?p_id=<?php echo $p['id_metodo_guardado']; ?>" class="btn btn-outline-danger btn-sm rounded-pill">Eliminar</a>
+                    </div>
+                <?php endwhile; ?>
+            </div>
+        </section>
+
+        <section id="recientes" class="seccion-content" style="display:none;">
+            <div class="card-profile">
+                <h4 class="mb-4 fw-bold">Vistos recientemente</h4>
+                <div class="row g-3">
+                    <?php if(mysqli_num_rows($result_recientes) > 0): ?>
+                        <?php while($r = mysqli_fetch_assoc($result_recientes)): 
+                            $id_h = $r['id_catalogo'];
+                            $q_habs = mysqli_query($config, "SELECT * FROM cat_catalogo_habitacion WHERE id_catalogo = '$id_h'");
+                            $habitaciones = [];
+                            while($hb = mysqli_fetch_assoc($q_habs)) { $habitaciones[] = $hb; }
+                            $habs_json = htmlspecialchars(json_encode($habitaciones), ENT_QUOTES, 'UTF-8');
+                        ?>
+                            <div class="col-md-6">
+                                <div class="item-row" style="cursor:pointer;" 
+                                     onclick="verFichaHotel('<?php echo addslashes($r['nombre']); ?>', '<?php echo $r['url_imagen']; ?>', '<?php echo addslashes($r['descripcion']); ?>', '<?php echo $habs_json; ?>')">
+                                    <img src="<?php echo !empty($r['url_imagen']) ? $r['url_imagen'] : 'imagenes/placeholder.jpg'; ?>" width="80" height="80" class="rounded-4 me-3" style="object-fit: cover;">
+                                    <div><h6 class="mb-1 fw-bold"><?php echo $r['nombre']; ?></h6><span class="badge bg-success bg-opacity-10 text-success">$<?php echo number_format($r['precio_min'], 2); ?></span></div>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <p class="text-muted text-center w-100">Aún no has visto ningún destino.</p>
+                    <?php endif; ?>
                 </div>
             </div>
+        </section>
 
-            <!-- RECIENTES -->
-            <div id="recientes" class="seccion" style="display:none;">
-                <div class="card p-4">
-                    <h4>Vistos recientes</h4>
-
-                    <?php while($r = mysqli_fetch_assoc($result_recientes)): ?>
-                        <div class="d-flex mb-3">
-                            <img src="<?php echo $r['url_imagen']; ?>" width="100" class="rounded me-3">
+        <section id="historial" class="seccion-content" style="display:none;">
+            <div class="card-profile">
+                <h4 class="mb-4 fw-bold">Mi Historial de Viajes</h4>
+                <?php while($h = mysqli_fetch_assoc($result_historial)): ?>
+                    <div class="item-row justify-content-between" style="cursor:pointer;" 
+                         onclick="verDetalleReserva('<?php echo addslashes($h['hotel_nombre']); ?>', '<?php echo $h['fecha_entrada']; ?>', '<?php echo $h['fecha_salida']; ?>', '<?php echo number_format($h['precio'], 2); ?>', '<?php echo $h['url_imagen']; ?>', '<?php echo $h['nombre_habitacion']; ?>')">
+                        <div class="d-flex align-items-center">
+                            <img src="<?php echo !empty($h['url_imagen']) ? $h['url_imagen'] : 'imagenes/placeholder.jpg'; ?>" width="100" height="75" class="rounded-3 me-3" style="object-fit: cover;">
                             <div>
-                                <h6><?php echo $r['nombre']; ?></h6>
-                                <span>$<?php echo number_format($r['precio'],2); ?></span>
+                                <h6 class="mb-1 fw-bold text-primary"><?php echo $h['hotel_nombre']; ?></h6>
+                                <small class="text-muted d-block"><?php echo $h['nombre_habitacion']; ?></small>
+                                <small class="text-muted"><?php echo $h['fecha_entrada']; ?></small>
                             </div>
                         </div>
-                    <?php endwhile; ?>
-
-                </div>
+                        <span class="badge rounded-pill bg-primary">Completado</span>
+                    </div>
+                <?php endwhile; ?>
             </div>
+        </section>
+    </main>
 
-            <!-- PAGOS -->
-            <div id="pagos" class="seccion" style="display:none;">
-                <div class="card p-4">
-                    <h4>Métodos de pago</h4>
-
-                    <?php while($p = mysqli_fetch_assoc($result_pago)): ?>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span><?php echo $p['tipo']; ?> ****<?php echo substr($p['numero'], -4); ?></span>
-
-                            <a href="auth/eliminar_pago.php?id=<?php echo $p['id']; ?>" class="btn btn-danger btn-sm">
-                                Eliminar
-                            </a>
+    <div class="modal fade" id="modalDetalle" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 20px; overflow: hidden;">
+                <div id="mImg" style="height: 250px; background-size: cover; background-position: center;"></div>
+                <div class="modal-body p-4">
+                    <div class="text-center mb-4">
+                        <h3 id="mNombre" class="fw-bold text-primary"></h3>
+                        <p id="mUbicacion" class="text-muted small"><i class="bi bi-geo-alt"></i> <span>Ubicación registrada</span></p>
+                    </div>
+                    
+                    <div class="row mb-4 text-center bg-light p-3 rounded-4">
+                        <div class="col-6 border-end">
+                            <small class="text-muted d-block">Fecha Entrada</small>
+                            <strong id="mCheckIn">--</strong>
                         </div>
-                    <?php endwhile; ?>
-
-                    <hr>
-
-                    <form action="auth/agregar_pago.php" method="POST">
-                        <input type="text" name="tipo" class="form-control mb-2" placeholder="Tipo">
-                        <input type="text" name="numero" class="form-control mb-2" placeholder="Número">
-                        <button class="btn btn-primary">Agregar</button>
-                    </form>
-
-                </div>
-            </div>
-
-            <!-- HISTORIAL -->
-            <div id="historial" class="seccion" style="display:none;">
-                <div class="card p-4">
-                    <h4>Historial</h4>
-
-                    <?php while($h = mysqli_fetch_assoc($result_historial)): ?>
-                        <div class="d-flex mb-3">
-                            <img src="<?php echo $h['url_imagen']; ?>" width="100" class="rounded me-3">
-                            <div>
-                                <h6><?php echo $h['nombre']; ?></h6>
-                                <small><?php echo $h['fecha_entrada']." → ".$h['fecha_salida']; ?></small><br>
-                                <span>$<?php echo number_format($h['precio'],2); ?></span>
-                            </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Fecha Salida</small>
+                            <strong id="mCheckOut">--</strong>
                         </div>
-                    <?php endwhile; ?>
+                    </div>
 
+                    <h6 class="fw-bold" id="mTituloDesc">Descripción</h6>
+                    <p id="mDescripcion" class="text-muted small mb-4"></p>
+
+                    <h6 class="fw-bold mb-3" id="mTituloHab">Habitaciones</h6>
+                    <div class="table-responsive">
+                        <table class="table table-habitaciones border">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Capacidad</th>
+                                    <th>Servicios</th>
+                                    <th>Precio</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mHabitacionesBody"></tbody>
+                        </table>
+                    </div>
+
+                    <button class="btn btn-dark w-100 rounded-pill mt-4" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
-
         </div>
-
     </div>
-</div>
 
-<script>
-function mostrar(seccion, boton) {
-    document.querySelectorAll('.seccion').forEach(div => div.style.display = 'none');
-    document.getElementById(seccion).style.display = 'block';
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function mostrar(id, btn) {
+            document.querySelectorAll('.seccion-content').forEach(s => s.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+            document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        function habilitarEdicion() {
+            document.querySelectorAll("#formUser input").forEach(input => input.disabled = false);
+            document.getElementById("btnEdit").style.display = "none";
+            document.getElementById("btnSave").style.display = "flex";
+        }
 
-    document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
-    boton.classList.add('active');
-}
+        function verFichaHotel(nombre, imagen, desc, habsJson) {
+            document.getElementById('mNombre').innerText = nombre;
+            document.getElementById('mImg').style.backgroundImage = "url('" + (imagen || 'imagenes/placeholder.jpg') + "')";
+            document.getElementById('mDescripcion').innerText = desc || 'Sin descripción adicional.';
+            document.getElementById('mTituloHab').innerText = "Habitaciones Disponibles";
+            
+            const body = document.getElementById('mHabitacionesBody');
+            body.innerHTML = '';
+            const habs = JSON.parse(habsJson);
+            
+            if(habs.length > 0) {
+                habs.forEach(h => {
+                    body.innerHTML += `
+                        <tr>
+                            <td><strong>${h.nombre || 'Habitación'}</strong></td>
+                            <td>${h.capacidad || 'N/A'} pers.</td>
+                            <td><small>TV, Wi-Fi</small></td>
+                            <td class="text-success fw-bold">MXN$ ${parseFloat(h.precio).toLocaleString()}</td>
+                        </tr>`;
+                });
+            }
+            new bootstrap.Modal(document.getElementById('modalDetalle')).show();
+        }
 
-function editar() {
-    document.querySelectorAll("#formUsuario input").forEach(i => i.disabled = false);
-    document.getElementById("botonesGuardar").style.display = "block";
-}
-
-function cancelar() {
-    location.reload();
-}
-</script>
-
+        function verDetalleReserva(hotel, entrada, salida, precio, imagen, tipoHab) {
+            document.getElementById('mNombre').innerText = hotel;
+            document.getElementById('mImg').style.backgroundImage = "url('" + (imagen || 'imagenes/placeholder.jpg') + "')";
+            document.getElementById('mCheckIn').innerText = entrada;
+            document.getElementById('mCheckOut').innerText = salida;
+            document.getElementById('mDescripcion').innerText = "Reserva confirmada.";
+            document.getElementById('mTituloHab').innerText = "Habitación Reservada";
+            
+            document.getElementById('mHabitacionesBody').innerHTML = `
+                <tr>
+                    <td><strong>${tipoHab}</strong></td>
+                    <td>Estándar</td>
+                    <td><small>Servicio incluido</small></td>
+                    <td class="text-primary fw-bold">$${precio}</td>
+                </tr>`;
+                
+            new bootstrap.Modal(document.getElementById('modalDetalle')).show();
+        }
+    </script>
 </body>
 </html>

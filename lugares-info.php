@@ -3,7 +3,23 @@ session_start();
 include("config/config.php"); 
 
 $id_hotel = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+// ... viene de la línea 5
+$id_hotel = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
+// --- INICIO DE BLOQUE PARA VISTOS RECIENTES ---
+if ($id_hotel > 0 && isset($_SESSION['user_uuid'])) {
+    $user_id = $_SESSION['user_uuid'];
+    $fecha_actual = date("Y-m-d H:i:s");
+
+    // Registra la visita: si el hotel ya estaba, actualiza la fecha al momento actual
+    $query_visto = "INSERT INTO vistos_recientes (user_id, id_catalogo, fecha) 
+                    VALUES ('$user_id', '$id_hotel', '$fecha_actual') 
+                    ON DUPLICATE KEY UPDATE fecha = '$fecha_actual'";
+    
+    mysqli_query($config, $query_visto);
+}
+
+if ($id_hotel > 0) 
 if ($id_hotel > 0) {
     $sql_detalle = "SELECT c.*,  u.direccion, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.name AS nombre_pais, i.url_imagen
                     FROM catalogo c
