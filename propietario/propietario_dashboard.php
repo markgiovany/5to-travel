@@ -9,13 +9,12 @@ if (!isset($_SESSION['user_uuid'])) {
   
 $propietario_uuid = $_SESSION['user_uuid'];
 
-/* HOTELES */
-$sql_hoteles = "SELECT * FROM catalogo
-                WHERE propietario_uuid = '$propietario_uuid'
-                AND (id_satatus IS NULL OR id_status != 2)
-                ORDER BY id_catalogo DESC";
-
-$res_hoteles = mysqli_query($config, "SELECT * FROM catalogo WHERE propietario_uuid='$propietario_uuid' AND id_status != 2");
+/* 🔥 QUERY CORREGIDA */
+$res_hoteles = mysqli_query($config, "
+    SELECT * FROM catalogo 
+    WHERE propietario_uuid = '$propietario_uuid' 
+    AND id_status != 2
+");
 ?>
 
 <!DOCTYPE html>
@@ -104,7 +103,8 @@ body {
 
 <div class="top-bar shadow-sm">
     <h5 class="mb-0">Panel de Control</h5>
-<span class="mb-0">Bienvenido, <strong><?php echo htmlspecialchars($nombre_usuario ?? 'Usuario'); ?></strong></span></div>
+    <span>Bienvenido, <strong><?php echo htmlspecialchars($nombre_usuario ?? 'Usuario'); ?></strong></span>
+</div>
 
 <div class="card shadow-sm">
 
@@ -137,8 +137,9 @@ body {
 
 <?php
 $id = $row['id_catalogo'];
+$uuid = $row['uuid']; // 🔥 IMPORTANTE
 
-/* IMÁGENES HOTEL */
+/* IMÁGENES */
 $res_img = mysqli_query($config, "
 SELECT url_imagen 
 FROM cat_imagen 
@@ -152,7 +153,7 @@ while($img = mysqli_fetch_assoc($res_img)){
     $imgs[] = $img['url_imagen'];
 }
 
-/* TIPOS (TABLA PRINCIPAL) */
+/* TIPOS */
 $res_tipos = mysqli_query($config, "
 SELECT DISTINCT t.nombre
 FROM cat_catalogo_habitacion ch
@@ -182,8 +183,7 @@ $precio_max = $precio_data['precio_max'] ?? 0;
 
 <td>
 <?php if(!empty($imgs)): ?>
-    <img src="<?php echo $imgs[0]; ?>" width="65" height="65"
-    style="object-fit:cover;border-radius:10px;">
+    <img src="<?php echo $imgs[0]; ?>" width="65" height="65" style="object-fit:cover;border-radius:10px;">
 <?php else: ?>
     <div style="width:65px;height:65px;background:#ddd;border-radius:10px;"></div>
 <?php endif; ?>
@@ -205,110 +205,26 @@ $precio_max = $precio_data['precio_max'] ?? 0;
 </td>
 
 <td>
-<?php if(empty($tipos)): ?>
-    <span class="text-muted small">Sin habitaciones</span>
-<?php else: ?>
-    <?php foreach($tipos as $t): ?>
-        <span class="badge bg-primary me-1 mb-1"><?php echo $t; ?></span>
-    <?php endforeach; ?>
-<?php endif; ?>
+<?php foreach($tipos as $t): ?>
+    <span class="badge bg-primary me-1 mb-1"><?php echo $t; ?></span>
+<?php endforeach; ?>
 </td>
 
 <td>
-<a href="editar.php?id=<?php echo $id; ?>" class="btn btn-outline-primary btn-sm">
+<!-- 🔥 EDITAR CON UUID -->
+<a href="editar.php?u=<?php echo $uuid; ?>" class="btn btn-outline-primary btn-sm">
 <i class="bi bi-pencil"></i>
 </a>
 
-<a href="eliminar.php?id=<?php echo $id; ?>" 
+<!-- 🔥 ELIMINAR CON UUID -->
+<a href="eliminar.php?u=<?php echo $uuid; ?>" 
    class="btn btn-outline-danger btn-sm" 
    onclick="return confirm('¿Eliminar hotel?')">
    <i class="bi bi-trash"></i>
 </a>
+</td>
 
 </tr>
-
-<!-- MODAL FINAL -->
-<div class="modal fade" id="modal<?php echo $id; ?>" tabindex="-1">
-<div class="modal-dialog modal-lg">
-<div class="modal-content">
-
-<div class="modal-header">
-<h5><?php echo $row['nombre']; ?></h5>
-<button class="btn-close" data-bs-dismiss="modal"></button>
-</div>
-
-<div class="modal-body">
-
-<?php
-/* IMÁGENES MODAL */
-$res_img_modal = mysqli_query($config, "
-SELECT url_imagen 
-FROM cat_imagen 
-WHERE id_catalogo = '$id'
-AND id_habitacion IS NULL
-ORDER BY id_imagen DESC
-");
-
-$imgs_modal = [];
-while($imgm = mysqli_fetch_assoc($res_img_modal)){
-    $imgs_modal[] = $imgm['url_imagen'];
-}
-?>
-
-<?php if(!empty($imgs_modal)): ?>
-<div id="carousel<?php echo $id; ?>" class="carousel slide mb-3"
-data-bs-ride="carousel">
-
-<div class="carousel-inner">
-
-<?php foreach($imgs_modal as $index => $img): ?>
-<div class="carousel-item <?php echo $index == 0 ? 'active' : ''; ?>">
-<img src="<?php echo $img; ?>"
-style="width:100%;height:250px;object-fit:cover;border-radius:10px;">
-</div>
-<?php endforeach; ?>
-
-</div>
-</div>
-<?php endif; ?>
-
-<hr>
-
-<!-- DESCRIPCIÓN -->
-<p><strong>📝 Descripción del hotel:</strong></p>
-<p><?php echo $row['descripcion']; ?></p>
-
-<hr>
-
-<!-- TIPOS -->
-<div>
-<strong>🏷 Tipos de habitaciones:</strong><br>
-
-<?php if(empty($tipos)): ?>
-    <span class="text-muted">No hay habitaciones registradas</span>
-<?php else: ?>
-    <?php foreach($tipos as $t): ?>
-        <span class="badge bg-primary me-1 mb-1"><?php echo $t; ?></span>
-    <?php endforeach; ?>
-<?php endif; ?>
-</div>
-
-<hr>
-
-<!-- PRECIOS -->
-<div>
-<strong>💰 Rango de precios:</strong><br>
-
-<span class="badge bg-success">Min: $<?php echo number_format($precio_min,2); ?></span>
-<span class="badge bg-danger ms-2">Max: $<?php echo number_format($precio_max,2); ?></span>
-
-</div>
-
-</div>
-
-</div>
-</div>
-</div>
 
 <?php endwhile; ?>
 
