@@ -2,7 +2,7 @@
 session_start();
 include("config/config.php"); 
 
-$query = "SELECT c.id_catalogo, c.nombre, i.url_imagen 
+$query = "SELECT c.id_catalogo, c.uuid, c.nombre, i.url_imagen
           FROM catalogo c
           LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
           GROUP BY c.id_catalogo
@@ -16,12 +16,50 @@ $catalogo_hoteles = array();
 while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
     $catalogo_hoteles[] = array(
         "id" => $fila['id_catalogo'],
+        "uuid" => $fila['uuid'],
         "nombre" => $fila['nombre'],
         "imagen" => $fila['url_imagen'] ?? 'https://images.unsplash.com/photo-1566073771259-6a8506099945'
     );
 }
-?>
 
+$entrada = isset($_GET['entrada']) ? $_GET['entrada'] : '';
+$salida = isset($_GET['salida']) ? $_GET['salida'] : '';
+
+$hoy = date('Y-m-d');
+if (!empty($entrada) && $entrada < $hoy) {
+    $entrada = $hoy; 
+    $error_fecha = "La fecha de entrada no puede ser anterior a hoy.";
+}
+
+if (!empty($entrada) && !empty($salida)) {
+    if ($salida <= $entrada) {
+        $mañana = date('Y-m-d', strtotime($entrada . ' +1 day'));
+        $salida = $mañana;
+        $error_fecha = "La fecha de salida debe ser posterior a la entrada.";
+        header("Location: index.php?error_fecha=1&entrada=$entrada&salida=$salida");
+        exit();
+    }
+}
+
+if (!empty($entrada)) {
+    $fecha_min_salida = date('Y-m-d', strtotime($entrada . ' +1 day'));
+} else {
+    $fecha_min_salida = date('Y-m-d', strtotime('+1 day'));
+}
+
+if (isset($error_fecha)): ?>
+    <div style="color: #ff4d4d; background: rgba(255, 77, 77, 0.1); padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-top: 10px; text-align: center;">
+        <i class="bi bi-exclamation-circle"></i> <?php echo $error_fecha; ?>
+    </div>
+<?php endif; 
+
+$query_auto = "SELECT name FROM  cities 
+        UNION SELECT name FROM states 
+        UNION SELECT name FROM countries  
+        ORDER BY name ASC";
+$res_auto = mysqli_query($config, $query_auto);        
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -65,28 +103,34 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
           <div class="smart-search">
               <div class="search-field">
                   <span class="label">UBICACIÓN</span>
-                  <input type="text" name="ubicacion" placeholder="¿A dónde quieres ir?">
+                  <input type="text" name="ubicacion" list="destinos_list" placeholder="¿A dónde quieres ir? " autocomplete="on">
+
+                  <datalist id="destinos_list">
+                    <?php while($row = mysqli_fetch_assoc($res_auto)): ?>
+                    <option value="<?php echo htmlspecialchars($row['name']); ?>"></option>
+                    <?php endwhile; ?>
+                  </datalist>
               </div>
 
               <div class="divider"></div> 
               
               <div class="search-field">
                   <span class="label">ENTRADA</span>
-                  <input type="date" name="entrada">
+                  <input type="date" name="entrada" value="<?php echo $entrada; ?>" min="<?php echo date('Y-m-d'); ?>">
               </div>
 
               <div class="divider"></div> 
               
               <div class="search-field">
                   <span class="label">SALIDA</span>
-                  <input type="date" name="salida">
+                  <input type="date" name="salida" value="<?php echo $salida; ?>" min="<?php echo $fecha_min_salida ?>"required >
               </div>
 
               <div class="divider"></div> 
               
               <div class="search-field">
                   <span class="label">PERSONAS</span>
-                  <input type="number" name="personas" placeholder="¿Cuántos?">
+                  <input type="number" name="personas" placeholder="¿Cuántos?" min="0" max="20">
               </div>
 
               <button class="search-btn">
@@ -134,7 +178,7 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
   <div class="col-md-3">
     <div class="hotel-card">
       
-      <a href="lugares-info.php?id=<?php echo $hotel['id']; ?>">
+      <a href="lugares-info.php?id=<?php echo $hotel['uuid']; ?>">
         <img src="<?php echo $hotel['imagen']; ?>" class="img-fluid">
       </a>
 
