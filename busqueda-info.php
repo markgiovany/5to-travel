@@ -123,7 +123,7 @@ if(!$resultado){
             <?php while ($sugerencias = mysqli_fetch_assoc($res_sugerencias)) { ?>
 
             <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-                <a href="lugares-info.php?id=<?php echo $sugerencias['hotel_uuid']; ?>" style="text-decoration: none; color:black">
+                <a href="lugares-info.php?uuid=<?php echo $sugerencias['hotel_uuid']; ?>" style="text-decoration: none; color:black">
                     <article class="hotel-card shadow-sm">
                         <div class="image-box">
                             <img src="<?php echo !empty($sugerencias['url_imagen']) ? $sugerencias['url_imagen'] : 'https://images.unsplash.com/photo-1590490360182-c33d57733427'; ?>" alt="Hotel">
