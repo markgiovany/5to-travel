@@ -16,7 +16,7 @@ if (!empty($status_val)) {
     $condiciones[] = "l.id_status = '$status_val'";
 }
 if (!empty($role_val)) {
-    $condiciones[] = "u.rol_name = '$role_val'";
+    $condiciones[] = "l.role = '$role_val'";
 }
 if (!empty($search_val)) {
     $condiciones[] = "(u.first_name LIKE '%$search_val%' OR u.last_name LIKE '%$search_val%' OR e.email LIKE '%$search_val%')";
@@ -27,16 +27,29 @@ if (count($condiciones) > 0) {
     $filtro = " WHERE " . implode(" AND ", $condiciones);
 }
 
-$query = "SELECT u.uuid, u.first_name, u.last_name, t.telefono, u.rol_name, e.email, u.created_at, s.nombre AS estado_nombre, l.id_status
+$query = "SELECT 
+            u.uuid, 
+            u.first_name, 
+            u.last_name, 
+            u.created_at,
+            r.rol AS rol_nombre, 
+            l.id_status,
+            s.nombre AS estado_nombre,
+            (SELECT email FROM usr_emails WHERE user_uuid = u.uuid LIMIT 1) AS email,
+            (SELECT telefono FROM usr_telefonos WHERE user_uuid = u.uuid LIMIT 1) AS telefono
           FROM usr_users u
-          LEFT JOIN usr_emails e ON u.uuid = e.user_uuid 
           LEFT JOIN usr_users_login l ON u.uuid = l.user_uuid
-          LEFT JOIN usr_telefonos t ON u.uuid = t.user_uuid
+          LEFT JOIN usr_roles r ON l.id_rol = r.id_rol
           LEFT JOIN status s ON l.id_status = s.id_status
           $filtro
-          ORDER BY u.first_name ASC, u.last_name ASC";
+          GROUP BY u.uuid
+          ORDER BY u.first_name ASC";
 
 $resultado = mysqli_query($config, $query);
+
+if (!$resultado) {
+    die("Error en la consulta: " . mysqli_error($config));
+}
 
 if (!$resultado) {
     die("Error en la consulta: " . mysqli_error($config));
@@ -97,26 +110,25 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
                 <img src="https://ui-avatars.com/api/?name=<?php echo $_SESSION['first_name'] ?? 'Admin'; ?>&background=6f42c1&color=fff" class="rounded-circle" width="40">
             </div>
         </div>
-        <?php if (isset($_GET['msg'])): ?>
-            <?php if ($_GET['msg'] == 'added'): ?>
-                <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
-                    <i class="bi bi-check-circle-fill me-2"></i>
-                    <strong>¡Excelente!</strong> El usuario ha sido registrado correctamente.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php elseif ($_GET['msg'] == 'updated' || $_GET['msg'] == 'status_updated'): ?>
-                <div class="alert alert-info alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
-                    <i class="bi bi-info-circle-fill me-2"></i>
-                    <strong>¡Actualizado!</strong> Los cambios del usuario se guardaron con éxito.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php elseif ($_GET['msg'] == 'error'): ?>
-                <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
-                    <i class="bi bi-x-circle-fill me-2"></i>
-                    <strong>Error:</strong> Ocurrió un problema al procesar la solicitud.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <?php endif; ?>
-        <?php endif; ?>
+<?php if (isset($_SESSION['flash'])): 
+    $flash = $_SESSION['flash'];
+    $icon = [
+        'success' => 'bi-check-circle-fill',
+        'info'    => 'bi-info-circle-fill',
+        'warning' => 'bi-exclamation-triangle-fill',
+        'danger'  => 'bi-x-circle-fill'
+    ][$flash['type']] ?? 'bi-bell-fill';
+?>
+    <div class="alert alert-<?= $flash['type'] ?> alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+        <i class="<?= $icon ?> me-2"></i>
+        <strong><?= $flash['title'] ?></strong> <?= $flash['msg'] ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <?php 
+        unset($_SESSION['flash']); 
+    ?>
+<?php endif; ?>
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="d-flex gap-2">

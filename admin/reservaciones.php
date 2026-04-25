@@ -79,13 +79,33 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
             </div>
         </div>
 
+<?php if (isset($_SESSION['flash'])): 
+    $flash = $_SESSION['flash'];
+    $icon = [
+        'success' => 'bi-check-circle-fill',
+        'info'    => 'bi-info-circle-fill',
+        'warning' => 'bi-exclamation-triangle-fill',
+        'danger'  => 'bi-x-circle-fill'
+    ][$flash['type']] ?? 'bi-bell-fill';
+?>
+    <div class="alert alert-<?= $flash['type'] ?> alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+    <i class="<?= $icon ?> me-2"></i>
+    <strong><?= $flash['title'] ?></strong> <?= $flash['msg'] ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+    <?php 
+        unset($_SESSION['flash']); 
+    ?>
+<?php endif; ?>
+
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="d-flex align-items-center">
                 <small class="text-muted fw-bold me-2">ESTADO:</small>
                 <a href="reservaciones.php" class="btn btn-xs <?php echo empty($status_val) ? 'fw-bold text-dark' : 'text-muted'; ?>" style="font-size: 0.8rem;">Todas</a>
                 <?php mysqli_data_seek($res_status_list, 0); while($s = mysqli_fetch_assoc($res_status_list)): ?>
                     <a href="reservaciones.php?status=<?php echo $s['id_status']; ?>" 
-                       class="ms-2 btn btn-xs <?php echo ($status_val == $s['id_status']) ? 'fw-bold text-dark text-decoration-underline' : 'text-muted'; ?>" 
+                       class="ms-2 btn btn-xs <?php echo ($status_val == $s['id_status']) ? 'fw-bold text-dark text-decoration-none' : 'text-muted'; ?>" 
                        style="font-size: 0.8rem;">
                         <?php echo $s['nombre']; ?>
                     </a>
@@ -184,6 +204,6 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
         </div>
     </div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

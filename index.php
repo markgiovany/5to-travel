@@ -46,6 +46,8 @@ while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
     <div class="nav-links">
         <a href="catalogo.php">Catálogo</a>
 
+        <a href="centro_de_ayuda.php">Centro de ayuda</a>
+
         <a href="Login.php" class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-2">
             <i class="bi bi-person-circle"></i> Login
         </a>

@@ -2,16 +2,13 @@
 session_start();
 include("../config/config.php");
 
-// 1. SEGURIDAD: Validar sesión y existencia del parámetro 'uuid'
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin' || !isset($_GET['uuid'])) {
     header("Location: reservaciones.php"); 
     exit();
 }
 
-// 2. LIMPIEZA: Escapar el UUID para prevenir Inyección SQL
 $uuid_url = mysqli_real_escape_string($config, $_GET['uuid']);
 
-// 3. QUERY: Buscamos por la columna 'uuid_reserva' (como me confirmaste)
 $query = "SELECT r.*, s.nombre as estado_nombre, u.first_name, u.last_name, e.email, t.telefono,
           c.nombre as hotel_nombre, ub.direccion, h.nombre as habitacion_nombre, h.precio, h.capacidad,
           p.monto as monto_pagado, p.fecha_pago, b.id_metodo_pago
@@ -30,15 +27,12 @@ $query = "SELECT r.*, s.nombre as estado_nombre, u.first_name, u.last_name, e.em
 $res = mysqli_query($config, $query);
 $data = mysqli_fetch_assoc($res);
 
-// 4. VALIDACIÓN: Si no existe, cortamos el proceso
 if (!$data) { 
     die("Error: No se encontró información para el UUID: " . htmlspecialchars($uuid_url)); 
 }
 
-// 5. VARIABLES DE APOYO
 $ref = "BK-" . str_pad($data['id_reserva'], 7, "0", STR_PAD_LEFT);
 
-// Lógica de color de status
 $status_clean = mb_strtolower(trim($data['estado_nombre']), 'UTF-8');
 $color_dot = '#6c757d'; // Default gris
 if (str_contains($status_clean, 'confirm')) { $color_dot = '#198754'; } // Verde
@@ -81,7 +75,6 @@ $email_body = "Reserva: $ref%0D%0ACliente: " . urlencode($data['first_name'] . "
 <body>
 
 <div class="container py-4">
-    <!-- Encabezado con Título y Botón Volver -->
     <div class="header-container">
         <div class="title-group">
             <h2 class="fw-bold m-0 text-dark">Reserva <?php echo $ref; ?></h2>

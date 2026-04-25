@@ -32,9 +32,9 @@ try {
                            VALUES ('$email', '$uuid')");
 
     // SQL 3: Insertar en usr_users_login (Sin created_at para evitar el error)
-    // Campos: user_uuid, password, role, id_status
-    mysqli_query($config, "INSERT INTO usr_users_login (user_uuid, password, role, id_status) 
-                           VALUES ('$uuid', '$password', 'user', 1)");
+    // Campos: user_uuid, password, id_rol, id_status
+    mysqli_query($config, "INSERT INTO usr_users_login (user_uuid, password, id_rol, id_status) 
+                           VALUES ('$uuid', '$password', 3, 1)");
 
     // SQL 4: Insertar en usr_telefonos
     mysqli_query($config, "INSERT INTO usr_telefonos (telefono, user_uuid) 

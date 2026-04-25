@@ -16,6 +16,11 @@ FROM res_reserva r
 JOIN catalogo c ON r.id_catalogo = c.id_catalogo
 JOIN usr_users u ON r.user_uuid = u.uuid
 JOIN status s ON r.id_status = s.id_status
+WHERE c.propietario_uuid = '$uuid'
+AND s.nombre != 'inactivo'
+
+JOIN usr_users u ON r.user_uuid = u.uuid
+JOIN status s ON r.id_status = s.id_status
 WHERE s.propietario_uuid = '$uuid'
 AND s.nombre != 'inactivo'";
 
@@ -27,8 +32,8 @@ SELECT COUNT(r.id_reserva) as total
 FROM res_reserva r
 JOIN catalogo c ON r.id_catalogo = c.id_catalogo
 WHERE c.propietario_uuid = '$uuid'
-AND MONTH (r.created_at) = MONTH(CURRENT_DATE())
-AND YEAR (r.created_at) = YEAR (CURRENT_DATE())";
+AND MONTH(r.created_at) = MONTH(CURRENT_DATE())
+AND YEAR(r.created_at) = YEAR(CURRENT_DATE())
 
 $total_mes_res = mysqli_query($config, $total_mes_sql);
 $total_mes = mysqli_fetch_assoc($total_mes_res)['total'] ?? 0;
