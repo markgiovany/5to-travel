@@ -178,7 +178,7 @@ $res_auto = mysqli_query($config, $query_auto);
   <div class="col-md-3">
     <div class="hotel-card">
       
-      <a href="lugares-info.php?id=<?php echo $hotel['uuid']; ?>">
+      <a href="lugares-info.php?uuid=<?php echo $hotel['uuid']; ?>">
         <img src="<?php echo $hotel['imagen']; ?>" class="img-fluid">
       </a>
 

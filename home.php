@@ -192,7 +192,7 @@ $res_auto = mysqli_query($config, $query_auto);
     ?>
       <div class="col-md-3">
         <div class="hotel-card">
-          <a href="lugares-info.php?id=<?php echo $datos['uuid']; ?>">
+          <a href="lugares-info.php?uuid=<?php echo $datos['uuid']; ?>">
             <img src="<?php echo $datos['imagen']; ?>" class="img-fluid">
           </a>
           <div class="hotel-info">
