@@ -137,7 +137,12 @@ body {
 
 <?php
 $id = $row['id_catalogo'];
-$uuid = $row['uuid']; // 🔥 IMPORTANTE
+$uuid = $row['uuid'] ?? '';
+
+/* 🔥 SI UUID ES NULL USA ID */
+$link = !empty($uuid) 
+    ? "u=$uuid" 
+    : "id=$id";
 
 /* IMÁGENES */
 $res_img = mysqli_query($config, "
@@ -211,13 +216,13 @@ $precio_max = $precio_data['precio_max'] ?? 0;
 </td>
 
 <td>
-<!-- 🔥 EDITAR CON UUID -->
-<a href="editar.php?u=<?php echo $uuid; ?>" class="btn btn-outline-primary btn-sm">
+<!-- 🔥 EDITAR -->
+<a href="editar.php?<?php echo $link; ?>" class="btn btn-outline-primary btn-sm">
 <i class="bi bi-pencil"></i>
 </a>
 
-<!-- 🔥 ELIMINAR CON UUID -->
-<a href="eliminar.php?u=<?php echo $uuid; ?>" 
+<!-- 🔥 ELIMINAR -->
+<a href="eliminar.php?<?php echo $link; ?>" 
    class="btn btn-outline-danger btn-sm" 
    onclick="return confirm('¿Eliminar hotel?')">
    <i class="bi bi-trash"></i>

@@ -9,24 +9,25 @@ if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
 
 $uuid = $_SESSION['user_uuid'];
 
-$sql = "SELECT r.*, c.nombre AS hotel, 
+/* =========================
+   RESERVACIONES LISTADO
+========================= */
+$sql = "SELECT r.*, 
+               c.nombre AS hotel, 
                u.first_name, u.last_name, 
                s.nombre AS estado_nombre
-FROM res_reserva r
-JOIN catalogo c ON r.id_catalogo = c.id_catalogo
-JOIN usr_users u ON r.user_uuid = u.uuid
-JOIN status s ON r.id_status = s.id_status
-WHERE c.propietario_uuid = '$uuid'
-AND s.nombre != 'inactivo'
-
-JOIN usr_users u ON r.user_uuid = u.uuid
-JOIN status s ON r.id_status = s.id_status
-WHERE s.propietario_uuid = '$uuid'
-AND s.nombre != 'inactivo'";
+        FROM res_reserva r
+        JOIN catalogo c ON r.id_catalogo = c.id_catalogo
+        JOIN usr_users u ON r.user_uuid = u.uuid
+        JOIN status s ON r.id_status = s.id_status
+        WHERE c.propietario_uuid = '$uuid'
+        AND s.nombre != 'inactivo'";
 
 $res = mysqli_query($config, $sql);
 
-/* TOTAL DEL MES */
+/* =========================
+   TOTAL DEL MES
+========================= */
 $total_mes_sql = "
 SELECT COUNT(r.id_reserva) as total
 FROM res_reserva r
@@ -34,15 +35,20 @@ JOIN catalogo c ON r.id_catalogo = c.id_catalogo
 WHERE c.propietario_uuid = '$uuid'
 AND MONTH(r.created_at) = MONTH(CURRENT_DATE())
 AND YEAR(r.created_at) = YEAR(CURRENT_DATE())
+";
 
 $total_mes_res = mysqli_query($config, $total_mes_sql);
 $total_mes = mysqli_fetch_assoc($total_mes_res)['total'] ?? 0;
-/* GRAFICA */
+
+/* =========================
+   GRÁFICA (FIX DEFINITIVO)
+   👉 ya NO depende de JOIN obligatorio
+========================= */
 $grafica_sql = "
-SELECT DATE_FORMAT(r.created_at, '%Y-%m') as mes, COUNT(r.id_reserva) as total
+SELECT DATE_FORMAT(r.created_at, '%Y-%m') as mes, 
+       COUNT(r.id_reserva) as total
 FROM res_reserva r
-JOIN cat_catalogo_habitacion h ON r.id_habitacion = h.id_habitacion
-JOIN catalogo c ON h.id_catalogo = c.id_catalogo
+JOIN catalogo c ON r.id_catalogo = c.id_catalogo
 WHERE c.propietario_uuid = '$uuid'
 GROUP BY mes
 ORDER BY mes DESC
@@ -50,10 +56,11 @@ LIMIT 6
 ";
 
 $grafica_res = mysqli_query($config, $grafica_sql);
+
 $labels = [];
 $data = [];
 
-while($g = mysqli_fetch_assoc($grafica_res)){
+while ($g = mysqli_fetch_assoc($grafica_res)) {
     $labels[] = $g['mes'];
     $data[] = $g['total'];
 }
@@ -203,7 +210,7 @@ body {
 </thead>
 
 <tbody>
-<?php while($r=mysqli_fetch_assoc($res)): ?>
+<?php while($r = mysqli_fetch_assoc($res)): ?>
 <tr>
 <td><?= htmlspecialchars($r['first_name'] . " " . $r['last_name']) ?></td>
 <td><?= htmlspecialchars($r['hotel']) ?></td>

@@ -19,9 +19,6 @@ $hoteles = mysqli_query($config, "
     WHERE propietario_uuid = '$propietario_uuid'
 ");
 
-/* TIPOS */
-$tipos = mysqli_query($config, "SELECT * FROM cat_tipo");
-
 /* STATUS */
 $estados = mysqli_query($config, "SELECT * FROM status");
 
@@ -30,7 +27,6 @@ $error = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $id_catalogo = intval($_POST['id_catalogo']);
-    $id_tipo = intval($_POST['id_tipo']);
     $precio = floatval($_POST['precio']);
     $id_status = intval($_POST['id_status']);
     $cantidad = intval($_POST['cantidad']);
@@ -52,16 +48,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             for ($i = 0; $i < $cantidad; $i++) {
 
-                $uuid = uniqid("hab_");
+                // 🔥 UUID de habitación
+                $uuid = uniqid("hab_", true);
 
                 $insert = mysqli_query($config, "
                     INSERT INTO cat_catalogo_habitacion
-                    (uuid, id_catalogo, id_tipo, nombre, descripcion, precio, capacidad, disponibilidad, id_status)
+                    (uuid, id_catalogo, nombre, descripcion, precio, capacidad, disponibilidad, id_status)
                     VALUES
                     (
                         '$uuid',
                         '$id_catalogo',
-                        '$id_tipo',
                         '$nombre',
                         '$descripcion',
                         '$precio',
@@ -75,7 +71,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     throw new Exception("Error al crear habitación: " . mysqli_error($config));
                 }
 
-                $ids_habitaciones[] = mysqli_insert_id($config);
+                $ids_habitaciones[] = $uuid;
             }
 
             /* IMAGEN */
@@ -153,6 +149,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <form method="POST" enctype="multipart/form-data">
 
+<!-- HOTEL -->
 <select name="id_catalogo" class="form-select mb-3" required>
 <option value="">Selecciona hotel</option>
 <?php while($h = mysqli_fetch_assoc($hoteles)): ?>
@@ -162,25 +159,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <?php endwhile; ?>
 </select>
 
-<select name="id_tipo" class="form-select mb-3" required>
-<option value="">Tipo de habitación</option>
-<?php while($t = mysqli_fetch_assoc($tipos)): ?>
-<option value="<?php echo $t['id_tipo']; ?>">
-<?php echo $t['nombre']; ?>
-</option>
-<?php endwhile; ?>
-</select>
-
+<!-- NOMBRE -->
 <input type="text" name="nombre" class="form-control mb-3" placeholder="Nombre de la habitación" required>
 
+<!-- DESCRIPCIÓN -->
 <textarea name="descripcion" class="form-control mb-3" placeholder="Descripción de la habitación" required></textarea>
 
+<!-- CAPACIDAD -->
 <input type="number" name="capacidad" class="form-control mb-3" placeholder="Capacidad de personas" required>
 
+<!-- CANTIDAD -->
 <input type="number" name="cantidad" class="form-control mb-3" placeholder="Cantidad de habitaciones" required>
 
+<!-- PRECIO -->
 <input type="number" step="0.01" name="precio" class="form-control mb-3" placeholder="Precio por habitación" required>
 
+<!-- ESTADO -->
 <select name="id_status" class="form-select mb-3" required>
 <option value="">Estado</option>
 <?php while($s = mysqli_fetch_assoc($estados)): ?>
@@ -190,6 +184,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <?php endwhile; ?>
 </select>
 
+<!-- IMAGEN -->
 <input type="file" name="imagen" class="form-control mb-3" accept="image/*">
 
 <button class="btn btn-success w-100">Guardar Habitación</button>
