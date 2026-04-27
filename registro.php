@@ -36,14 +36,7 @@
 
 <input type="text" name="apellido" placeholder="Apellidos" required>
 
-<select name="lada" required>
-<option value="">Selecciona lada</option>
-<option value="+52">+52 México</option>
-<option value="+1">+1 USA</option>
-<option value="+34">+34 España</option>
-</select>
-
-<input type="text" name="telefono" placeholder="Número telefónico">
+<input type="tel" name="telefono" placeholder="Número telefónico" required minlength="10" maxlength="10" pattern="[0-9]{10}" title="El teléfono debe tener exactamente 10 números.">
 
 <input type="email" name="email" placeholder="Correo electrónico" required>
 
