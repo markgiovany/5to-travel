@@ -50,7 +50,7 @@ $email_regex = '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/';
             mysqli_query($config, "INSERT INTO usr_telefonos (user_uuid, telefono) VALUES ('$uuid', '$phone')");
         }
 
-        mysqli_query($config, "INSERT INTO usr_users_login (user_uuid, password, role) VALUES ('$uuid', '$password', '$role')");
+        mysqli_query($config, "INSERT INTO usr_users_login (user_uuid, password, id_rol) VALUES ('$uuid', '$password', '$role')");
 
         mysqli_commit($config);
         $_SESSION['flash'] = ['type' => 'success', 'title' => '¡Excelente!', 'msg' => 'El usuario ha sido registrado correctamente.'];
@@ -127,9 +127,9 @@ $email_regex = '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/';
             <div class="mb-4">
                 <label class="form-label small fw-bold">ROL ASIGNADO</label>
                 <select name="role" class="form-select" required>
-                    <option value="user">Usuario (Cliente)</option>
-                    <option value="propietario">Propietario (Dueño de Hotel)</option>
-                    <option value="admin">Administrador</option>
+                    <option value="3">Usuario (Cliente)</option>
+                    <option value="2">Propietario (Dueño de Hotel)</option>
+                    <option value="1">Administrador</option>
                 </select>
             </div>
             <button type="submit" class="btn btn-primary w-100 fw-bold rounded-pill">Crear Usuario</button>
