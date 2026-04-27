@@ -47,10 +47,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_uuid'])) {
         // 3. CREAR RESERVA (res_reserva)
         $uuid_reserva = bin2hex(random_bytes(16));
         // Efectivo (2) -> 3 (Pendiente), Tarjeta (1) -> 8 (Revisión/Confirmado)
-        $id_status_reserva = ($metodo == 2) ? 3 : 8; 
+        $id_status_reserva = 8; 
 
-        $q_reserva = "INSERT INTO res_reserva (uuid_reserva, user_uuid, id_habitacion, id_catalogo, fecha_entrada, fecha_salida, cantidad_personas, id_status) 
-                      VALUES ('$uuid_reserva', '$user_uuid', '{$_POST['id_habitacion']}', '{$_POST['id_catalogo']}', '{$_POST['fecha_entrada']}', '{$_POST['fecha_salida']}', '{$_POST['cantidad_personas']}', '$id_status_reserva')";
+$q_reserva = "INSERT INTO res_reserva (uuid_reserva, user_uuid, id_habitacion, id_catalogo, fecha_entrada, fecha_salida, cantidad_personas, id_status) 
+              VALUES ('$uuid_reserva', '$user_uuid', '{$_POST['id_habitacion']}', '{$_POST['id_catalogo']}', '{$_POST['fecha_entrada']}', '{$_POST['fecha_salida']}', '{$_POST['cantidad_personas']}', '$id_status_reserva')";
         
         if (!mysqli_query($config, $q_reserva)) {
             throw new Exception(mysqli_error($config));
