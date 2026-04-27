@@ -34,7 +34,7 @@ $salida = $_GET['salida'] ?? '';
 
 if (!empty($entrada) && !empty($salida)) {
     if ($salida <= $entrada) {
-        header("Location: index.php?error_fecha=1&entrada=$entrada&salida=$salida");
+        header("Location: " . $url_regresar . "?error_fecha=1&entrada=$entrada&salida=$salida");
         exit(); 
     }
 }
