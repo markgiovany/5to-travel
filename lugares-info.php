@@ -28,7 +28,27 @@ if ($hotel) {
     $id_hotel = $hotel['id_catalogo']; 
     
     // Ahora las consultas que usen $id_hotel en las líneas 124 y 125 funcionarán
+
+    // 1. Procesar la calificación
+if (isset($_POST['enviar_calificacion']) && isset($_SESSION['user_uuid'])) {
+    $estrellas = intval($_POST['estrellas']);
+    $comentario = mysqli_real_escape_string($config, $_POST['comentario']);
+    $user_uuid = $_SESSION['user_uuid'];
+    
+    $query_ins = "INSERT INTO calif_hoteles (id_hotel, user_uuid, estrellas, comentario) 
+                  VALUES ($id_hotel, '$user_uuid', $estrellas, '$comentario')";
+    mysqli_query($config, $query_ins);
+    
+    // Recargar para evitar reenvío de formulario
+    header("Location: lugares-info.php?uuid=" . $uuid_hotel);
+    exit();
 }
+
+// 2. Obtener comentarios existentes
+$query_reviews = "SELECT c.* FROM calif_hoteles c WHERE c.id_hotel = $id_hotel ORDER BY c.fecha DESC";
+$res_reviews = mysqli_query($config, $query_reviews);
+}
+
 $query_imgs = "SELECT url_imagen 
             FROM cat_imagen 
             WHERE id_catalogo = $id_hotel 
@@ -216,11 +236,7 @@ if ($id_hotel > 0 && isset($_SESSION['user_uuid'])) {
                     <div class="text-end mb-3">
                         <h3 class="fw-bold mb-0">MXN$ <?php echo number_format($hab['precio'], 2); ?></h3>
                     </div>
-                        <?php if (isset($_SESSION['user_uuid'])): ?>
-                            <a href="reservation.hmtl?uuid=<?php echo $hab['uuid']; ?>" class="btn btn-info text-white">Reservar</a>
-                        <?php else: ?>
-                            <a href="login.php" class="btn btn-info text-white">Reservar</a>
-                        <?php endif; ?>
+                        <a href="reservacion.php?id_habitacion=<?= $hab['uuid']; ?>" class="btn btn-info text-white">Reservar</a>
                 </div>
             </div>
         <?php endwhile; ?>
@@ -241,6 +257,43 @@ if ($id_hotel > 0 && isset($_SESSION['user_uuid'])) {
         </div>
 
     <?php endif; ?>
+</div>
+
+<div class="container my-5">
+    <div class="card p-4 shadow-sm mb-4">
+        <h4 class="fw-bold mb-3">Deja tu opinión</h4>
+        <?php if (isset($_SESSION['user_uuid'])): ?>
+            <form action="lugares-info.php?uuid=<?= $uuid_hotel ?>" method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Calificación (Estrellas)</label>
+                    <select name="estrellas" class="form-select w-25" required>
+                        <option value="5">5 Estrellas</option>
+                        <option value="4">4 Estrellas</option>
+                        <option value="3">3 Estrellas</option>
+                        <option value="2">2 Estrellas</option>
+                        <option value="1">1 Estrella</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <textarea name="comentario" class="form-control" placeholder="Escribe tu comentario..." rows="3" required></textarea>
+                </div>
+                <button type="submit" name="enviar_calificacion" class="btn btn-dark">Publicar opinión</button>
+            </form>
+        <?php else: ?>
+            <p>Debes <a href="login.php">iniciar sesión</a> para calificar.</p>
+        <?php endif; ?>
+    </div>
+
+    <h4 class="fw-bold mb-3">Opiniones de usuarios</h4>
+    <?php while($row = mysqli_fetch_assoc($res_reviews)): ?>
+        <div class="card p-3 mb-2">
+            <div class="d-flex justify-content-between">
+                <strong><?= $row['estrellas'] ?> <i class="bi bi-star-fill text-warning"></i></strong>
+                <small class="text-muted"><?= $row['fecha'] ?></small>
+            </div>
+            <p class="mb-0"><?= htmlspecialchars($row['comentario']) ?></p>
+        </div>
+    <?php endwhile; ?>
 </div>
     
     <footer class="main-footer">
