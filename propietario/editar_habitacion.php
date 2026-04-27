@@ -1,6 +1,8 @@
 <?php
 session_start();
 include("../config/config.php");
+require_once "../config/cloudinary_config.php";
+use Cloudinary\Api\Upload\UploadApi;
 
 if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
     header("Location: ../auth/login.php");
@@ -27,7 +29,10 @@ if (!$habitacion) {
 
 /* tipos */
 $tipos = mysqli_query($config, "SELECT * FROM cat_tipo");
-$estados = mysqli_query($config, "SELECT * FROM status");
+$estados = mysqli_query($config, "
+    SELECT * FROM status 
+    WHERE nombre IN ('Activo','Mantenimiento')
+");
 
 /* update */
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -38,19 +43,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $tipo = intval($_POST['tipo']);
     $estado = intval($_POST['estado']);
 
+    /* actualizar datos */
     mysqli_query($config, "
-    UPDATE cat_catalogo_habitacion 
-    SET nombre='$nombre',
-        capacidad='$capacidad',
-        precio='$precio',
-        id_tipo='$tipo',
-        id_status='$estado'
-    WHERE uuid='$uuid'
-");
+        UPDATE cat_catalogo_habitacion 
+        SET nombre='$nombre',
+            capacidad='$capacidad',
+            precio='$precio',
+            id_tipo='$tipo',
+            id_status='$estado'
+        WHERE uuid='$uuid'
+    ");
+
+    /* subir imagenes a cloudinary */
+    if (!empty($_FILES['imagenes']['name'][0])) {
+
+        foreach ($_FILES['imagenes']['tmp_name'] as $key => $tmp_name) {
+
+            $resultado = (new UploadApi())->upload($tmp_name);
+            $url = $resultado['secure_url'];
+
+            mysqli_query($config, "
+                INSERT INTO cat_imagen (id_habitacion, url_imagen)
+                VALUES ('{$habitacion['id_habitacion']}', '$url')
+            ");
+        }
+    }
 
     header("Location: habitaciones.php");
     exit();
 }
+$imagenes = mysqli_query($config, "
+    SELECT * FROM cat_imagen 
+    WHERE id_habitacion = '{$habitacion['id_habitacion']}'
+");
 ?>
 
 <!DOCTYPE html>
@@ -88,7 +113,7 @@ body {
     </a>
 </div>
 
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
 
 <!-- nombre -->
 <div class="mb-3">
@@ -141,6 +166,35 @@ class="form-control" required>
 <?php endwhile; ?>
 </select>
 </div>
+
+<!-- subir imágenes -->
+<div class="mb-3">
+<label class="form-label small text-muted">IMÁGENES</label>
+<input type="file" name="imagenes[]" multiple class="form-control">
+</div>
+
+<!-- imágenes actuales -->
+<div class="mb-3">
+<label class="form-label small text-muted">IMÁGENES ACTUALES</label>
+
+<div class="d-flex flex-wrap gap-2">
+<?php while($img = mysqli_fetch_assoc($imagenes)): ?>
+    <div style="position: relative;">
+        
+        <img src="<?= $img['url_imagen'] ?>" width="100" class="rounded">
+
+        <a href="eliminar_imagen.php?id=<?= $img['id_imagen'] ?>&uuid=<?= $uuid ?>"
+        class="btn btn-danger btn-sm"
+        style="position:absolute; top:0; right:0;"
+        onclick="return confirm('¿Eliminar imagen?')">
+            ×
+        </a>
+
+    </div>
+<?php endwhile; ?>
+</div>
+</div>
+
 
 <button class="btn btn-primary w-100">
     Guardar cambios
