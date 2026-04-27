@@ -93,17 +93,19 @@ $res_auto = mysqli_query($config, $query_auto);
 </div>
 </header>
 
-<section class="hero-section">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-        <h1>Encuentra tu próximo <span class="text-gradient">destino ideal</span></h1>
-        <p>Reserva hoteles, casas y experiencias únicas en todo el mundo.</p>
+<section class="d-flex align-items-center justify-content-center text-center" 
+         style="height:300px; padding-top:100px;">
+    
+    <div class="hero-content container">
+        <h1 style="color:#000;">Encuentra tu próximo <span class="text-gradient">destino ideal</span></h1>
+        
         
         <form action="busqueda-info.php" method="GET">
-          <div class="smart-search">
+          <div class="smart-search d-flex align-items-center mx-auto">
+
               <div class="search-field">
                   <span class="label">UBICACIÓN</span>
-                  <input type="text" name="ubicacion" list="destinos_list" placeholder="¿A dónde quieres ir? " autocomplete="on">
+                  <input type="text" name="ubicacion" list="destinos_list" placeholder="¿A dónde quieres ir?" autocomplete="on">
 
                   <datalist id="destinos_list">
                     <?php while($row = mysqli_fetch_assoc($res_auto)): ?>
@@ -123,54 +125,30 @@ $res_auto = mysqli_query($config, $query_auto);
               
               <div class="search-field">
                   <span class="label">SALIDA</span>
-                  <input type="date" name="salida" value="<?php echo $salida; ?>" min="<?php echo $fecha_min_salida ?>"required >
+                  <input type="date" name="salida" value="<?php echo $salida; ?>" min="<?php echo $fecha_min_salida ?>" required>
               </div>
 
               <div class="divider"></div> 
               
               <div class="search-field">
                   <span class="label">PERSONAS</span>
-                  <input type="number" name="personas" placeholder="¿Cuántos?" min="0" max="20">
+                  <input type="number" name="personas" placeholder="¿Cuántos?" min="1" max="20">
               </div>
 
               <button class="search-btn">
-                  <svg width="20" height="20" fill="white" viewBox="0 0 16 16">
-                      <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                  </svg>
+                  <i class="bi bi-search"></i>
               </button>
+
           </div>
         </form>
     </div>
+
 </section>
 
 <section class="ofertas-section py-5">
 <div class="container">
 
-<div class="row text-center mb-5">
-    <div class="col-md-4">
-        <div class="beneficio-card">
-            <i class="bi bi-tag"></i>
-            <h5>Ofertas exclusivas</h5>
-            <p>Encuentra las mejores promociones y precios exclusivos.</p>
-        </div>
-    </div>
 
-    <div class="col-md-4">
-        <div class="beneficio-card">
-            <i class="bi bi-shield-check"></i>
-            <h5>Reserva segura</h5>
-            <p>Tus datos están protegidos y tu reservación es 100% confiable.</p>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="beneficio-card">
-            <i class="bi bi-headset"></i>
-            <h5>Atención 24/7</h5>
-            <p>Disponible para ayudarte en cualquier momento.</p>
-        </div>
-    </div>
-</div>
 
 <!-- 🔥 HOTELES -->
 <div class="row g-4">
