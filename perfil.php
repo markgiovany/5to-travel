@@ -43,7 +43,7 @@ $result_recientes = mysqli_query($config, "
     ORDER BY v.fecha DESC LIMIT 4
 ");
 
-/* 3. CONSULTA: HISTORIAL (Ajustada con GROUP BY para eliminar duplicados visuales) */
+/* 3. CONSULTA: HISTORIAL */
 $result_historial = mysqli_query($config, "
     SELECT 
         r.id_reserva, 
@@ -168,14 +168,17 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
                     <?php if(mysqli_num_rows($result_recientes) > 0): ?>
                         <?php while($r = mysqli_fetch_assoc($result_recientes)): 
                             $id_h = $r['id_catalogo'];
-                            $q_habs = mysqli_query($config, "SELECT * FROM cat_catalogo_habitacion WHERE id_catalogo = '$id_h'");
+                            // AJUSTE: Agrupamos por nombre de habitación y contamos cuántas hay iguales
+                            $q_habs = mysqli_query($config, "SELECT nombre, capacidad, precio, COUNT(*) as cantidad 
+                                                             FROM cat_catalogo_habitacion 
+                                                             WHERE id_catalogo = '$id_h' 
+                                                             GROUP BY nombre, capacidad, precio");
                             $habitaciones = [];
                             while($hb = mysqli_fetch_assoc($q_habs)) { $habitaciones[] = $hb; }
-                            $habs_json = htmlspecialchars(json_encode($habitaciones), ENT_QUOTES, 'UTF-8');
                         ?>
                             <div class="col-md-6">
                                 <div class="item-row" style="cursor:pointer;" 
-                                     onclick="verFichaHotel('<?php echo addslashes($r['nombre']); ?>', '<?php echo $r['url_imagen']; ?>', '<?php echo addslashes($r['descripcion']); ?>', '<?php echo $habs_json; ?>')">
+                                     onclick='verFichaHotel(<?php echo json_encode($r["nombre"]); ?>, <?php echo json_encode($r["url_imagen"]); ?>, <?php echo json_encode($r["descripcion"]); ?>, <?php echo json_encode($habitaciones); ?>)'>
                                     <img src="<?php echo !empty($r['url_imagen']) ? $r['url_imagen'] : 'imagenes/placeholder.jpg'; ?>" width="80" height="80" class="rounded-4 me-3" style="object-fit: cover;">
                                     <div><h6 class="mb-1 fw-bold"><?php echo $r['nombre']; ?></h6><span class="badge bg-success bg-opacity-10 text-success">$<?php echo number_format($r['precio_min'], 2); ?></span></div>
                                 </div>
@@ -240,8 +243,8 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
                                 <tr>
                                     <th>Tipo</th>
                                     <th>Capacidad</th>
-                                    <th>Servicios</th>
-                                    <th>Precio</th>
+                                    <th>Disponibilidad</th>
+                                    <th>Precio Unitario</th>
                                 </tr>
                             </thead>
                             <tbody id="mHabitacionesBody"></tbody>
@@ -268,7 +271,7 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
             document.getElementById("btnSave").style.display = "flex";
         }
 
-        function verFichaHotel(nombre, imagen, desc, habsJson) {
+        function verFichaHotel(nombre, imagen, desc, habs) {
             document.getElementById('mNombre').innerText = nombre;
             document.getElementById('mImg').style.backgroundImage = "url('" + (imagen || 'imagenes/placeholder.jpg') + "')";
             document.getElementById('mDescripcion').innerText = desc || 'Sin descripción adicional.';
@@ -276,15 +279,14 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
             
             const body = document.getElementById('mHabitacionesBody');
             body.innerHTML = '';
-            const habs = JSON.parse(habsJson);
             
-            if(habs.length > 0) {
+            if(habs && habs.length > 0) {
                 habs.forEach(h => {
                     body.innerHTML += `
                         <tr>
-                            <td><strong>${h.nombre || 'Habitación'}</strong></td>
-                            <td>${h.capacidad || 'N/A'} pers.</td>
-                            <td><small>TV, Wi-Fi</small></td>
+                            <td><strong>${h.nombre}</strong></td>
+                            <td>${h.capacidad} pers.</td>
+                            <td><span class="badge bg-primary rounded-pill">${h.cantidad} disponibles</span></td>
                             <td class="text-success fw-bold">MXN$ ${parseFloat(h.precio).toLocaleString()}</td>
                         </tr>`;
                 });
@@ -304,7 +306,7 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
                 <tr>
                     <td><strong>${tipoHab}</strong></td>
                     <td>Estándar</td>
-                    <td><small>Servicio incluido</small></td>
+                    <td><span class="badge bg-secondary rounded-pill">1 reservada</span></td>
                     <td class="text-primary fw-bold">$${precio}</td>
                 </tr>`;
                 
