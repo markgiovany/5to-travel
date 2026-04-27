@@ -89,6 +89,7 @@ if ($id_hotel > 0 && isset($_SESSION['user_uuid'])) {
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
         <link rel="stylesheet" href="styles/lugares-info.css">
+        <link rel="stylesheet" href="styles/styles.css">
     <title>PAGINA INFO</title> 
 </head>
 <body>
@@ -296,49 +297,46 @@ if ($id_hotel > 0 && isset($_SESSION['user_uuid'])) {
     <?php endwhile; ?>
 </div>
     
-    <footer class="main-footer">
+<footer class="footer">
+    <div class="footer-container">
 
-        <div class="footer-grid">
-            <div class="footer-column">
-                <h3>Soporte</h3>
-                <ul>
-                    <li><a href="#">Centro de ayuda</a></li>
-                    <li><a href="#">Información de seguridad</a></li>
-                    <li><a href="#">Opciones de cancelación</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>Compañía</h3>
-                <ul>
-                    <li><a href="#">Sobre nosotros</a></li>
-                    <li><a href="#">Política de privacidad</a></li>
-                    <li><a href="#">Blog de la Comunidad</a></li>
-                    <li><a href="#">Términos de servicio</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>Contacto</h3>
-                <ul>
-                    <li><a href="#">Preguntas frecuentes</a></li>
-                    <li><a href="#">Ponte en contacto</a></li>
-                    <li><a href="#">Patrocinadores</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-            <h3>Redes Sociales</h3>
-                <div class="social-icons">
-                    <a href="#"><i class="bi bi-facebook"></i></a>
-                    <a href="#"><i class="bi bi-twitter-x"></i></a>
-                    <a href="#"><i class="bi bi-tiktok"></i></a>
-                    <a href="#"><i class="bi bi-youtube"></i></a>
-                </div>
-            </div>
+        <!-- Soporte -->
+        <div class="footer-col">
+            <h4>Soporte</h4>
+            <ul>
+                <li><a href="footer/centro-ayuda.php">Centro de ayuda</a></li>
+                <li><a href="footer/seguridad.php">Información de seguridad</a></li>
+                <li><a href="footer/cancelacion.php">Opciones de cancelación</a></li>
+            </ul>
         </div>
- 
-    </footer>
+
+        <!-- Compañía -->
+        <div class="footer-col">
+            <h4>Compañía</h4>
+            <ul>
+                <li><a href="footer/sobre-nosotros.php">Sobre nosotros</a></li>
+                <li><a href="footer/privacidad.php">Política de privacidad</a></li>
+                <li><a href="footer/blog.php">Blog de la comunidad</a></li>
+                <li><a href="footer/terminos.php">Términos de servicio</a></li>
+            </ul>
+        </div>
+
+        <!-- Contacto -->
+        <div class="footer-col">
+            <h4>Contacto</h4>
+            <ul>
+                <li><a href="footer/faq.php">Preguntas frecuentes</a></li>
+                <li><a href="footer/contacto.php">Ponte en contacto</a></li>
+                <li><a href="footer/patrocinadores.php">Patrocinadores</a></li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <p>© <?php echo date("Y"); ?> BookingEngineering</p>
+    </div>
+</footer>
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

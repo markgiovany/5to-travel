@@ -61,6 +61,7 @@ $res_auto = mysqli_query($config, $query_auto);
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="styles/styles.css">
+<link rel="stylesheet" href="styles/footer-pages.css">
 
 <title>Booking | Home</title>
 </head>
@@ -199,11 +200,44 @@ padding-top:100px;
 </div>
 </section>
 
-<footer class="py-4 border-top mt-5 bg-white text-center">
-    <div class="container">
-        <p class="text-muted mb-0 small">
-            &copy; 2026 <strong>BookingEngineering</strong>. Todos los derechos reservados.
-        </p>
+<footer class="footer">
+    <div class="footer-container">
+
+        <!-- Soporte -->
+        <div class="footer-col">
+            <h4>Soporte</h4>
+            <ul>
+                <li><a href="footer/centro-ayuda.php">Centro de ayuda</a></li>
+                <li><a href="footer/seguridad.php">Información de seguridad</a></li>
+                <li><a href="footer/cancelacion.php">Opciones de cancelación</a></li>
+            </ul>
+        </div>
+
+        <!-- Compañía -->
+        <div class="footer-col">
+            <h4>Compañía</h4>
+            <ul>
+                <li><a href="footer/sobre-nosotros.php">Sobre nosotros</a></li>
+                <li><a href="footer/privacidad.php">Política de privacidad</a></li>
+                <li><a href="footer/blog.php">Blog de la comunidad</a></li>
+                <li><a href="footer/terminos.php">Términos de servicio</a></li>
+            </ul>
+        </div>
+
+        <!-- Contacto -->
+        <div class="footer-col">
+            <h4>Contacto</h4>
+            <ul>
+                <li><a href="footer/faq.php">Preguntas frecuentes</a></li>
+                <li><a href="footer/contacto.php">Ponte en contacto</a></li>
+                <li><a href="footer/patrocinadores.php">Patrocinadores</a></li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <p>© <?php echo date("Y"); ?> BookingEngineering</p>
     </div>
 </footer>
 
