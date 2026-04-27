@@ -2,25 +2,10 @@
 session_start();
 include("config/config.php"); 
 
-$id_hotel = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-// ... viene de la línea 5
-$id_hotel = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$uuid_hotel = isset($_GET['uuid']) ? mysqli_real_escape_string($config, $_GET['uuid']) : '';
+$url_regresar = isset($_SESSION['user_uuid']) ? 'home.php' : 'index.php';
 
-// --- INICIO DE BLOQUE PARA VISTOS RECIENTES ---
-if ($id_hotel > 0 && isset($_SESSION['user_uuid'])) {
-    $user_id = $_SESSION['user_uuid'];
-    $fecha_actual = date("Y-m-d H:i:s");
-
-    // Registra la visita: si el hotel ya estaba, actualiza la fecha al momento actual
-    $query_visto = "INSERT INTO vistos_recientes (user_id, id_catalogo, fecha) 
-                    VALUES ('$user_id', '$id_hotel', '$fecha_actual') 
-                    ON DUPLICATE KEY UPDATE fecha = '$fecha_actual'";
-    
-    mysqli_query($config, $query_visto);
-}
-
-if ($id_hotel > 0) 
-if ($id_hotel > 0) {
+if (!empty($uuid_hotel)) {
     $sql_detalle = "SELECT c.*,  u.direccion, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.name AS nombre_pais, i.url_imagen
                     FROM catalogo c
                     LEFT JOIN cat_ubicacion u ON c.id_ubicacion = u.id_ubicacion
@@ -28,7 +13,7 @@ if ($id_hotel > 0) {
                     LEFT JOIN states est ON ciu.state_id = est.id
                     LEFT JOIN countries pais ON est.country_id = pais.id
                     LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
-                    WHERE c.id_catalogo = $id_hotel";
+                    WHERE c.uuid = '$uuid_hotel'";
     
     $res_detalle = mysqli_query($config, $sql_detalle);
     $hotel = mysqli_fetch_assoc($res_detalle);
@@ -37,7 +22,43 @@ if ($id_hotel > 0) {
     header("Location: home.php");
     exit();
 }
+
+if ($hotel) {
+    // Guardamos el ID numérico en una variable para las consultas de abajo
+    $id_hotel = $hotel['id_catalogo']; 
+    
+    // Ahora las consultas que usen $id_hotel en las líneas 124 y 125 funcionarán
+}
+$query_imgs = "SELECT url_imagen 
+            FROM cat_imagen 
+            WHERE id_catalogo = $id_hotel 
+            ORDER BY id_imagen ASC 
+            LIMIT 3";
+
+$res_imgs = mysqli_query($config, $query_imgs);
+// esto llama a las imagenes 
+$imagenes = [];
+while($img = mysqli_fetch_assoc($res_imgs)){
+    $imagenes[] = $img['url_imagen'];
+}
+
+
+if ($id_hotel > 0 && isset($_SESSION['user_uuid'])) {
+    $user_id = $_SESSION['user_uuid'];
+    $fecha_actual = date("Y-m-d H:i:s");
+
+    $query_visto = "INSERT INTO vistos_recientes (user_id, id_catalogo, fecha) 
+                    VALUES ('$user_id', '$id_hotel', '$fecha_actual') 
+                    ON DUPLICATE KEY UPDATE fecha = '$fecha_actual'";
+    
+    mysqli_query($config, $query_visto);
+}
+
+
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -88,18 +109,34 @@ if ($id_hotel > 0) {
 </header>
 
 
-    <section class="hero-lugar">
-        <div class="container">
-            <div class="row g-3"> <div class="col-lg-8">
-                    <img src="<?php echo !empty($hotel['url_imagen']) ? $hotel['url_imagen'] : 'https://images.unsplash.com/photo-1590490360182-c33d57733427'; ?>" class="img-fluid gallery-main" alt="Principal">
-                </div>
-                <div class="col-lg-4 d-flex flex-column justify-content-between">
-                    <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427" class="img-fluid gallery-sub" alt="Sub 1">
-                    <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427" class="img-fluid gallery-sub" alt="Sub 2">
-                </div>
+<section class="hero-lugar">
+    <div class="container">
+        <div class="row g-3">
+
+            <!-- Imagen principal -->
+            <div class="col-lg-8">
+                <img 
+                    src="<?php echo $imagenes[0] ?? 'https://images.unsplash.com/photo-1590490360182-c33d57733427'; ?>" 
+                    class="img-fluid gallery-main" 
+                    alt="Principal">
             </div>
+
+            <!-- Imágenes secundarias -->
+            <div class="col-lg-4 d-flex flex-column justify-content-between">
+
+                <?php if(isset($imagenes[1])): ?>
+                    <img src="<?php echo $imagenes[1]; ?>" class="img-fluid gallery-sub mb-2" alt="Sub 1">
+                <?php endif; ?>
+
+                <?php if(isset($imagenes[2])): ?>
+                    <img src="<?php echo $imagenes[2]; ?>" class="img-fluid gallery-sub" alt="Sub 2">
+                <?php endif; ?>
+
+            </div>
+
         </div>
-    </section>
+    </div>
+</section>
 
     <section class="datos-lugar">
         <div class="container">
@@ -139,64 +176,72 @@ if ($id_hotel > 0) {
     </section>
 
     <?php 
-    $query_hab = "SELECT * FROM cat_catalogo_habitacion WHERE id_catalogo = $id_hotel AND id_status = 1";
-    $res_hab = mysqli_query($config, $query_hab);
+    $query_hab = "SELECT h.*, i.url_imagen 
+    FROM cat_catalogo_habitacion h 
+    LEFT JOIN cat_imagen i on h.id_habitacion = i.id_habitacion 
+    WHERE h.id_catalogo = $id_hotel AND h.id_status = 1
+    AND h.disponibilidad > 0
+    GROUP BY h.nombre";
     
+    $res_hab = mysqli_query($config, $query_hab);
     ?>
     <div class="container">
-
+    <?php if(mysqli_num_rows($res_hab) > 0): ?>
+        
         <div class="row fw-bold mb-3 d-none d-lg-flex border-bottom pb-2">
             <div class="col-lg-3">TIPO DE HABITACIÓN</div>
-            <div class="col-lg-4 text-center">DESCRIPCION</div>
+            <div class="col-lg-4 text-center">DESCRIPCIÓN</div>
             <div class="col-lg-5 text-center">PRECIO</div>
         </div>
 
-       <?php while($hab = mysqli_fetch_assoc($res_hab)): ?>
-        <div class="row mb-4 border rounded shadow-sm bg-white overflow-hidden">
-            <div class="col-lg-3 p-0 border-end">
-                <div class="tipo-habitaciones">
-                    <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427" class="img-fluid w-100" style="height: 160px; object-fit: cover;">
-                    <div class="p-2">
-                        <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($hab['nombre']); ?></h6>
-                        <p class="small text-muted mb-3">Capacidad para <?php echo $hab['capacidad']; ?> personas</p>
-                        
-                        <div class="d-flex gap-3 text-muted" style="font-size: 0.8rem;">
-                            <span><i class="bi bi-tv"></i> TV</span>
-                            <span><i class="bi bi-wifi"></i> Wi-Fi gratis</span>
+        <?php while($hab = mysqli_fetch_assoc($res_hab)): ?>
+            <div class="row mb-4 border rounded shadow-sm bg-white overflow-hidden">
+                <div class="col-lg-3 p-0 border-end">
+                    <div class="tipo-habitaciones">
+                        <img src="<?php echo !empty($hab['url_imagen']) ? $hab['url_imagen'] : 'https://images.unsplash.com/photo-1590490360182-c33d57733427'; ?>" class="img-fluid w-100" style="height: 160px; object-fit: cover;">
+                        <div class="p-2">
+                            <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($hab['nombre']); ?></h6>
+                            <p class="small text-muted mb-3">Capacidad: <?php echo $hab['capacidad']; ?> pers.</p>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-lg-4 p-4 border-end bg-light-subtle">
-                <div class="mb-3">
-                    <p class="small mb-1"><strong>Descripción:</strong></p>
-                    <p class="text-muted small mb-1">
-                        <?php echo htmlspecialchars($hab['descripcion'] ?? 'Sin descripción disponible'); ?>
+                <div class="col-lg-4 p-4 border-end bg-light-subtle">
+                    <p class="text-muted small">
+                        <?php echo htmlspecialchars($hab['descripcion'] ?? 'Sin descripción disponible.'); ?>
                     </p>
                 </div>
-            </div>
 
-            <div class="col-lg-5 p-4 d-flex flex-column justify-content-center align-items-end">
-                <div class="precio_habitacion">        
+                <div class="col-lg-5 p-4 d-flex flex-column justify-content-center align-items-end">
                     <div class="text-end mb-3">
-                        <div class="d-flex align-items-center justify-content-end gap-2">
-                            <h3 class="fw-bold mb-0">MXN$ <?php echo number_format($hab['precio'], 2); ?></h3>
-                        </div>
-                        <div class="small text-muted">Disponibilidad: <?php echo $hab['disponibilidad']; ?> unidades</div>
-                        <div class="small text-muted" style="font-size: 0.75rem;">Impuestos incluidos</div>
+                        <h3 class="fw-bold mb-0">MXN$ <?php echo number_format($hab['precio'], 2); ?></h3>
                     </div>
+                        <?php if (isset($_SESSION['user_uuid'])): ?>
+                            <a href="reservation.hmtl?uuid=<?php echo $hab['uuid']; ?>" class="btn btn-info text-white">Reservar</a>
+                        <?php else: ?>
+                            <a href="login.php" class="btn btn-info text-white">Reservar</a>
+                        <?php endif; ?>
                 </div>
+            </div>
+        <?php endwhile; ?>
 
-                <div class="botones_habitacion">
-                    <div class="d-grid gap-2 me-3">
-                        <a href="reservation.html" class="btn btn-info text-white">Reservar</a>
-                    </div>
+    <?php else: ?>
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-light border shadow-sm p-5 text-center rounded-4">
+                    <i class="bi bi-door-closed text-muted" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3 fw-bold">No hay habitaciones disponibles</h4>
+                    <p class="text-muted">Lo sentimos, este establecimiento no tiene habitaciones registradas para reservar en línea actualmente.</p>
+                    <a href="home.php" class="btn btn-outline-primary btn-sm rounded-pill mt-2">
+                        <i class="bi bi-arrow-left"></i> Volver a buscar
+                    </a>
                 </div>
             </div>
         </div>
-        <?php endwhile; ?>    
-    </div>
+
+    <?php endif; ?>
+</div>
     
     <footer class="main-footer">
 
