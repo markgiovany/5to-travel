@@ -93,7 +93,16 @@ $res_auto = mysqli_query($config, $query_auto);
 </div>
 </header>
 
-<section class="hero-section">
+<section class="hero-section"style="
+height:520px;
+background: url('https://images.unsplash.com/photo-1551882547-ff40c63fe5fa') center/cover no-repeat;
+position:relative;
+display:flex;
+align-items:center;
+justify-content:center;
+text-align:center;
+padding-top:100px;
+">
     <div class="hero-overlay"></div>
     <div class="hero-content">
         <h1>Encuentra tu próximo <span class="text-gradient">destino ideal</span></h1>
@@ -148,28 +157,7 @@ $res_auto = mysqli_query($config, $query_auto);
 
 <div class="row text-center mb-5">
     <div class="col-md-4">
-        <div class="beneficio-card">
-            <i class="bi bi-tag"></i>
-            <h5>Ofertas exclusivas</h5>
-            <p>Encuentra las mejores promociones y precios exclusivos.</p>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="beneficio-card">
-            <i class="bi bi-shield-check"></i>
-            <h5>Reserva segura</h5>
-            <p>Tus datos están protegidos y tu reservación es 100% confiable.</p>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="beneficio-card">
-            <i class="bi bi-headset"></i>
-            <h5>Atención 24/7</h5>
-            <p>Disponible para ayudarte en cualquier momento.</p>
-        </div>
-    </div>
+        
 </div>
 
 <!-- 🔥 HOTELES -->
@@ -189,7 +177,16 @@ $res_auto = mysqli_query($config, $query_auto);
     </div>
   </div>
 <?php endforeach; ?>
+
+
+
+
 </div>
+
+
+
+
+
 
 </div>
 </section>
