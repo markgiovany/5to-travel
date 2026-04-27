@@ -2,10 +2,10 @@
 session_start();
 include("config/config.php"); 
 
-$query = "SELECT c.id_catalogo, c.uuid, c.nombre, i.url_imagen 
+$query = "SELECT c.id_catalogo, c.uuid, c.nombre, i.url_imagen
           FROM catalogo c
-         LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
-         GROUP BY c.id_catalogo
+          LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
+          GROUP BY c.id_catalogo
           ORDER BY RAND()
           LIMIT 12";
 
@@ -14,7 +14,7 @@ $resultado_hoteles = mysqli_query($config, $query);
 $catalogo_hoteles = array();
 
 while($fila = mysqli_fetch_assoc($resultado_hoteles)) {
-    $catalogo_hoteles[$fila['nombre']] = array(
+    $catalogo_hoteles[] = array(
         "id" => $fila['id_catalogo'],
         "uuid" => $fila['uuid'],
         "nombre" => $fila['nombre'],
@@ -57,56 +57,52 @@ $query_auto = "SELECT name FROM  cities
         UNION SELECT name FROM states 
         UNION SELECT name FROM countries  
         ORDER BY name ASC";
-$res_auto = mysqli_query($config, $query_auto);
+$res_auto = mysqli_query($config, $query_auto);        
 
 ?>
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-     <link rel="stylesheet" href="styles/styles.css">
-    <title>Booking | Home</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="styles/styles.css">
+
+<title>Booking | Home</title>
 </head>
+
 <body>
-    <header class="main-header">
-    <div class="glass-nav">
-        <a href="home.php" class="logo">
-            <img src="imagenes/brooking.png" alt="Logo">
+
+<header class="main-header">
+<div class="glass-nav">
+    <a href="index.php" class="logo">
+        <img src="imagenes/brooking.png" alt="Logo">
+    </a>
+
+    <div class="nav-links">
+        <a href="catalogo.php">Catálogo</a>
+
+        <a href="centro_de_ayuda.php">Centro de ayuda</a>
+
+        <a href="Login.php" class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-2">
+            <i class="bi bi-person-circle"></i> Login
         </a>
-        <div class="nav-links">
-            <a href="catalogo.php">Catálogo</a>
-            <a href="favoritos.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                <i class="bi bi-heart-fill"></i> Mis Favoritos
-            </a>
-<div class="dropdown">
-    <div class="user-pill" data-bs-toggle="dropdown" aria-expanded="false" role="button">
-        <i class="bi bi-list"></i>
-        <div class="user-avatar">
-           <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="display: block; fill: #717171; height: 30px; width: 30px;">
-               <path d="m16 .7c-8.437 0-15.3 6.863-15.3 15.3s6.863 15.3 15.3 15.3 15.3-6.863 15.3-15.3-6.863-15.3-15.3-15.3zm0 28c-4.021 0-7.605-1.884-9.933-4.81a12.425 12.425 0 0 1 2.245-2.903l.445-.4c1.886-1.637 4.191-2.487 7.243-2.487s5.357.85 7.243 2.487l.445.4a12.425 12.425 0 0 1 2.245 2.903c-2.328 2.926-5.912 4.81-9.933 4.81zm9.328-7.387c-.012-.02-.023-.04-.035-.06a10.428 10.428 0 0 0-6.191-3.653c1.789-1.344 2.898-3.411 2.898-5.7 0-3.97-3.23-7.2-7.2-7.2s-7.2 3.23-7.2 7.2c0 2.289 1.109 4.356 2.898 5.7a10.428 10.428 0 0 0-6.191 3.653c-.012.02-.023.04-.035.06a13.31 13.31 0 0 1-2.573-7.913c0-7.345 5.955-13.3 13.3-13.3s13.3 5.955 13.3 13.3c0 2.924-1.01 5.614-2.711 7.913z"></path>
-           </svg>
-        </div>
     </div>
-    
-    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-      <li><a class="dropdown-item" href="perfil.php">Mi perfil</a></li>    
-    
-    <li><hr class="dropdown-divider"></li>
-        
-    <li><a class="dropdown-item" href="centro_de_ayuda.php">Centro de ayuda</a></li>
-    <li><a class="dropdown-item" href="auth/logout.php">Cerrar sesión</a></li>
-    </ul>
-    </div>
-        </div>
-    </div>
+</div>
 </header>
 
-<section class="hero-section">
+<section class="hero-section"style="
+height:520px;
+background: url('https://images.unsplash.com/photo-1551882547-ff40c63fe5fa') center/cover no-repeat;
+position:relative;
+display:flex;
+align-items:center;
+justify-content:center;
+text-align:center;
+padding-top:100px;
+">
     <div class="hero-overlay"></div>
     <div class="hero-content">
         <h1>Encuentra tu próximo <span class="text-gradient">destino ideal</span></h1>
@@ -116,27 +112,27 @@ $res_auto = mysqli_query($config, $query_auto);
           <div class="smart-search">
               <div class="search-field">
                   <span class="label">UBICACIÓN</span>
-                  <input type="text" name="ubicacion" list="destinos_list" placeholder="¿A dónde quieres ir?" autocomplete="on">
-                   <datalist id="destinos_list">
+                  <input type="text" name="ubicacion" list="destinos_list" placeholder="¿A dónde quieres ir? " autocomplete="on">
+
+                  <datalist id="destinos_list">
                     <?php while($row = mysqli_fetch_assoc($res_auto)): ?>
                     <option value="<?php echo htmlspecialchars($row['name']); ?>"></option>
                     <?php endwhile; ?>
-                  </datalist>  
-
-                </div>
+                  </datalist>
+              </div>
 
               <div class="divider"></div> 
               
               <div class="search-field">
                   <span class="label">ENTRADA</span>
-                                    <input type="date" name="entrada" value="<?php echo $entrada; ?>" min="<?php echo date('Y-m-d'); ?>">
+                  <input type="date" name="entrada" value="<?php echo $entrada; ?>" min="<?php echo date('Y-m-d'); ?>">
               </div>
 
               <div class="divider"></div> 
               
               <div class="search-field">
                   <span class="label">SALIDA</span>
-                              <input type="date" name="salida" value="<?php echo $salida; ?>" min="<?php echo $fecha_min_salida ?>"required >
+                  <input type="date" name="salida" value="<?php echo $salida; ?>" min="<?php echo $fecha_min_salida ?>"required >
               </div>
 
               <div class="divider"></div> 
@@ -157,52 +153,41 @@ $res_auto = mysqli_query($config, $query_auto);
 </section>
 
 <section class="ofertas-section py-5">
-  <div class="container">
+<div class="container">
 
-    
-    <div class="row text-center mb-5">
-      <div class="col-md-4">
-        <div class="beneficio-card">
-          <i class="bi bi-tag"></i>
-          <h5>Ofertas exclusivas</h5>
-          <p>Encuentra las mejores promociones y precios exclusivos.</p>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="beneficio-card">
-          <i class="bi bi-shield-check"></i>
-          <h5>Reserva segura</h5>
-          <p>Tus datos están protegidos y tu reservación es 100% confiable.</p>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="beneficio-card">
-          <i class="bi bi-headset"></i>
-          <h5>Atención 24/7</h5>
-          <p>Disponible para ayudarte en cualquier momento.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-4">
-    <?php 
-    foreach ($catalogo_hoteles as $nombre => $datos): 
-    ?>
-      <div class="col-md-3">
-        <div class="hotel-card">
-          <a href="lugares-info.php?uuid=<?php echo $datos['uuid']; ?>">
-            <img src="<?php echo $datos['imagen']; ?>" class="img-fluid">
-          </a>
-          <div class="hotel-info">
-            <h6><?php echo $nombre; ?></h6>
-            <p><?php /* echo number_format($datos['precio'], 2); */ ?></p>
-          </div>
-        </div>
-      </div>
-    <?php endforeach; ?>
+<div class="row text-center mb-5">
+    <div class="col-md-4">
+        
 </div>
+
+<!-- 🔥 HOTELES -->
+<div class="row g-4">
+<?php foreach ($catalogo_hoteles as $hotel): ?>
+  <div class="col-md-3">
+    <div class="hotel-card">
+      
+      <a href="lugares-info.php?uuid=<?php echo $hotel['uuid']; ?>">
+        <img src="<?php echo $hotel['imagen']; ?>" class="img-fluid">
+      </a>
+
+      <div class="hotel-info">
+        <h6><?php echo $hotel['nombre']; ?></h6>
+      </div>
+
+    </div>
+  </div>
+<?php endforeach; ?>
+
+
+
+
+</div>
+
+
+
+
+
+
 </div>
 </section>
 
@@ -215,7 +200,6 @@ $res_auto = mysqli_query($config, $query_auto);
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
-
-
 </html>
