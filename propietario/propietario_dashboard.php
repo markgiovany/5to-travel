@@ -117,9 +117,29 @@ body {
     </div>
 
     <ul class="nav nav-pills flex-column mb-auto">
-        <li><a href="propietario_dashboard.php" class="nav-link active">Panel</a></li>
-        <li><a href="mis_reservaciones.php" class="nav-link">Reservaciones</a></li>
-        <li><a href="mis_pagos.php" class="nav-link">Pagos</a></li>
+        <li>
+    <a href="propietario_dashboard.php" class="nav-link active">
+        <i class="bi bi-speedometer2 me-2"></i> Panel
+    </a>
+</li>
+
+<li>
+    <a href="mis_reservaciones.php" class="nav-link">
+        <i class="bi bi-calendar-check me-2"></i> Reservaciones
+    </a>
+</li>
+
+<li>
+    <a href="mis_pagos.php" class="nav-link">
+        <i class="bi bi-cash-coin me-2"></i> Pagos
+    </a>
+</li>
+
+<li>
+    <a href="habitaciones.php" class="nav-link">
+        <i class="bi bi-door-open me-2"></i> Habitaciones
+    </a>
+</li>
     </ul>
 
     <hr>

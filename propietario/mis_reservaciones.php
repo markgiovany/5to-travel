@@ -135,7 +135,7 @@ body {
 
         <li>
             <a href="propietario_dashboard.php" class="nav-link">
-                <i class="bi bi-speedometer2 me-2"></i> Panel de control
+                <i class="bi bi-speedometer2 me-2"></i> Panel 
             </a>
         </li>
 
@@ -150,7 +150,11 @@ body {
                 <i class="bi bi-cash-coin me-2"></i> Pagos
             </a>
         </li>
-
+<li>
+    <a href="habitaciones.php" class="nav-link">
+        <i class="bi bi-door-open me-2"></i> Habitaciones
+    </a>
+</li>
     </ul>
 
     <hr>
