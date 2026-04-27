@@ -16,7 +16,7 @@ if (!empty($status_val)) {
     $condiciones[] = "l.id_status = '$status_val'";
 }
 if (!empty($role_val)) {
-    $condiciones[] = "l.role = '$role_val'";
+    $condiciones[] = "r.rol = '$role_val'";
 }
 if (!empty($search_val)) {
     $condiciones[] = "(u.first_name LIKE '%$search_val%' OR u.last_name LIKE '%$search_val%' OR e.email LIKE '%$search_val%')";
@@ -196,7 +196,7 @@ $res_status_list = mysqli_query($config, "SELECT * FROM status WHERE id_status I
                                 <td>
                                     <?php 
                                 $badge_class = "bg-secondary text-white"; 
-                                $r = $row['role'] ?? 'user';
+                                $r = $row['rol_nombre'] ?? 'user';
                                 if($r == 'admin') $badge_class = "bg-primary text-white";
                                 if($r == 'propietario') $badge_class = "bg-warning text-white";
                             ?>

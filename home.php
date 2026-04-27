@@ -74,14 +74,30 @@ $res_auto = mysqli_query($config, $query_auto);
     </a>
 
     <div class="nav-links">
-        <a href="catalogo.php">Catálogo</a>
-
-        <a href="centro_de_ayuda.php">Centro de ayuda</a>
-
-        <a href="Login.php" class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-2">
-            <i class="bi bi-person-circle"></i> Login
-        </a>
+            <a href="catalogo.php">Catálogo</a>
+            <a href="favoritos.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                <i class="bi bi-heart-fill"></i> Mis Favoritos
+            </a>
+<div class="dropdown">
+    <div class="user-pill" data-bs-toggle="dropdown" aria-expanded="false" role="button">
+        <i class="bi bi-list"></i>
+        <div class="user-avatar">
+           <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="display: block; fill: #717171; height: 30px; width: 30px;">
+               <path d="m16 .7c-8.437 0-15.3 6.863-15.3 15.3s6.863 15.3 15.3 15.3 15.3-6.863 15.3-15.3-6.863-15.3-15.3-15.3zm0 28c-4.021 0-7.605-1.884-9.933-4.81a12.425 12.425 0 0 1 2.245-2.903l.445-.4c1.886-1.637 4.191-2.487 7.243-2.487s5.357.85 7.243 2.487l.445.4a12.425 12.425 0 0 1 2.245 2.903c-2.328 2.926-5.912 4.81-9.933 4.81zm9.328-7.387c-.012-.02-.023-.04-.035-.06a10.428 10.428 0 0 0-6.191-3.653c1.789-1.344 2.898-3.411 2.898-5.7 0-3.97-3.23-7.2-7.2-7.2s-7.2 3.23-7.2 7.2c0 2.289 1.109 4.356 2.898 5.7a10.428 10.428 0 0 0-6.191 3.653c-.012.02-.023.04-.035.06a13.31 13.31 0 0 1-2.573-7.913c0-7.345 5.955-13.3 13.3-13.3s13.3 5.955 13.3 13.3c0 2.924-1.01 5.614-2.711 7.913z"></path>
+           </svg>
+        </div>
     </div>
+    
+    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+      <li><a class="dropdown-item" href="perfil.php">Mi perfil</a></li>    
+    
+    <li><hr class="dropdown-divider"></li>
+        
+    <li><a class="dropdown-item" href="centro_de_ayuda.php">Centro de ayuda</a></li>
+    <li><a class="dropdown-item" href="auth/logout.php">Cerrar sesión</a></li>
+    </ul>
+    </div>
+        </div>
 </div>
 </header>
 
