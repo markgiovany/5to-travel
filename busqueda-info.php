@@ -7,7 +7,8 @@ $url_regresar = isset($_SESSION['user_uuid']) ? 'home.php' : 'index.php';
 $ubicacion = isset($_GET['ubicacion']) ? $_GET['ubicacion'] : '';
 $personas  = !empty($_GET['personas']) ? (int)$_GET['personas'] : 0;
 
-$sql = "SELECT c.*, c.uuid AS hotel_uuid, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.name AS nombre_pais, h.precio, i.url_imagen
+$sql = "SELECT c.*, c.uuid AS hotel_uuid, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.name AS nombre_pais, h.precio, i.url_imagen,
+        (SELECT AVG(ca.estrellas) FROM calif_hoteles ca WHERE ca.id_hotel = c.id_catalogo) AS promedio_estrellas
         FROM catalogo c
         LEFT JOIN cat_ubicacion u ON c.id_ubicacion = u.id_ubicacion
         LEFT JOIN cities ciu ON u.city_id = ciu.id
@@ -85,7 +86,10 @@ if(!$resultado){
                     <div class="info-box">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="category">Hospedaje</span>
-                            <span class="rating"><i class="bi bi-star-fill text-warning"></i> 4.9</span>
+                            <span class="rating">
+    <i class="bi bi-star-fill text-warning"></i> 
+    <?php echo $row['promedio_estrellas'] ? number_format($row['promedio_estrellas'], 1) : '0.0'; ?>
+</span>
                         </div>
                         <h3 class="hotel-title"><?php echo htmlspecialchars($row['nombre']); ?></h3>
                         <p class="location"><i class="bi bi-geo-alt"></i> <?php echo !empty($row['nombre_ciudad']) ? htmlspecialchars($row['nombre_ciudad']) : 'Destino pendiente'; ?></p>

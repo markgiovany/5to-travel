@@ -16,15 +16,20 @@ $ciudad_id = isset($_GET['ciudad']) ? intval($_GET['ciudad']) : 0;
 $filtros_activos = ($min > 0 || $max < 999999 || $stars > 0 || $pais_id > 0 || $estado_id > 0 || $ciudad_id > 0) ? 1 : 0;
 
 /**
- * 2. CARGAR SELECTORES (Tablas: countries, states, cities)
+ * 2. CARGAR SELECTORES (Dinámicos según selección)
  */
 $countries_res = mysqli_query($config, "SELECT id, name FROM countries ORDER BY name ASC");
-$states_res = mysqli_query($config, "SELECT id, name FROM states ORDER BY name ASC");
-$cities_res = mysqli_query($config, "SELECT id, name FROM cities ORDER BY name ASC");
 
-/**
- * 3. QUERY PRINCIPAL
- */
+// Solo cargar estados si ya se seleccionó un país
+$states_res = ($pais_id > 0) 
+    ? mysqli_query($config, "SELECT id, name FROM states WHERE country_id = $pais_id ORDER BY name ASC") 
+    : null;
+
+// Solo cargar ciudades si ya se seleccionó un estado
+$cities_res = ($estado_id > 0) 
+    ? mysqli_query($config, "SELECT id, name FROM cities WHERE state_id = $estado_id ORDER BY name ASC") 
+    : null;
+ 
 $query = "SELECT 
             c.id_catalogo, c.nombre, 
             u.direccion AS ubicacion_real,
@@ -139,24 +144,34 @@ $resultado = mysqli_query($config, $query);
             <form action="catalogo.php" method="GET">
                 <h6 class="fw-bold mb-3 small text-uppercase text-muted">Ubicación</h6>
                 <div class="mb-4">
-                    <select name="pais" class="form-select mb-2 rounded-3">
-                        <option value="0">País</option>
-                        <?php while($p = mysqli_fetch_assoc($countries_res)): ?>
-                            <option value="<?= $p['id'] ?>" <?= $pais_id == $p['id'] ? 'selected' : '' ?>><?= $p['name'] ?></option>
-                        <?php endwhile; ?>
-                    </select>
-                    <select name="estado" class="form-select mb-2 rounded-3">
-                        <option value="0">Estado</option>
-                        <?php while($e = mysqli_fetch_assoc($states_res)): ?>
-                            <option value="<?= $e['id'] ?>" <?= $estado_id == $e['id'] ? 'selected' : '' ?>><?= $e['name'] ?></option>
-                        <?php endwhile; ?>
-                    </select>
-                    <select name="ciudad" class="form-select rounded-3">
-                        <option value="0">Ciudad</option>
-                        <?php while($c = mysqli_fetch_assoc($cities_res)): ?>
-                            <option value="<?= $c['id'] ?>" <?= $ciudad_id == $c['id'] ? 'selected' : '' ?>><?= $c['name'] ?></option>
-                        <?php endwhile; ?>
-                    </select>
+                    <select name="pais" id="pais" class="form-select mb-2 rounded-3" onchange="cargarDependientes('state', this.value)">
+    <option value="0">País</option>
+    <?php 
+    mysqli_data_seek($countries_res, 0); 
+    while($p = mysqli_fetch_assoc($countries_res)): ?>
+        <option value="<?= $p['id'] ?>" <?= $pais_id == $p['id'] ? 'selected' : '' ?>><?= $p['name'] ?></option>
+    <?php endwhile; ?>
+</select>
+
+<select name="estado" id="estado" class="form-select mb-2 rounded-3" onchange="cargarDependientes('city', this.value)">
+    <option value="0">Estado</option>
+    <?php if ($pais_id > 0): 
+        $res = mysqli_query($config, "SELECT id, name FROM states WHERE country_id = $pais_id ORDER BY name ASC");
+        while($e = mysqli_fetch_assoc($res)): ?>
+            <option value="<?= $e['id'] ?>" <?= $estado_id == $e['id'] ? 'selected' : '' ?>><?= $e['name'] ?></option>
+        <?php endwhile; 
+    endif; ?>
+</select>
+
+<select name="ciudad" id="ciudad" class="form-select rounded-3">
+    <option value="0">Ciudad</option>
+    <?php if ($estado_id > 0): 
+        $res = mysqli_query($config, "SELECT id, name FROM cities WHERE state_id = $estado_id ORDER BY name ASC");
+        while($c = mysqli_fetch_assoc($res)): ?>
+            <option value="<?= $c['id'] ?>" <?= $ciudad_id == $c['id'] ? 'selected' : '' ?>><?= $c['name'] ?></option>
+        <?php endwhile; 
+    endif; ?>
+</select>
                 </div>
 
                 <hr class="my-4 opacity-25">
@@ -195,6 +210,10 @@ $resultado = mysqli_query($config, $query);
                         <p class="text-muted mb-2 text-truncate" style="font-size: 11px;">
                             <i class="bi bi-geo-alt me-1 text-danger"></i><?= htmlspecialchars($hotel['ubicacion_real'] ?? 'Sin ubicación'); ?>
                         </p>
+                        <div class="small text-muted mb-2">
+    <i class="bi bi-star-fill text-warning"></i> 
+    <?= $hotel['promedio_estrellas'] ? number_format($hotel['promedio_estrellas'], 1) : "0.0" ?>
+</div>
                         <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-3">
                             <span class="fw-bold fs-6 text-dark">$<?= number_format($hotel['precio_min'], 0); ?> <small class="text-muted" style="font-size: 10px;">MXN</small></span>
                             <a href="lugares-info.php?id=<?= $hotel['id_catalogo']; ?>" class="text-dark"><i class="bi bi-arrow-right-circle-fill fs-4 opacity-75"></i></a>
@@ -236,4 +255,26 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 </body>
+<script>
+function cargarDependientes(type, id) {
+    const targetId = (type === 'state') ? 'estado' : 'ciudad';
+    const targetSelect = document.getElementById(targetId);
+    
+    // esto hace que si cambio el pais se me resetea la ciudad y estado
+    if(type === 'state') {
+        document.getElementById('ciudad').innerHTML = '<option value="0">Ciudad</option>';
+    }
+
+    // Petición AJAX al archivo nuevo
+    fetch(`get_locations.php?type=${type}&id=${id}`)
+        .then(response => response.json())
+        .then(data => {
+            targetSelect.innerHTML = `<option value="0">${type === 'state' ? 'Estado' : 'Ciudad'}</option>`;
+            data.forEach(item => {
+                targetSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+            });
+        })
+        .catch(error => console.error('Error:', error));
+}
+</script>
 </html>
