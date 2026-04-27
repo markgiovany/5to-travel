@@ -2,17 +2,24 @@
 session_start();
 include("config/config.php"); 
 
-$ubicacion = isset($_GET['ubicacion']) ? $_GET['ubicacion'] : '';
-$personas  = isset($_GET['personas'])  ? $_GET['personas']  : '';
+$url_regresar = isset($_SESSION['user_uuid']) ? 'home.php' : 'index.php';
 
-$sql = "SELECT c.*, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.name AS nombre_pais
+$ubicacion = isset($_GET['ubicacion']) ? $_GET['ubicacion'] : '';
+$personas  = !empty($_GET['personas']) ? (int)$_GET['personas'] : 0;
+
+$sql = "SELECT c.*, c.uuid AS hotel_uuid, ciu.name AS nombre_ciudad, est.name AS nombre_estado, pais.name AS nombre_pais, h.precio, i.url_imagen
         FROM catalogo c
         LEFT JOIN cat_ubicacion u ON c.id_ubicacion = u.id_ubicacion
         LEFT JOIN cities ciu ON u.city_id = ciu.id
         LEFT JOIN states est ON ciu.state_id = est.id
         LEFT JOIN countries pais ON est.country_id = pais.id
         LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
-        WHERE 1=1";
+        INNER JOIN cat_catalogo_habitacion h ON c.id_catalogo = h.id_catalogo
+        WHERE h.disponibilidad >= 0";
+
+if ($personas > 0) {
+    $sql .= " AND h.capacidad >= $personas";
+}
 
 if (!empty($ubicacion)) {
     $ubi_safe = mysqli_real_escape_string($config, $ubicacion);
@@ -20,6 +27,16 @@ if (!empty($ubicacion)) {
                 OR est.name LIKE '%$ubi_safe%' 
                 OR pais.name LIKE '%$ubi_safe%' 
                 OR c.nombre LIKE '%$ubi_safe%')";
+}
+
+$entrada = $_GET['entrada'] ?? '';
+$salida = $_GET['salida'] ?? '';
+
+if (!empty($entrada) && !empty($salida)) {
+    if ($salida <= $entrada) {
+        header("Location: index.php?error_fecha=1&entrada=$entrada&salida=$salida");
+        exit(); 
+    }
 }
 
 $sql .= " GROUP BY c.id_catalogo";
@@ -46,7 +63,7 @@ if(!$resultado){
     <div class="mb-5">
         <h2 class="fw-bold text-dark">Resultados en <?php echo !empty($ubicacion) ? htmlspecialchars($ubicacion) : 'todos los destinos'; ?></h2>
         <p class="text-muted">Explora las mejores opciones disponibles para tu viaje</p>
-        <a href="home.php" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <a href="<?php echo $url_regresar; ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
             <i class="bi bi-arrow-return-left"></i> Regresar
         </a>
     </div>
@@ -57,11 +74,13 @@ if(!$resultado){
         while ($row = mysqli_fetch_assoc($resultado)) { 
     ?>
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <a href="lugares-info.php?id=<?php echo $row['id_catalogo']; ?>" style="text-decoration: none; color:black">
+            <a href="lugares-info.php?uuid=<?php echo $row['hotel_uuid']; ?>" style="text-decoration: none; color:black">
                 <article class="hotel-card shadow-sm">
                     <div class="image-box">
                         <span class="badge-tag">Recomendado</span>
-                        <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=600" alt="Hotel">
+                        <?php 
+                        $imagen_url = !empty($row['url_imagen']) ? $row['url_imagen'] : 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600'; ?>
+                        <img src="<?php echo $imagen_url; ?>" alt="<?php echo htmlspecialchars($row['nombre']); ?>" style="width: 100%; height: 200px; object-fit: cover;">
                     </div>
                     <div class="info-box">
                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -72,8 +91,8 @@ if(!$resultado){
                         <p class="location"><i class="bi bi-geo-alt"></i> <?php echo !empty($row['nombre_ciudad']) ? htmlspecialchars($row['nombre_ciudad']) : 'Destino pendiente'; ?></p>
                         <div class="footer-card">
                             <div class="price-data">
-                                <span class="old-p"><?php echo number_format(($row['precio_min'] ?? 0) * 1.2, 0); ?></span>
-                                <span class="new-p"><?php echo number_format($row['precio_min'] ?? 0, 0); ?> <small>MXN</small></span>
+                                <span class="old-p"><?php echo number_format(($row['precio'] ?? 0) * 1.2, 0); ?></span>
+                                <span class="new-p"><?php echo number_format($row['precio'] ?? 0, 0); ?> <small>MXN</small></span>
                             </div>
                         </div>
                     </div>
@@ -83,10 +102,12 @@ if(!$resultado){
     <?php 
         }
     } else {
-        $query_sugerencias = "SELECT c.nombre, c.precio_min, ciu.name AS nombre_ciudad, c.id_catalogo 
+        $query_sugerencias = "SELECT c.nombre, h.precio, ciu.name AS nombre_ciudad, c.id_catalogo, c.uuid AS hotel_uuid, i.url_imagen 
                               FROM catalogo c
                               LEFT JOIN cat_ubicacion u ON c.id_ubicacion = u.id_ubicacion
                               LEFT JOIN cities ciu ON u.city_id = ciu.id
+                              LEFT JOIN cat_catalogo_habitacion h ON c.id_catalogo = h.id_catalogo
+                              LEFT JOIN cat_imagen i ON c.id_catalogo = i.id_catalogo
                               GROUP BY c.id_catalogo
                               ORDER BY RAND() LIMIT 12";
         $res_sugerencias = mysqli_query($config, $query_sugerencias);
@@ -102,17 +123,17 @@ if(!$resultado){
             <?php while ($sugerencias = mysqli_fetch_assoc($res_sugerencias)) { ?>
 
             <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-                <a href="lugares-info.php?id=<?php echo $sugerencias['id_catalogo']; ?>" style="text-decoration: none; color:black">
+                <a href="lugares-info.php?uuid=<?php echo $sugerencias['hotel_uuid']; ?>" style="text-decoration: none; color:black">
                     <article class="hotel-card shadow-sm">
                         <div class="image-box">
-                            <img src="<?php echo !empty($hotel['url_imagen']) ? $sugerencias['url_imagen'] : 'https://images.unsplash.com/photo-1590490360182-c33d57733427'; ?>" alt="Hotel">
+                            <img src="<?php echo !empty($sugerencias['url_imagen']) ? $sugerencias['url_imagen'] : 'https://images.unsplash.com/photo-1590490360182-c33d57733427'; ?>" alt="Hotel">
                         </div>
                         <div class="info-box">
                             <h3 class="hotel-title"><?php echo htmlspecialchars($sugerencias['nombre']); ?></h3>
                             <p class="location"><i class="bi bi-geo-alt"></i> <?php echo !empty($sugerencias['nombre_ciudad']) ? htmlspecialchars($sugerencias['nombre_ciudad']) : 'Ubicación pendiente'; ?></p>
                             <div class="footer-card">
                                 <div class="price-data">
-                                    <span class="new-p"><?php echo number_format($sugerencias['precio_min'] ?? 0, 0); ?> <small>MXN</small></span>
+                                    <span class="new-p"><?php echo number_format($sugerencias['precio'] ?? 0, 0); ?> <small>MXN</small></span>
                                 </div>
                             </div>
                         </div>
