@@ -123,7 +123,7 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
                         <div class="col-md-6"><label class="form-label small fw-bold">Nombre</label><input type="text" name="nombre" class="form-control" value="<?php echo $user['first_name']; ?>" disabled required></div>
                         <div class="col-md-6"><label class="form-label small fw-bold">Apellido</label><input type="text" name="apellido" class="form-control" value="<?php echo $user['last_name']; ?>" disabled required></div>
                         <div class="col-12"><label class="form-label small fw-bold">Correo Electrónico</label><input type="email" name="email" class="form-control" value="<?php echo $user['email']; ?>" disabled required></div>
-                        <div class="col-12"><label class="form-label small fw-bold">Teléfono</label><input type="text" name="telefono" class="form-control" value="<?php echo $user['telefono']; ?>" disabled required minlength="10" maxlength="10"></div>
+                        <div class="col-12"><label class="form-label small fw-bold">Teléfono</label><input type="tel" name="telefono" class="form-control" value="<?php echo $user['telefono']; ?>" disabled required minlength="10" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div>
                     </div>
                     <div class="mt-4 pt-2">
                         <button type="button" id="btnEdit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill" onclick="habilitarEdicion()">Editar mi información</button>
@@ -139,13 +139,23 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
         <section id="pagos" class="seccion-content" style="display:none;">
             <div class="card-profile">
                 <h4 class="mb-4 fw-bold">Gestión de Pagos</h4>
-                <form action="auth/guardar_pago.php" method="POST" class="mb-4">
+                <form id="formPago" action="auth/agregar_pago.php" method="POST" class="mb-4">
                     <div class="row g-3">
-                        <div class="col-md-6"><input type="text" name="titular" class="form-control" placeholder="Nombre en la tarjeta" required></div>
-                        <div class="col-md-6"><input type="text" name="numero" class="form-control" placeholder="Número de Tarjeta (16 dígitos)" maxlength="16" required></div>
-                        <div class="col-md-4"><input type="text" name="expiracion" class="form-control" placeholder="MM/AA" maxlength="5" required></div>
-                        <div class="col-md-4"><input type="password" name="cvv" class="form-control" placeholder="CVV" maxlength="3" required></div>
-                        <div class="col-md-4"><button type="submit" class="btn btn-primary w-100 h-100 rounded-pill fw-bold">Añadir</button></div>
+                        <div class="col-md-6">
+                            <input type="text" name="titular" class="form-control" placeholder="Nombre en la tarjeta" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="tel" id="numTarjeta" name="numero" class="form-control" placeholder="Número de Tarjeta (16 dígitos)" maxlength="16" required oninput="validarNumeros(this)">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="tel" id="expiracion" name="expiracion" class="form-control" placeholder="MM/AA" maxlength="5" required oninput="formatearFecha(this)">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="tel" id="cvv" name="cvv" class="form-control" placeholder="CVV" maxlength="3" required oninput="validarNumeros(this)">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" id="btnAnadir" class="btn btn-primary w-100 h-100 rounded-pill fw-bold" disabled>Añadir</button>
+                        </div>
                     </div>
                 </form>
                 <hr class="my-4">
@@ -155,7 +165,7 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
                             <div class="bg-primary bg-opacity-10 p-3 rounded-4 me-3"><i class="bi bi-wallet2 text-primary"></i></div>
                             <div><span class="d-block fw-bold"><?php echo $p['nombre_titular']; ?></span><small>•••• <?php echo substr($p['datos_encriptados'], -4); ?></small></div>
                         </div>
-                        <a href="auth/eliminar_pago.php?p_id=<?php echo $p['id_metodo_guardado']; ?>" class="btn btn-outline-danger btn-sm rounded-pill">Eliminar</a>
+                        <a href="auth/eliminar_pago.php?p_id=<?php echo $p['id_metodo_guardado']; ?>&u_id=<?php echo $user_id; ?>" class="btn btn-sm btn-outline-danger">Eliminar</a>
                     </div>
                 <?php endwhile; ?>
             </div>
@@ -168,7 +178,6 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
                     <?php if(mysqli_num_rows($result_recientes) > 0): ?>
                         <?php while($r = mysqli_fetch_assoc($result_recientes)): 
                             $id_h = $r['id_catalogo'];
-                            // AJUSTE: Agrupamos por nombre de habitación y contamos cuántas hay iguales
                             $q_habs = mysqli_query($config, "SELECT nombre, capacidad, precio, COUNT(*) as cantidad 
                                                              FROM cat_catalogo_habitacion 
                                                              WHERE id_catalogo = '$id_h' 
@@ -221,7 +230,6 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
                         <h3 id="mNombre" class="fw-bold text-primary"></h3>
                         <p id="mUbicacion" class="text-muted small"><i class="bi bi-geo-alt"></i> <span>Ubicación registrada</span></p>
                     </div>
-                    
                     <div class="row mb-4 text-center bg-light p-3 rounded-4">
                         <div class="col-6 border-end">
                             <small class="text-muted d-block">Fecha Entrada</small>
@@ -232,10 +240,8 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
                             <strong id="mCheckOut">--</strong>
                         </div>
                     </div>
-
                     <h6 class="fw-bold" id="mTituloDesc">Descripción</h6>
                     <p id="mDescripcion" class="text-muted small mb-4"></p>
-
                     <h6 class="fw-bold mb-3" id="mTituloHab">Habitaciones</h6>
                     <div class="table-responsive">
                         <table class="table table-habitaciones border">
@@ -250,7 +256,6 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
                             <tbody id="mHabitacionesBody"></tbody>
                         </table>
                     </div>
-
                     <button class="btn btn-dark w-100 rounded-pill mt-4" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
@@ -259,27 +264,53 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // --- LOGICA DE NAVEGACION ---
         function mostrar(id, btn) {
             document.querySelectorAll('.seccion-content').forEach(s => s.style.display = 'none');
             document.getElementById(id).style.display = 'block';
             document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
+
         function habilitarEdicion() {
             document.querySelectorAll("#formUser input").forEach(input => input.disabled = false);
             document.getElementById("btnEdit").style.display = "none";
             document.getElementById("btnSave").style.display = "flex";
         }
 
+        // --- VALIDACIONES DE TARJETA ---
+        function validarNumeros(input) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+            validarFormularioPago();
+        }
+
+        function formatearFecha(input) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+            if (input.value.length >= 2) {
+                input.value = input.value.slice(0, 2) + '/' + input.value.slice(2, 4);
+            }
+            // Salto automático al CVV tras poner los 2 dígitos del mes y 2 del año
+            if (input.value.length === 5) {
+                document.getElementById('cvv').focus();
+            }
+            validarFormularioPago();
+        }
+
+        function validarFormularioPago() {
+            const num = document.getElementById('numTarjeta').value.length === 16;
+            const exp = document.getElementById('expiracion').value.length === 5;
+            const cvv = document.getElementById('cvv').value.length === 3;
+            document.getElementById('btnAnadir').disabled = !(num && exp && cvv);
+        }
+
+        // --- LOGICA DE MODALES ---
         function verFichaHotel(nombre, imagen, desc, habs) {
             document.getElementById('mNombre').innerText = nombre;
             document.getElementById('mImg').style.backgroundImage = "url('" + (imagen || 'imagenes/placeholder.jpg') + "')";
             document.getElementById('mDescripcion').innerText = desc || 'Sin descripción adicional.';
             document.getElementById('mTituloHab').innerText = "Habitaciones Disponibles";
-            
             const body = document.getElementById('mHabitacionesBody');
             body.innerHTML = '';
-            
             if(habs && habs.length > 0) {
                 habs.forEach(h => {
                     body.innerHTML += `
@@ -301,7 +332,6 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
             document.getElementById('mCheckOut').innerText = salida;
             document.getElementById('mDescripcion').innerText = "Reserva confirmada.";
             document.getElementById('mTituloHab').innerText = "Habitación Reservada";
-            
             document.getElementById('mHabitacionesBody').innerHTML = `
                 <tr>
                     <td><strong>${tipoHab}</strong></td>
@@ -309,7 +339,6 @@ $result_pago = mysqli_query($config, "SELECT * FROM usr_billetera WHERE user_uui
                     <td><span class="badge bg-secondary rounded-pill">1 reservada</span></td>
                     <td class="text-primary fw-bold">$${precio}</td>
                 </tr>`;
-                
             new bootstrap.Modal(document.getElementById('modalDetalle')).show();
         }
     </script>
