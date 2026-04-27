@@ -5,107 +5,97 @@ require_once "../config/cloudinary_config.php";
 
 use Cloudinary\Api\Upload\UploadApi;
 
+if (isset($_POST['ajax_type'])) {
+    $id = intval($_POST['val_id'] ?? 0);
+
+    if ($_POST['ajax_type'] == 'get_states') {
+        $res = mysqli_query($config, "SELECT id, name FROM states WHERE country_id = $id ORDER BY name");
+        echo '<option value="">Selecciona estado</option>';
+        while ($r = mysqli_fetch_assoc($res)) {
+            echo "<option value='{$r['id']}'>{$r['name']}</option>";
+        }
+    }
+
+    if ($_POST['ajax_type'] == 'get_cities') {
+        $res = mysqli_query($config, "SELECT id, name FROM cities WHERE state_id = $id ORDER BY name");
+        if (mysqli_num_rows($res) > 0) {
+            echo '<option value="">Selecciona ciudad</option>';
+            while ($r = mysqli_fetch_assoc($res)) {
+                echo "<option value='{$r['id']}'>{$r['name']}</option>";
+            }
+        } else {
+            echo '<option value="">No se encontraron ciudades</option>';
+        }
+    }
+    exit; 
+}
+
 if (!isset($_SESSION['user_uuid']) || $_SESSION['role'] !== 'propietario') {
     header("Location: ../auth/login.php");
     exit();
 }
 
-$id = $_GET['id'] ?? 0;
+$uuid_hotel = mysqli_real_escape_string($config, $_GET['u'] ?? '');
+$id_numerico = mysqli_real_escape_string($config, $_GET['id'] ?? '');
 $propietario_uuid = $_SESSION['user_uuid'];
 
-/* HOTEL */
-$sql = "SELECT * FROM catalogo WHERE id_catalogo='$id' AND propietario_uuid='$propietario_uuid'";
+if ($uuid_hotel != '') {
+    $sql = "SELECT * FROM catalogo WHERE uuid = '$uuid_hotel' AND propietario_uuid = '$propietario_uuid'";
+} else {
+    $sql = "SELECT * FROM catalogo WHERE id_catalogo = '$id_numerico' AND propietario_uuid = '$propietario_uuid'";
+}
+
 $res = mysqli_query($config, $sql);
 $hotel = mysqli_fetch_assoc($res);
 
 if (!$hotel) {
-    die("Hotel no encontrado");
+    die("Error: El hotel no existe o no tienes permiso para editarlo.");
 }
 
-/* TIPOS */
-$res_tipos = mysqli_query($config, "SELECT * FROM cat_tipo");
+$id = $hotel['id_catalogo'];
 
-/* TIPOS SELECCIONADOS */
-$res_selected = mysqli_query($config, "SELECT id_tipo FROM cat_catalogo_habitacion WHERE id_catalogo='$id'");
-$selected = [];
+$res_ubicacion = mysqli_query($config, "SELECT * FROM cat_ubicacion WHERE id_catalogo = '$id'");
+$ubicacion = mysqli_fetch_assoc($res_ubicacion);
 
-while ($s = mysqli_fetch_assoc($res_selected)) {
-    $selected[] = $s['id_tipo'];
+$current_country = $ubicacion['country_id'] ?? 0;
+$current_state = $ubicacion['state_id'] ?? 0;
+$current_city = $ubicacion['city_id'] ?? 0;
+
+if (isset($_GET['del_img'])) {
+    $id_img = intval($_GET['del_img']);
+    mysqli_query($config, "DELETE FROM cat_imagen WHERE id_imagen = '$id_img'");
+    header("Location: editar.php?u=" . $uuid_hotel . "&id=" . $id);
+    exit();
 }
 
-/* PAISES */
-$paises = mysqli_query($config, "SELECT id, name FROM countries ORDER BY name ASC");
+$paises = mysqli_query($config, "SELECT id, name FROM countries ORDER BY name");
+$estados = mysqli_query($config, "SELECT id, name FROM states WHERE country_id = '$current_country' ORDER BY name");
+$ciudades = mysqli_query($config, "SELECT id, name FROM cities WHERE state_id = '$current_state' ORDER BY name");
 
-/* ESTADOS */
-$estados = mysqli_query($config, "SELECT id, name, country_id FROM states ORDER BY name ASC");
-
-/* UPDATE */
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['ajax_type'])) {
     $nombre = mysqli_real_escape_string($config, $_POST['nombre']);
     $descripcion = mysqli_real_escape_string($config, $_POST['descripcion']);
-
     $pais_id = intval($_POST['pais_id']);
     $estado_id = intval($_POST['estado_id']);
+    $ciudad_id = intval($_POST['ciudad_id']);
+    $id_status = intval($_POST['id_status']);
 
-    mysqli_query($config, "
-        UPDATE catalogo 
-        SET nombre='$nombre', 
-            descripcion='$descripcion',
-            pais_id='$pais_id',
-            estado_id='$estado_id'
-        WHERE id_catalogo='$id'
-    ");
+    mysqli_query($config, "UPDATE catalogo SET nombre = '$nombre', descripcion = '$descripcion', id_status = '$id_status' WHERE id_catalogo = '$id'");
+    
+    mysqli_query($config, "UPDATE cat_ubicacion SET country_id = '$pais_id', state_id = '$estado_id', city_id = '$ciudad_id' WHERE id_catalogo = '$id'");
 
-    /* TIPOS */
-    mysqli_query($config, "DELETE FROM cat_catalogo_habitacion WHERE id_catalogo='$id'");
-
-    if (!empty($_POST['tipos'])) {
-        foreach ($_POST['tipos'] as $tipo) {
-            mysqli_query($config, "
-                INSERT INTO cat_catalogo_habitacion (id_catalogo, id_tipo)
-                VALUES ('$id', '$tipo')
-            ");
-        }
-    }
-
-    /* IMAGEN */
-    if (isset($_FILES['imagen']) && !empty($_FILES['imagen']['name'])) {
-
+    if (isset($_FILES['imagen']) && !empty($_FILES['imagen']['name'][0])) {
         $upload = new UploadApi();
-        $tmp = $_FILES['imagen']['tmp_name'];
-
-        if ($_FILES['imagen']['error'] == 0) {
-
-            $file_hash = md5_file($tmp);
-
-            $check = mysqli_query($config, "
-                SELECT url_imagen 
-                FROM cat_imagen 
-                WHERE hash_archivo = '$file_hash'
-                LIMIT 1
-            ");
-
-            if (mysqli_num_rows($check) > 0) {
-                $img_data = mysqli_fetch_assoc($check);
-                $url_final = $img_data['url_imagen'];
-            } else {
-                $result = $upload->upload($tmp, [
-                    'folder' => 'brooking_hoteles'
-                ]);
+        foreach ($_FILES['imagen']['tmp_name'] as $key => $tmp_name) {
+            if ($_FILES['imagen']['error'][$key] == 0) {
+                $file_hash = md5_file($tmp_name);
+                $result = $upload->upload($tmp_name, ['folder' => 'brooking_hoteles']);
                 $url_final = $result['secure_url'];
+                mysqli_query($config, "INSERT INTO cat_imagen (id_catalogo, url_imagen, hash_archivo, id_status) VALUES ('$id', '$url_final', '$file_hash', 1)");
             }
-
-            mysqli_query($config, "
-                INSERT INTO cat_imagen 
-                (id_catalogo, url_imagen, hash_archivo)
-                VALUES 
-                ('$id', '$url_final', '$file_hash')
-            ");
         }
     }
-
-    header("Location: propietario_dashboard.php");
+    header("Location: propietario_dashboard.php?success=1");
     exit();
 }
 ?>
@@ -113,131 +103,123 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Editar Hotel</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Hotel | 5to-travel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+<body class="bg-light">
 
-<body class="bg-light p-5">
+<div class="container py-5">
+    <div class="card shadow border-0 rounded-4 p-4">
+        <h4 class="fw-bold mb-4">Editar Hotel</h4>
 
-<div class="container">
-<div class="col-md-7 mx-auto card shadow-sm border-0 p-4">
+        <form method="POST" enctype="multipart/form-data">
+            <label class="small fw-bold">Nombre del Hotel</label>
+            <input type="text" name="nombre" class="form-control mb-3" value="<?php echo htmlspecialchars($hotel['nombre']); ?>" required>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold m-0">Editar Hotel</h4>
-    <a href="propietario_dashboard.php" class="btn btn-outline-primary btn-sm">← Volver</a>
+            <label class="small fw-bold">Descripción</label>
+            <textarea name="descripcion" class="form-control mb-3" rows="4"><?php echo htmlspecialchars($hotel['descripcion']); ?></textarea>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="small fw-bold">País</label>
+                    <select name="pais_id" id="pais" class="form-select mb-3" required>
+                        <option value="">Selecciona país</option>
+                        <?php while($p = mysqli_fetch_assoc($paises)): ?>
+                            <option value="<?php echo $p['id']; ?>" <?php echo ($p['id'] == $current_country) ? 'selected' : ''; ?>>
+                                <?php echo $p['name']; ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="small fw-bold">Estado</label>
+                    <select name="estado_id" id="estado" class="form-select mb-3" required>
+                        <option value="">Selecciona estado</option>
+                        <?php while($e = mysqli_fetch_assoc($estados)): ?>
+                            <option value="<?php echo $e['id']; ?>" <?php echo ($e['id'] == $current_state) ? 'selected' : ''; ?>>
+                                <?php echo $e['name']; ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="small fw-bold">Ciudad</label>
+                    <select name="ciudad_id" id="ciudad" class="form-select mb-3" required>
+                        <option value="">Selecciona ciudad</option>
+                        <?php while($c = mysqli_fetch_assoc($ciudades)): ?>
+                            <option value="<?php echo $c['id']; ?>" <?php echo ($c['id'] == $current_city) ? 'selected' : ''; ?>>
+                                <?php echo $c['name']; ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-4 mt-2">
+                <label class="fw-bold">Galería Actual</label>
+                <div class="d-flex flex-wrap gap-3 mt-2">
+                    <?php
+                    $res_gal = mysqli_query($config, "SELECT * FROM cat_imagen WHERE id_catalogo = '$id'");
+                    while($img = mysqli_fetch_assoc($res_gal)):
+                    ?>
+                    <div class="position-relative">
+                        <img src="<?php echo $img['url_imagen']; ?>" width="100" height="100" style="object-fit:cover;border-radius:10px;">
+                        <a href="editar.php?del_img=<?php echo $img['id_imagen']; ?>&u=<?php echo $uuid_hotel; ?>&id=<?php echo $id; ?>" 
+                           class="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle"
+                           style="width:22px;height:22px;padding:0;margin:-5px;"
+                           onclick="return confirm('¿Eliminar imagen?')">
+                           &times;
+                        </a>
+                    </div>
+                    <?php endwhile; ?>
+                </div>
+            </div>
+
+            <label class="small fw-bold">Subir nuevas imágenes</label>
+            <input type="file" name="imagen[]" class="form-control mb-3" multiple>
+
+            <label class="small fw-bold">Estado del Registro</label>
+            <select name="id_status" class="form-select mb-4">
+                <option value="1" <?php echo ($hotel['id_status']==1)?'selected':''; ?>>Activo</option>
+                <option value="2" <?php echo ($hotel['id_status']==2)?'selected':''; ?>>Inactivo</option>
+                <option value="7" <?php echo ($hotel['id_status']==7)?'selected':''; ?>>Mantenimiento</option>
+            </select>
+
+            <button class="btn btn-primary w-100 py-2 fw-bold shadow-sm">ACTUALIZAR DATOS</button>
+        </form>
+    </div>
 </div>
 
-<form method="POST" enctype="multipart/form-data">
-
-<!-- NOMBRE -->
-<div class="mb-3">
-<label class="form-label fw-bold small text-muted">NOMBRE DEL HOTEL</label>
-<input type="text" name="nombre"
-value="<?php echo htmlspecialchars($hotel['nombre']); ?>"
-class="form-control rounded-pill" required>
-</div>
-
-<!-- DESCRIPCIÓN -->
-<div class="mb-3">
-<label class="form-label fw-bold small text-muted">DESCRIPCIÓN</label>
-<textarea name="descripcion" class="form-control rounded-4" required><?php echo htmlspecialchars($hotel['descripcion']); ?></textarea>
-</div>
-
-<!-- PAIS -->
-<div class="mb-3">
-<label class="form-label fw-bold small text-muted">PAÍS</label>
-<select name="pais_id" id="pais" class="form-select" required>
-<option value="">Selecciona país</option>
-<?php while($p = mysqli_fetch_assoc($paises)): ?>
-<option value="<?php echo $p['id']; ?>"
-<?php echo (isset($hotel['pais_id']) && $hotel['pais_id'] == $p['id']) ? 'selected' : ''; ?>>
-<?php echo $p['name']; ?>
-</option>
-<?php endwhile; ?>
-</select>
-</div>
-
-<!-- ESTADO -->
-<div class="mb-3">
-<label class="form-label fw-bold small text-muted">ESTADO</label>
-<select name="estado_id" id="estado" class="form-select" required>
-<option value="">Selecciona estado</option>
-<?php while($e = mysqli_fetch_assoc($estados)): ?>
-<option value="<?php echo $e['id']; ?>" 
-data-country="<?php echo $e['country_id']; ?>"
-<?php echo (isset($hotel['estado_id']) && $hotel['estado_id'] == $e['id']) ? 'selected' : ''; ?>>
-<?php echo $e['name']; ?>
-</option>
-<?php endwhile; ?>
-</select>
-</div>
-
-<!-- TIPOS -->
-<div class="mb-3">
-<label class="form-label fw-bold small text-muted">TIPOS DE HABITACIÓN</label>
-<select name="tipos[]" class="form-select" multiple required>
-<?php while($t = mysqli_fetch_assoc($res_tipos)): ?>
-<option value="<?php echo $t['id_tipo']; ?>"
-<?php echo in_array($t['id_tipo'], $selected) ? 'selected' : ''; ?>>
-<?php echo $t['nombre']; ?>
-</option>
-<?php endwhile; ?>
-</select>
-</div>
-
-<!-- IMAGEN -->
-<div class="mb-4">
-<label class="form-label fw-bold small text-muted">IMAGEN</label>
-<input type="file" name="imagen" class="form-control" accept="image/*">
-</div>
-
-<button class="btn btn-primary w-100">
-Guardar Cambios
-</button>
-
-</form>
-
-</div>
-</div>
-
-<!-- JS FILTRO -->
 <script>
-document.addEventListener("DOMContentLoaded", function(){
+const paisSelect = document.getElementById("pais");
+const estadoSelect = document.getElementById("estado");
+const ciudadSelect = document.getElementById("ciudad");
 
-    const pais = document.getElementById("pais");
-    const estado = document.getElementById("estado");
+paisSelect.addEventListener("change", function() {
+    const formData = new FormData();
+    formData.append('ajax_type', 'get_states');
+    formData.append('val_id', this.value);
 
-    const estadosOriginal = Array.from(estado.options);
-    const estadoSeleccionado = "<?php echo $hotel['estado_id']; ?>";
-
-    function filtrarEstados() {
-        let pais_id = pais.value;
-
-        estado.innerHTML = '<option value="">Selecciona estado</option>';
-
-        estadosOriginal.forEach(opt => {
-            if(opt.dataset && opt.dataset.country == pais_id){
-                let nuevo = opt.cloneNode(true);
-
-                // 🔥 Mantener seleccionado
-                if(nuevo.value == estadoSeleccionado){
-                    nuevo.selected = true;
-                }
-
-                estado.appendChild(nuevo);
-            }
+    fetch('editar.php', { method: 'POST', body: formData })
+        .then(res => res.text())
+        .then(data => {
+            estadoSelect.innerHTML = data;
+            ciudadSelect.innerHTML = '<option value="">Selecciona ciudad</option>';
         });
-    }
+});
 
-    // 🔥 IMPORTANTE: ejecutar al cargar
-    filtrarEstados();
+estadoSelect.addEventListener("change", function() {
+    const formData = new FormData();
+    formData.append('ajax_type', 'get_cities');
+    formData.append('val_id', this.value);
 
-    // 🔁 Cuando cambia país
-    pais.addEventListener("change", function(){
-        filtrarEstados();
-    });
-
+    fetch('editar.php', { method: 'POST', body: formData })
+        .then(res => res.text())
+        .then(data => {
+            ciudadSelect.innerHTML = data;
+        });
 });
 </script>
 

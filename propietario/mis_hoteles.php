@@ -25,26 +25,40 @@ $res = mysqli_query($config, $sql);
             <a href="propietario_dashboard.php" class="btn btn-outline-secondary btn-sm">Volver al Panel</a>
         </div>
         <table class="table table-hover">
-            <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Descripción</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($row = mysqli_fetch_assoc($res)): ?>
-                <tr>
-                    <td>#<?php echo $row['id_catalogo']; ?></td>
-                    <td><strong><?php echo $row['nombre']; ?></strong></td>
-                    <td><?php echo htmlspecialchars(substr($row['descripcion'], 0, 50)); ?>...</td>
-                </tr>
-                <?php endwhile; ?>
-                <?php if(mysqli_num_rows($res) == 0): ?>
-                    <tr><td colspan="3" class="text-center">No tienes hoteles aún.</td></tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+    <thead class="table-light">
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Acciones</th> </tr>
+    </thead>
+    <tbody>
+        <?php while($row = mysqli_fetch_assoc($res)): ?>
+        <tr>
+            <td>#<?php echo $row['id_catalogo']; ?></td>
+            <td><strong><?php echo $row['nombre']; ?></strong></td>
+            <td><?php echo htmlspecialchars(substr($row['descripcion'], 0, 50)); ?>...</td>
+            <td>
+                <a href="editar.php?id=<?= $row['id_catalogo'] ?>" class="btn btn-warning btn-sm">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+                
+                <a href="eliminar.php?id=<?= $row['id_catalogo'] ?>" 
+                   class="btn btn-danger btn-sm" 
+                   onclick="return confirm('¿Estás seguro de desactivar este hotel?')">
+                   <i class="bi bi-trash"></i> Eliminar
+                </a>
+            </td>
+        </tr>
+        <?php endwhile; ?>
+        
+        <?php if(mysqli_num_rows($res) == 0): ?>
+        <tr>
+            <td colspan="4" class="text-center">No tienes hoteles aún.</td>
+        </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
     </div>
 </body>
 </html>

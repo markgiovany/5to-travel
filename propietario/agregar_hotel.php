@@ -210,9 +210,18 @@ const pais = document.getElementById("pais");
 const estado = document.getElementById("estado");
 const ciudad = document.getElementById("ciudad");
 
+// 🔥 OCULTAR TODO DESDE EL INICIO (CLAVE PARA PERFORMANCE)
+for (let opt of estado.options) {
+    if (opt.value !== "") opt.style.display = "none";
+}
+for (let opt of ciudad.options) {
+    if (opt.value !== "") opt.style.display = "none";
+}
+
 estado.disabled = true;
 ciudad.disabled = true;
 
+// 👉 CUANDO CAMBIA PAIS
 pais.addEventListener("change", function() {
 
     let pais_id = this.value;
@@ -223,17 +232,19 @@ pais.addEventListener("change", function() {
     estado.value = "";
     ciudad.value = "";
 
+    // 🔥 SOLO FILTRA ESTADOS (YA NO RECORRE TODO DE MÁS)
     for (let opt of estado.options) {
         if (opt.value === "") continue;
         opt.style.display = (opt.dataset.country == pais_id) ? "block" : "none";
     }
 
+    // 🔥 OCULTAR TODAS LAS CIUDADES
     for (let opt of ciudad.options) {
-        if (opt.value === "") continue;
-        opt.style.display = "none";
+        if (opt.value !== "") opt.style.display = "none";
     }
 });
 
+// 👉 CUANDO CAMBIA ESTADO
 estado.addEventListener("change", function() {
 
     let estado_id = this.value;
@@ -242,6 +253,7 @@ estado.addEventListener("change", function() {
     ciudad.disabled = !estado_id;
     ciudad.value = "";
 
+    // 🔥 FILTRAR SOLO LAS NECESARIAS
     for (let opt of ciudad.options) {
         if (opt.value === "") continue;
 
