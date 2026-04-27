@@ -36,8 +36,6 @@ if (!empty($entrada) && !empty($salida)) {
         $mañana = date('Y-m-d', strtotime($entrada . ' +1 day'));
         $salida = $mañana;
         $error_fecha = "La fecha de salida debe ser posterior a la entrada.";
-        header("Location: index.php?error_fecha=1&entrada=$entrada&salida=$salida");
-        exit();
     }
 }
 
@@ -47,12 +45,6 @@ if (!empty($entrada)) {
     $fecha_min_salida = date('Y-m-d', strtotime('+1 day'));
 }
 
-if (isset($error_fecha)): ?>
-    <div style="color: #ff4d4d; background: rgba(255, 77, 77, 0.1); padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-top: 10px; text-align: center;">
-        <i class="bi bi-exclamation-circle"></i> <?php echo $error_fecha; ?>
-    </div>
-<?php endif; 
-
 $query_auto = "SELECT name FROM  cities 
         UNION SELECT name FROM states 
         UNION SELECT name FROM countries  
@@ -60,8 +52,6 @@ $query_auto = "SELECT name FROM  cities
 $res_auto = mysqli_query($config, $query_auto);
 
 ?>
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
