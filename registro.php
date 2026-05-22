@@ -50,7 +50,7 @@
 
 <p>¿Ya tienes cuenta?</p>
 
-<a href="index.php">
+<a href="confirmar_regristro.html">
 <button class="register">Iniciar sesión</button>
 </a>
 
